@@ -2,7 +2,8 @@ eggpant:
 	https://www.kaggle.com/datasets/researchforus/eggplant-leaf-disease-dataset (leaf)
 	https://data.mendeley.com/datasets/d3ypkphghb/2 (unknown parts covered)
 	https://www.kaggle.com/datasets/sujaykapadnis/eggplant-disease-recognition-dataset (recommended set so far)
-
+	https://www.kaggle.com/datasets/ahsanurparul/brinjal-460x460(could be helpful)
+	https://universe.roboflow.com/bscs-sdztk/eggplant-fruit-disease-detection
 
 tomato:
 	https://www.kaggle.com/datasetds/ashishmotwani/tomato (classes: Late_blight

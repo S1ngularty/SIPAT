@@ -1,7 +1,7 @@
 from pathlib import Path
 from PIL import Image
 
-folder = Path("/home/singularity/Downloads/tomato_plant/Tomato_Plant_Stages_Dataset/Stage2_Flowering_Initiation")
+folder = Path("/home/singularity/Downloads/Merge_set(tomato_fruit)/Images")
 
 for image_path in folder.iterdir():
     if image_path.suffix.lower() not in {".jpg", ".jpeg"}:
