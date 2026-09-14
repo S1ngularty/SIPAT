@@ -57,5 +57,46 @@ https://huggingface.co/datasets/lorenzoxi/tomato-leaves-dataset (
 	https://www.kaggle.com/datasets/arjunsudheer326/tomato-plant-stages-dataset (good for crop identification)
 
 
-	Chili:
+Chili:
 	https://www.kaggle.com/datasets/ravindubandara3002/chilli-plant-diseases-dataset(support most of the classes )
+
+
+potato:
+	https://www.kaggle.com/datasets/arajmishra/potato-dataset(only contain 3 classes:
+																early blight
+																late blight
+																healthy)
+
+	https://data.mendeley.com/datasets/7vm7xskfg4/2(consists of 10,117 images categorized into 10 classes, representing
+													 different potato diseases and healthy samples. The classes include
+													  Black Scurf (49 images), Blackleg (47), Blackspot Bruising (770),
+													   Brown Rot (105), Common Scab (60), Dry Rot (1,355), Healthy 
+													   Potatoes (815), Miscellaneous (73), Pink Rot (57), and Soft Rot (560).)
+	
+	https://github.com/Mukaffi28/Potato-Disease(
+												Common scab	62	Bacteria
+												Blackleg	60	Bacteria
+												Dry rot	60	Fungus
+												Pink rot	57	Fungus
+												Black scurf	58	Fungus
+												Healthy Potatoes	80	-
+												Miscellaneous	74	-
+												Total	451	-
+												)
+
+	https://www.kaggle.com/datasets/rizwan123456789/potato-disease-leaf-datasetpld
+	https://www.kaggle.com/datasets/musireddy/potato-leaf-disease
+
+	https://www.kaggle.com/datasets/nirmalsankalana/potato-leaf-disease-dataset (scattered objects: recommended for crop identification)
+	
+	https://www.kaggle.com/datasets/mukaffimoin/potato-diseases-datasets
+	https://www.kaggle.com/datasets/shuvokumarbasak4004/potato-crop-disease-and-health-dataset(massive dataset)
+
+	https://www.kaggle.com/datasets/sujaykapadnis/potato-disease-recognition-dataset(good for additions)
+
+	https://universe.roboflow.com/123-6mci6/potato-uqlre/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true (potato crop, recommended for crop identification)
+
+	https://universe.roboflow.com/123-6mci6/potato-uqlre (potato detection)
+	https://universe.roboflow.com/vegetable-quality-detection/potato-detection-3et6q/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true (potato detection)
+
+	https://universe.roboflow.com/doudi-said-workspace/potato-ysgwg/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true(scattered objects)

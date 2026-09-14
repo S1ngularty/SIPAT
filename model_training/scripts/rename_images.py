@@ -1,7 +1,7 @@
 from pathlib import Path
 
 # Folder containing your images
-folder = Path("/home/singularity/Downloads/tomato_plant/Tomato_Plant_Stages_Dataset/Stage1_Early_Vegetative")
+folder = Path("/home/singularity/Downloads/potato.v4i.yolov8")
 
 # Image extensions to include
 extensions = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tiff"}

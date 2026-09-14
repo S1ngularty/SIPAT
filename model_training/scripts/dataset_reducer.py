@@ -6,10 +6,10 @@ import shutil
 # CONFIG
 # ============================================================
 
-DATASET_DIR = Path("/home/singularity/Downloads/binjal1")
+DATASET_DIR = Path("/home/singularity/Downloads/potato.v4i.yolov8")
 
 # Number of images you want to keep
-TARGET_COUNT = 500
+TARGET_COUNT = 450
 
 # Output dataset
 OUTPUT_DIR = DATASET_DIR.parent / f"{DATASET_DIR.name}_reduced"
