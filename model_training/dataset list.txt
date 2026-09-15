@@ -4,6 +4,11 @@ eggpant:
 	https://www.kaggle.com/datasets/sujaykapadnis/eggplant-disease-recognition-dataset (recommended set so far)
 	https://www.kaggle.com/datasets/ahsanurparul/brinjal-460x460(could be helpful)
 	https://universe.roboflow.com/bscs-sdztk/eggplant-fruit-disease-detection
+	https://universe.roboflow.com/bohol-island-state-university-vgjlb/eggplant-disease-detection (
+																									Healthy
+																									Fruit borer
+																									Fruit Rot
+																									Melon Thrips)
 
 tomato:
 	https://www.kaggle.com/datasetds/ashishmotwani/tomato (classes: Late_blight
