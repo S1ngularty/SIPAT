@@ -1,6 +1,6 @@
 crop identificaiton:
     binjal(eggplant):
-        leaf - 305 images
+        leaf - 406 images
         fruit - 0 images
 
     tomato
