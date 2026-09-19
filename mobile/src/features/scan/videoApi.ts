@@ -4,6 +4,7 @@ import { client } from "../../api/apiClient";
 import type {
   CreateVideoUploadRequest,
   CreateVideoUploadResponse,
+  IVideo,
 } from "./types/videoTypes";
 
 class VideoAPI {
@@ -39,18 +40,16 @@ class VideoAPI {
     });
   }
 
-  async completeVideoUpload(
-    videoId: string,
-    token: string,
-    idempotencyKey: string,
-  ): Promise<void> {
-    await client.request(
-      `/api/videos/${videoId}/complete`,
+  async completeVideoUpload(videoId: string, token: string) {
+    const response = await client.request<IVideo>(
+      `/api/v1/videos/${videoId}/uploaded`,
       {
-        method: "POST",
+        method: "PATCH",
       },
-      { token, idempotencyKey },
+      { token },
     );
+
+    return response;
   }
 }
 

@@ -217,15 +217,22 @@ export default function usePreview() {
         idempotencyKey,
       );
 
-      console.log("presign upload response", upload);
+      await handleObjectStorageUpload(upload.uploadUrl);
 
-      const uploaded = await handleObjectStorageUpload(upload.uploadUrl);
+      const updateStatus = await videoApi.completeVideoUpload(
+        upload.videoId,
+        token,
+      );
+
+      console.log(updateStatus);
     } catch (error) {
       console.error(error);
     }
   };
 
-  const handleObjectStorageUpload = async (presignedUrl: string) => {
+  const handleObjectStorageUpload = async (
+    presignedUrl: string,
+  ): Promise<void> => {
     if (!videoUri) {
       throw new Error("Missing video URI");
     }
@@ -247,10 +254,6 @@ export default function usePreview() {
       presignedUrl,
       videoFile,
     );
-
-    console.log("Upload response:", uploadResponse);
-
-    return uploadResponse;
   };
 
   const handleRecapture = () => {

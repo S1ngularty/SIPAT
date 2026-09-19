@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { r2Client } from "../../integrations/storage/r2.client.js";
 
 import { videoRepository } from "./video.repository.js";
-import type { CreateVideoInput } from "./video.types.js";
+import type { CreateVideoInput, Video } from "./video.types.js";
 
 import { validateVideoUpload } from "./video.validation.js";
 import type { IPresignedUploadResponse } from "./video.dto.js";
@@ -46,7 +46,7 @@ export class VideoService {
       );
 
       return {
-        videoId: null,
+        videoId: vid._id.toString(),
         storageKey: vid.storageKey,
         uploadUrl: newUploadUrl,
         expiresIn: 300,
@@ -55,14 +55,7 @@ export class VideoService {
 
     const metadata = this.generateVideoMetadata(userId, input);
 
-    const uploadUrl = await r2Client.createUploadUrl(
-      metadata.storageKey,
-      input.contentType,
-    );
-
-    // Save metadata to DB here.
-    //
-    await videoRepository.createVideo({
+    const videoDoc = await videoRepository.createVideo({
       userId,
       storageKey: metadata.storageKey,
       fileSize: input.fileSize,
@@ -72,12 +65,29 @@ export class VideoService {
       status: "pending_upload",
     });
 
+    const plainVideoObj = videoDoc.toObject();
+
+    const uploadUrl = await r2Client.createUploadUrl(
+      metadata.storageKey,
+      input.contentType,
+    );
+
     return {
-      videoId: metadata.videoId,
+      videoId: plainVideoObj._id.toString(),
       storageKey: metadata.storageKey,
       uploadUrl,
       expiresIn: 300,
     };
+  }
+
+  async updateUploadedVideoStatus(videoId: string): Promise<Video> {
+    const result = await videoRepository.videoUpdateStatus(videoId, {
+      status: "uploaded",
+    });
+
+    if (!result) throw new Error("Failed to find the video");
+
+    return result?.toObject();
   }
 }
 

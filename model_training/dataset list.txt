@@ -1,0 +1,114 @@
+eggpant:
+	https://www.kaggle.com/datasets/researchforus/eggplant-leaf-disease-dataset (leaf)
+	https://data.mendeley.com/datasets/d3ypkphghb/2 (unknown parts covered)
+	https://www.kaggle.com/datasets/sujaykapadnis/eggplant-disease-recognition-dataset (recommended set so far)
+	https://www.kaggle.com/datasets/ahsanurparul/brinjal-460x460(could be helpful)
+	https://universe.roboflow.com/bscs-sdztk/eggplant-fruit-disease-detection
+	https://universe.roboflow.com/bohol-island-state-university-vgjlb/eggplant-disease-detection (
+																									Healthy
+																									Fruit borer
+																									Fruit Rot
+																									Melon Thrips)
+
+tomato:
+	https://www.kaggle.com/datasetds/ashishmotwani/tomato (classes: Late_blight
+									healthy
+									Early_blight
+									Septorialeafspot
+									TomatoYellowLeafCurlVirus
+									Bacterial_spot
+									Target_Spot
+									Tomatomosaicvirus
+									Leaf_Mold
+									Spidermites Two-spottedspider_mite
+									Powdery Mildew )
+									
+	 https://data.mendeley.com/datasets/bpfd9cns5g/2 (Number of images: 731
+							Number of classes: 7
+							Name if the classes: 1. Category Early Blight
+							2. Category Black Spot
+							3. Category Late Blight
+							4. Category Leaf Mold
+							5. Category Bacterial Spot
+							6. Category Target Spot
+							7. Category Healthy
+							Number of annotation images : 1621)
+							
+	https://data.mendeley.com/datasets/zfv4jj7855/1 (. Tomato_healthy: Healthy tomato leaves without any signs of
+							disease.
+							2. Bacterial_spot: Leaves affected by bacterial spot disease.
+							3. Early_blight: Leaves showing symptoms of early blight.
+							4. Late_blight: Leaves with signs of late blight.
+							5. Leaf_Mold: Tomato leaves affected by leaf mold.
+							6. Septoria_leaf_spot: Leaves showing septoria leaf spot disease.
+							7. Spider_mites_Two-spotted_spider_mite: Leaves infested with two-spotted spider mites.
+							8. Tomato_mosaic_virus: Leaves infected with tomato mosaic virus.
+							9. Target_Spot: Leaves showing target spot disease.
+							10. Tomato_Yellow_Leaf_Curl_Virus: Leaves affected by tomato yellow leaf curl virus)
+
+https://huggingface.co/datasets/lorenzoxi/tomato-leaves-dataset (
+																Bacterial_spot (0)
+																Early_blight (1)
+																Late_blight (2)
+																Leaf_Mold (3)
+																Septoria_leaf_spot (4)
+																Tomato_Yellow_Leaf_Curl_Virus (5)
+																Tomato_mosaic_virus (6)
+																healthy (7)
+																)
+
+	https://www.kaggle.com/datasets/enalis/tomatoes-dataset (general classes)
+	https://github.com/up2metric/tomatOD (unripe-1592	semi-ripe-395	fully-ripe-431)
+	https://www.kaggle.com/datasets/arjunsudheer326/tomato-plant-stages-dataset (good for crop identification)
+	https://universe.roboflow.com/ball-tracking-0w8si/tomato-plant-x1mz4/dataset/1/download (candidate for tomato crop detection)
+	https://universe.roboflow.com/kan-jur7t/kkkk-7dqdf (much more accurate)
+	https://universe.roboflow.com/student-nrpvc/tomata-leaf-disease/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
+	https://www.scidb.cn/en/detail?dataSetId=a380b0183f5441dc944e2eaf45cb3552
+
+Chili:
+	https://www.kaggle.com/datasets/ravindubandara3002/chilli-plant-diseases-dataset(support most of the classes )
+
+
+potato:
+	https://www.kaggle.com/datasets/arajmishra/potato-dataset(only contain 3 classes:
+																early blight
+																late blight
+																healthy)
+
+	https://data.mendeley.com/datasets/7vm7xskfg4/2(consists of 10,117 images categorized into 10 classes, representing
+													 different potato diseases and healthy samples. The classes include
+													  Black Scurf (49 images), Blackleg (47), Blackspot Bruising (770),
+													   Brown Rot (105), Common Scab (60), Dry Rot (1,355), Healthy 
+													   Potatoes (815), Miscellaneous (73), Pink Rot (57), and Soft Rot (560).)
+	
+	https://github.com/Mukaffi28/Potato-Disease(
+												Common scab	62	Bacteria
+												Blackleg	60	Bacteria
+												Dry rot	60	Fungus
+												Pink rot	57	Fungus
+												Black scurf	58	Fungus
+												Healthy Potatoes	80	-
+												Miscellaneous	74	-
+												Total	451	-
+												)
+
+	https://www.kaggle.com/datasets/rizwan123456789/potato-disease-leaf-datasetpld
+	https://www.kaggle.com/datasets/musireddy/potato-leaf-disease
+
+	https://www.kaggle.com/datasets/nirmalsankalana/potato-leaf-disease-dataset (scattered objects: recommended for crop identification)
+	
+	https://www.kaggle.com/datasets/mukaffimoin/potato-diseases-datasets
+	https://www.kaggle.com/datasets/shuvokumarbasak4004/potato-crop-disease-and-health-dataset(massive dataset)
+
+	https://universe.roboflow.com/123-6mci6/potato-uqlre/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true (potato crop, recommended for crop identification)
+
+	https://universe.roboflow.com/123-6mci6/potato-uqlre (potato detection)
+	https://universe.roboflow.com/vegetable-quality-detection/potato-detection-3et6q/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true (potato detection)
+
+	https://universe.roboflow.com/doudi-said-workspace/potato-ysgwg/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true(scattered objects)
+
+
+
+
+general dataset:
+	https://universe.roboflow.com/kan-jur7t/kkkk-7dqdf (support 20 pest and disease in plant leafs)
