@@ -60,7 +60,8 @@ https://huggingface.co/datasets/lorenzoxi/tomato-leaves-dataset (
 	https://www.kaggle.com/datasets/enalis/tomatoes-dataset (general classes)
 	https://github.com/up2metric/tomatOD (unripe-1592	semi-ripe-395	fully-ripe-431)
 	https://www.kaggle.com/datasets/arjunsudheer326/tomato-plant-stages-dataset (good for crop identification)
-
+	https://universe.roboflow.com/ball-tracking-0w8si/tomato-plant-x1mz4/dataset/1/download (candidate for tomato crop detection)
+	https://universe.roboflow.com/kan-jur7t/kkkk-7dqdf (much more accurate)
 
 Chili:
 	https://www.kaggle.com/datasets/ravindubandara3002/chilli-plant-diseases-dataset(support most of the classes )
@@ -97,11 +98,15 @@ potato:
 	https://www.kaggle.com/datasets/mukaffimoin/potato-diseases-datasets
 	https://www.kaggle.com/datasets/shuvokumarbasak4004/potato-crop-disease-and-health-dataset(massive dataset)
 
-	https://www.kaggle.com/datasets/sujaykapadnis/potato-disease-recognition-dataset(good for additions)
-
 	https://universe.roboflow.com/123-6mci6/potato-uqlre/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true (potato crop, recommended for crop identification)
 
 	https://universe.roboflow.com/123-6mci6/potato-uqlre (potato detection)
 	https://universe.roboflow.com/vegetable-quality-detection/potato-detection-3et6q/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true (potato detection)
 
 	https://universe.roboflow.com/doudi-said-workspace/potato-ysgwg/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true(scattered objects)
+
+
+
+
+general dataset:
+	https://universe.roboflow.com/kan-jur7t/kkkk-7dqdf (support 20 pest and disease in plant leafs)
