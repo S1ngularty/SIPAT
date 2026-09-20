@@ -5,7 +5,7 @@ eggpant:
 	https://www.kaggle.com/datasets/ahsanurparul/brinjal-460x460(could be helpful)
 	https://universe.roboflow.com/bscs-sdztk/eggplant-fruit-disease-detection
 	https://universe.roboflow.com/bohol-island-state-university-vgjlb/eggplant-disease-detection (
-																									Healthy
+	https://app.roboflow.com/singularity-rdlzv/eggplant-disease-detection-gzmzs/browse?queryText=class%3A%22Fruit+Rot%22&pageSize=1000&startingIndex=0&browseQuery=true(very very good)																								Healthy
 																									Fruit borer
 																									Fruit Rot
 																									Melon Thrips)

@@ -61,7 +61,7 @@ MAIN_DATASET = Path(
 #   Actually merge the dataset.
 #
 
-DRY_RUN = True
+DRY_RUN = False
 
 
 # ------------------------------------------------------------
@@ -103,13 +103,9 @@ AUTO_RENAME_DUPLICATES = True
 #
 
 SOURCE_CLASSES = {
-     0: "Tomato Early blight leaf",
-  1: "Tomato Septoria leaf spot",
-  2: "Tomato leaf bacterial spot",
-  3: "Tomato leaf late blight",
-  4: "Tomato leaf mosaic virus",
-  5: "Tomato leaf yellow virus",
-  6: "Tomato mold leaf"
+     0:"Fruit Rot",
+  1:"Fruit borer",
+  2: "Melon Thrips"
 }
 
 
@@ -141,7 +137,10 @@ MAIN_CLASSES = {
     17: "powdery_mildew",
     18: "rust",
     19: "septoria_spot",
-    20: "bacterial_spot"
+    20: "bacterial_spot",
+    21:"fruit_rot",
+    22:"melon_thrips",
+    23:"fruit_borer"
 }
 
 
@@ -177,26 +176,10 @@ MAIN_CLASSES = {
 #
 
 CLASS_MAPPING = {
-
-    # Tomato Early blight leaf
-    0: 0,
-
-    # Tomato Septoria leaf spot
-    1: 6,
-
-    # Tomato leaf late blight
-    3: 2,
-
-    # Tomato leaf mosaic virus
-    4: 5,
-
-    # Tomato leaf yellow virus
-    5: 8,
-
-    # Tomato mold leaf
-    6: 4,
-
-    2:20
+    0:21,
+    1:23,
+    2:22
+   
 }
 
 

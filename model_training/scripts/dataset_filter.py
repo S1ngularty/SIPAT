@@ -6,7 +6,7 @@ import shutil
 # CONFIGURATION
 # ============================================================
 
-INPUT_DATASET = Path("/home/singularity/Downloads/TomatoFusion.v17-v17_no_healthy_leafes.yolov8-obb")
+INPUT_DATASET = Path("/home/singularity/Downloads/Eggplant disease detection.yolov8-obb")
 OUTPUT_DATASET = Path("/home/singularity/Downloads/filtered_dataset")
 
 # Classes you WANT to keep.
@@ -29,13 +29,9 @@ OUTPUT_DATASET = Path("/home/singularity/Downloads/filtered_dataset")
 # The names here must match your original data.yaml classes.
 
 KEEP_CLASSES = {
-    "Tomato Early blight leaf": 0,
-    "Tomato Septoria leaf spot": 1,
-    "Tomato leaf bacterial spot": 2,
-    "Tomato leaf late blight": 3,
-    "Tomato leaf mosaic virus": 4,
-    "Tomato leaf yellow virus": 5,
-    "Tomato mold leaf": 6,
+      "Fruit Rot":0,
+      "Fruit borer":1,
+      "Melon Thrips":2
 }
 
 # Original class names.
@@ -49,20 +45,10 @@ KEEP_CLASSES = {
 #   3: early_blight
 
 ORIGINAL_CLASSES = [
-   "Gray leaf spot",
-    "Leaf miner",
-    "Magnesium deficiency",
-    "Nitrogen Deficiency",
-    "Pottassium Deficiency",
-    "Powdery mildew II",
-    "Tomato Early blight leaf",
-    "Tomato Septoria leaf spot",
-    "Tomato leaf bacterial spot",
-    "Tomato leaf late blight",
-    "Tomato leaf mosaic virus",
-    "Tomato leaf yellow virus",
-    "Tomato mold leaf",
-    "Tomato spotted wilt virus",
+    "Fruit Rot",
+    "Fruit borer",
+    "Healthy",
+    "Melon Thrips"
 ]
 
 
