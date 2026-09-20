@@ -16,7 +16,7 @@ from pathlib import Path
 #
 
 DATASET_DIR = Path(
-    "/home/singularity/Downloads/eggplant_leaf(700)"
+    "/home/singularity/Downloads/main_dataset"
 )
 
 
