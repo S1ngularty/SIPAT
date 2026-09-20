@@ -1,0 +1,54 @@
+DISEASES / PLANT CONDITIONS
+
+anthracnose disease - 70/1000
+bacterial canker
+bacterial spot
+bacterial wilt
+black spot - 66/1000
+blossom end rot
+botrytis blight - 40/1000
+cercospora spots - 56/1000
+damping off
+downy mildew - 51/1000
+early blight - 1372/1000
+fusarium wilt
+gray mold - 3/1000
+late blight - 1763/1000
+leaf curl - 59/1000
+leaf mold - 1497/1000
+mosaic virus - 1800/1000
+mycosphaerella leaf blotch - 54/1000
+powdery mildew - 58/1000
+rhizoctonia root rot
+rust / leaf rust - 62/1000
+septoria - 1392/1000
+septoria spot - 54/1000
+verticillium wilt
+yellow leaf curl virus - 1057/1000
+healthy - 477/1500-2000
+
+
+PESTS
+
+leaf miner - 1278/1000
+spider mites - 1038/1000
+aphids
+fruit borer
+whiteflies
+thrips
+caterpillars
+cutworms
+flea beetles
+leafhoppers
+stink bugs
+fruit flies
+mealybugs
+scale insects
+beetles
+slugs
+snails
+weevils
+grasshoppers
+armyworms
+tomato hornworms
+root-knot nematodes
