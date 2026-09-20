@@ -61,7 +61,7 @@ MAIN_DATASET = Path(
 #   Actually merge the dataset.
 #
 
-DRY_RUN = False
+DRY_RUN = True
 
 
 # ------------------------------------------------------------
@@ -103,9 +103,13 @@ AUTO_RENAME_DUPLICATES = True
 #
 
 SOURCE_CLASSES = {
-     0:"Fruit Rot",
-  1:"Fruit borer",
-  2: "Melon Thrips"
+  0: "aphids_pest",
+  1: "cercospora_leaf_spot",
+  2: "flea_beetles_pest",
+  3: "healthy",
+  4: "mosaic_virus",
+  5: "powdery_mildew",
+  6: "wilt"
 }
 
 
@@ -138,9 +142,14 @@ MAIN_CLASSES = {
     18: "rust",
     19: "septoria_spot",
     20: "bacterial_spot",
+
     21:"fruit_rot",
     22:"melon_thrips",
-    23:"fruit_borer"
+    23:"fruit_borer",
+
+    24: "aphids",
+    25: "flea_beetles",
+    26: "bacterial_wilt"
 }
 
 
@@ -176,9 +185,13 @@ MAIN_CLASSES = {
 #
 
 CLASS_MAPPING = {
-    0:21,
-    1:23,
-    2:22
+    0:24,
+    1:12,
+    2:25,
+    3:1,
+    4:5,
+    5:17,
+    6:26,
    
 }
 

@@ -9,6 +9,8 @@ eggpant:
 																									Fruit borer
 																									Fruit Rot
 																									Melon Thrips)
+	https://universe.roboflow.com/prattoys-workspace/final-dataset-ecobo/dataset/1/download (pest and disease)
+
 
 tomato:
 	https://www.kaggle.com/datasetds/ashishmotwani/tomato (classes: Late_blight
@@ -63,7 +65,7 @@ https://huggingface.co/datasets/lorenzoxi/tomato-leaves-dataset (
 	https://universe.roboflow.com/ball-tracking-0w8si/tomato-plant-x1mz4/dataset/1/download (candidate for tomato crop detection)
 	https://universe.roboflow.com/kan-jur7t/kkkk-7dqdf (much more accurate)
 	https://universe.roboflow.com/student-nrpvc/tomata-leaf-disease/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
-	https://www.scidb.cn/en/detail?dataSetId=a380b0183f5441dc944e2eaf45cb3552
+	https://www.scidb.cn/en/detail?dataSetId=a380b0183f5441dc944e2eaf45cb3552	(pest and disease)
 
 Chili:
 	https://www.kaggle.com/datasets/ravindubandara3002/chilli-plant-diseases-dataset(support most of the classes )
@@ -112,3 +114,7 @@ potato:
 
 general dataset:
 	https://universe.roboflow.com/kan-jur7t/kkkk-7dqdf (support 20 pest and disease in plant leafs)
+
+
+diseases/pest:
+https://data.mendeley.com/datasets/5c8h6sh495/1 Downy Mildew and Powdery Mildew Symptoms
