@@ -103,13 +103,13 @@ AUTO_RENAME_DUPLICATES = True
 #
 
 SOURCE_CLASSES = {
-  0: "aphids_pest",
-  1: "cercospora_leaf_spot",
-  2: "flea_beetles_pest",
-  3: "healthy",
-  4: "mosaic_virus",
-  5: "powdery_mildew",
-  6: "wilt"
+  0: "Cercospora leaf spot",
+  1: "Flea-Beetles",
+  2: "Healthy leaf",
+  3: "Phomopsis Blight",
+  4: "Phytophthora Blight",
+  5: "Powdery Mildew",
+  6: "Tobacco Mosaic Virus"
 }
 
 
@@ -185,13 +185,13 @@ MAIN_CLASSES = {
 #
 
 CLASS_MAPPING = {
-    0:24,
-    1:12,
-    2:25,
-    3:1,
-    4:5,
+    0:12,
+    1:25,
+    2:1,
+    3:0,
+    4:2,
     5:17,
-    6:26,
+    6:5,
    
 }
 
