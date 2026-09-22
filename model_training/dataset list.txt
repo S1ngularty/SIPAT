@@ -10,7 +10,8 @@ eggpant:
 																									Fruit Rot
 																									Melon Thrips)
 	https://universe.roboflow.com/prattoys-workspace/final-dataset-ecobo/dataset/1/download (pest and disease)
-
+	https://www.kaggle.com/datasets/sujaykapadnis/eggplant-disease-recognition-dataset(small but has many leaf instances)
+	https://www.kaggle.com/datasets/kamalmoha/eggplant-disease-recognition-dataset(small but has many leaf instances)
 
 tomato:
 	https://www.kaggle.com/datasetds/ashishmotwani/tomato (classes: Late_blight
@@ -66,6 +67,7 @@ https://huggingface.co/datasets/lorenzoxi/tomato-leaves-dataset (
 	https://universe.roboflow.com/kan-jur7t/kkkk-7dqdf (much more accurate)
 	https://universe.roboflow.com/student-nrpvc/tomata-leaf-disease/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
 	https://www.scidb.cn/en/detail?dataSetId=a380b0183f5441dc944e2eaf45cb3552	(pest and disease)
+	https://universe.roboflow.com/paulinhofernandes/tom-qti1n (tomato fruit)
 
 Chili:
 	https://www.kaggle.com/datasets/ravindubandara3002/chilli-plant-diseases-dataset(support most of the classes )
@@ -114,6 +116,11 @@ potato:
 
 general dataset:
 	https://universe.roboflow.com/kan-jur7t/kkkk-7dqdf (support 20 pest and disease in plant leafs)
+	https://www.kaggle.com/datasets/alinedobrovsky/plant-disease-classification-merged-dataset(massive dataset but needs to filter out the other classes)
+	https://www.kaggle.com/datasets/ziya07/solanaceae-family-leaves-dataset
+	https://www.kaggle.com/datasets/ibrahimagabardiop/niayes-crops-disease-v2?select=labels.csv(consist of good amount of object classes and just need to filter out the other unnessary object/classes and the problem is the labels)
+	https://www.kaggle.com/datasets/kishorchettri/hybrid-solanaceae-dataset(consist of pepper, potato,tomato)
+	https://drive.google.com/drive/folders/1WpBULgS4XXJlYSvClR-btcutM_ZAxwU8?usp=sharing
 
 
 diseases/pest:

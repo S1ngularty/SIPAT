@@ -103,13 +103,10 @@ AUTO_RENAME_DUPLICATES = True
 #
 
 SOURCE_CLASSES = {
-  0: "Cercospora leaf spot",
-  1: "Flea-Beetles",
-  2: "Healthy leaf",
-  3: "Phomopsis Blight",
-  4: "Phytophthora Blight",
-  5: "Powdery Mildew",
-  6: "Tobacco Mosaic Virus"
+  0: "cercospora",
+  1: "healthy",
+  2: "leaf curl",
+  3: "mosaic",
 }
 
 
@@ -186,12 +183,9 @@ MAIN_CLASSES = {
 
 CLASS_MAPPING = {
     0:12,
-    1:25,
-    2:1,
-    3:0,
-    4:2,
-    5:17,
-    6:5,
+    1:1,
+    2:15,
+    3:5,
    
 }
 

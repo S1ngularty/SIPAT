@@ -6,7 +6,7 @@ import shutil
 # CONFIGURATION
 # ============================================================
 
-INPUT_DATASET = Path("/home/singularity/Downloads/eggplant_diseases")
+INPUT_DATASET = Path("/home/singularity/Downloads/Smart Agriculture.v3-v2.yolov8-obb")
 OUTPUT_DATASET = Path("/home/singularity/Downloads/filtered_dataset")
 
 # Classes you WANT to keep.
@@ -29,13 +29,10 @@ OUTPUT_DATASET = Path("/home/singularity/Downloads/filtered_dataset")
 # The names here must match your original data.yaml classes.
 
 KEEP_CLASSES = {
-   "aphids_pest"  : 0,
- "cercospora_leaf_spot": 1,
- "flea_beetles_pest": 2,
- "healthy" :3,
- "mosaic_virus": 4,
- "powdery_mildew": 5,
- "wilt" :6,
+   "cercospora"  : 0,
+ "healthy": 1,
+ "leaf curl": 2,
+ "mosaic" :3,
 }
 
 # Original class names.
@@ -49,14 +46,11 @@ KEEP_CLASSES = {
 #   3: early_blight
 
 ORIGINAL_CLASSES = [
-    "aphids_pest" ,
-    "cercospora_leaf_spot",
-    "eggplant_leaf",
-    "flea_beetles_pest",
-    "healthy" ,
-    "mosaic_virus",
-    "powdery_mildew",
-    "wilt",
+    "cercospora",
+    "healthy",
+    "leaf curl",
+    "mosaic" ,
+    "xanthomonas"
 ]
 
 
