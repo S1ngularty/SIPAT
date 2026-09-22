@@ -28,7 +28,7 @@ import shutil
 #
 
 SOURCE_DATASET = Path(
-    "/home/singularity/Downloads/filtered_dataset"
+    "/home/singularity/Downloads/crop_identification_datasets/Capsicum RGB.v2i.yolov8-obb"
 )
 
 
@@ -45,7 +45,7 @@ SOURCE_DATASET = Path(
 #
 
 MAIN_DATASET = Path(
-    "/home/singularity/Downloads/main_dataset"
+    "/home/singularity/Downloads/crop_identification_datasets/main_dataset"
 )
 
 
@@ -61,7 +61,7 @@ MAIN_DATASET = Path(
 #   Actually merge the dataset.
 #
 
-DRY_RUN = True
+DRY_RUN = False
 
 
 # ------------------------------------------------------------
@@ -103,15 +103,7 @@ AUTO_RENAME_DUPLICATES = True
 #
 
 SOURCE_CLASSES = {
- 0: "Tomato Early blight leaf",
-  1: "Tomato Septoria leaf spot",
-  2: "Tomato leaf",
-  3: "Tomato leaf bacterial spot",
-  4: "Tomato leaf late blight",
-  5: "Tomato leaf mosaic virus",
-  6: "Tomato leaf yellow virus",
-  7: "Tomato mold leaf"
- 
+     0: "Pepper",
 }
 
 
@@ -123,31 +115,41 @@ SOURCE_CLASSES = {
 #
 
 MAIN_CLASSES = {
- 0:   " Early Blight",
-1: "Healthy",
-2:"Late Blight",
-3:"Leaf Miner",
-4:"Leaf Mold",
-5:"Mosaic Virus",
-6:"Septoria Leaf Spot",
-7:"Spider Mites",
-8:"Yellow Leaf Curl Virus",
-9: "Anthracnose",
-10: "Black Spot",
-11: "Botrytis Gray Mold",
-12: "Cercospora Leaf Spot",
-13:"Downy Mildew",
-14:"Leaf Curl",
-15: "Mycosphaerella Leaf Blotch",
-16: "Powdery Mildew",
-17: "Rust",
-18: "Bacterial Spot",
-19: "Fruit Rot",
-20: "Melon Thrips",
-21: "Fruit Borer",
-22: "Aphids",
-23: "Flea Beetles",
-24:"Wilt"
+      0: "eggplant_fruit",
+  1: "eggplant_leaf",
+  2:"potato_leaf",
+  3:"tomato_leaf",
+  4: "tomato_fruit",
+  5:"chili_leaves",
+  6:"chili_fruit",
+  7:"bell_pepper"
+
+    #crop pest and disease identification classes
+#  0:   " Early Blight",
+# 1: "Healthy",
+# 2:"Late Blight",
+# 3:"Leaf Miner",
+# 4:"Leaf Mold",
+# 5:"Mosaic Virus",
+# 6:"Septoria Leaf Spot",
+# 7:"Spider Mites",
+# 8:"Yellow Leaf Curl Virus",
+# 9: "Anthracnose",
+# 10: "Black Spot",
+# 11: "Botrytis Gray Mold",
+# 12: "Cercospora Leaf Spot",
+# 13:"Downy Mildew",
+# 14:"Leaf Curl",
+# 15: "Mycosphaerella Leaf Blotch",
+# 16: "Powdery Mildew",
+# 17: "Rust",
+# 18: "Bacterial Spot",
+# 19: "Fruit Rot",
+# 20: "Melon Thrips",
+# 21: "Fruit Borer",
+# 22: "Aphids",
+# 23: "Flea Beetles",
+# 24:"Wilt"
 }
 
 
@@ -183,15 +185,8 @@ MAIN_CLASSES = {
 #
 
 CLASS_MAPPING = {
-    0:0,
-    1:6,
-    2:1,
-    3:18,
-    4:2,
-    5:5,
-    
-
-   
+    0:7,
+  
 }
 
 

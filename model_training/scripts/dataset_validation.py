@@ -7,7 +7,7 @@ from collections import Counter
 # ============================================================
 
 DATASET_DIR = Path(
-    "/home/singularity/Downloads/main_dataset"
+    "/home/singularity/Downloads/crop_identification_datasets/main_dataset"
 )
 
 CLASSES_FILE = DATASET_DIR / "classes.txt"

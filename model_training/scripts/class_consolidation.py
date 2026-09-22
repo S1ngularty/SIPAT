@@ -8,7 +8,7 @@ import yaml
 # ============================================================
 
 DATASET_DIR = Path(
-    "/home/singularity/Downloads/main_dataset"
+    "/home/singularity/Downloads/crop_identification_datasets/tomato_leaf_split"
 )
 
 DATA_YAML = DATASET_DIR / "data.yaml"
@@ -44,37 +44,14 @@ BACKUP_DIR = DATASET_DIR / "backup_before_consolidation"
 
 CLASS_MAPPING = {
     0: 0,    # Early Blight
-    1: 1,    # Healthy
-    2: 2,    # Late Blight
-    3: 3,    # Leaf Miner
-    4: 4,    # Leaf Mold
-    5: 5,    # Mosaic Virus
-    6: 6,    # Septoria → Septoria Leaf Spot
-    7: 7,    # Spider Mites
-    8: 8,    # Yellow Leaf Curl Virus
+    1: 0,    # Healthy
+    2: 0,    # Late Blight
+    3: 0,    # Leaf Miner
+    4: 0,    # Leaf Mold
+    5: 0,    # Mosaic Virus
+    6: 0,    # Septoria → Septoria Leaf Spot
+    7: 0,    # Spider Mites
 
-    9: 9,    # anthracnose_disease → Anthracnose
-    10: 10,  # black_spot → Black Spot
-    11: 11,  # botrytis_blight → Botrytis Gray Mold
-    12: 12,  # cercospora_spot → Cercospora Leaf Spot
-    13: 13,  # downy_mildew → Downy Mildew
-
-    14: 11,  # gray_mold → Botrytis Gray Mold
-
-    15: 14,  # leaf_curl → Leaf Curl
-    16: 15,  # mycosphaerella_leaf_blotch → Mycosphaerella Leaf Blotch
-    17: 16,  # powdery_mildew → Powdery Mildew
-    18: 17,  # rust → Rust
-
-    19: 6,   # septoria_spot → Septoria Leaf Spot
-
-    20: 18,  # bacterial_spot → Bacterial Spot
-    21: 19,  # fruit_rot → Fruit Rot
-    22: 20,  # melon_thrips → Melon Thrips
-    23: 21,  # fruit_borer → Fruit Borer
-    24: 22,  # aphids → Aphids
-    25: 23,  # flea_beetles → Flea Beetles
-    26: 24,  # bacterial_wilt → Bacterial Wilt
 }
 
 
@@ -83,31 +60,7 @@ CLASS_MAPPING = {
 # ============================================================
 
 NEW_CLASSES = [
-    "Early Blight",
-    "Healthy",
-    "Late Blight",
-    "Leaf Miner",
-    "Leaf Mold",
-    "Mosaic Virus",
-    "Septoria Leaf Spot",
-    "Spider Mites",
-    "Yellow Leaf Curl Virus",
-    "Anthracnose",
-    "Black Spot",
-    "Botrytis Gray Mold",
-    "Cercospora Leaf Spot",
-    "Downy Mildew",
-    "Leaf Curl",
-    "Mycosphaerella Leaf Blotch",
-    "Powdery Mildew",
-    "Rust",
-    "Bacterial Spot",
-    "Fruit Rot",
-    "Melon Thrips",
-    "Fruit Borer",
-    "Aphids",
-    "Flea Beetles",
-    "Wilt",
+    "Tomato leaf"
 ]
 
 
@@ -214,10 +167,10 @@ def validate_configuration(data):
     # Validate old class count
     # --------------------------------------------------------
 
-    if len(old_classes) != 27:
+    if len(old_classes) != 8:
 
         raise ValueError(
-            f"Expected 27 old classes, "
+            f"Expected 8 old classes, "
             f"but data.yaml contains {len(old_classes)}."
         )
 
@@ -225,20 +178,20 @@ def validate_configuration(data):
     # Validate mapping covers every old class
     # --------------------------------------------------------
 
-    expected_ids = set(range(27))
+    # expected_ids = set(range(8))
 
-    mapping_ids = set(CLASS_MAPPING.keys())
+    # mapping_ids = set(CLASS_MAPPING.keys())
 
-    if mapping_ids != expected_ids:
+    # if mapping_ids != expected_ids:
 
-        missing = expected_ids - mapping_ids
-        extra = mapping_ids - expected_ids
+    #     missing = expected_ids - mapping_ids
+    #     extra = mapping_ids - expected_ids
 
-        raise ValueError(
-            f"Invalid class mapping.\n"
-            f"Missing IDs: {sorted(missing)}\n"
-            f"Extra IDs: {sorted(extra)}"
-        )
+    #     raise ValueError(
+    #         f"Invalid class mapping.\n"
+    #         f"Missing IDs: {sorted(missing)}\n"
+    #         f"Extra IDs: {sorted(extra)}"
+    #     )
 
     # --------------------------------------------------------
     # Validate target IDs

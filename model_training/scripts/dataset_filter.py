@@ -6,7 +6,7 @@ import shutil
 # CONFIGURATION
 # ============================================================
 
-INPUT_DATASET = Path("/home/singularity/Downloads/Chili Disease Detection.v3i.yolov8-obb")
+INPUT_DATASET = Path("/home/singularity/Downloads/crop_identification_datasets/test-rename-dataset.yolov8-obb")
 OUTPUT_DATASET = Path("/home/singularity/Downloads/filtered_dataset")
 
 # Classes you WANT to keep.
@@ -29,8 +29,9 @@ OUTPUT_DATASET = Path("/home/singularity/Downloads/filtered_dataset")
 # The names here must match your original data.yaml classes.
 
 KEEP_CLASSES = {
-   "Healthy"  : 0,
- "Leaf Curl": 1,
+   "Chilli":0,
+     "Green Chilli":1
+
 }
 
 # Original class names.
@@ -44,10 +45,10 @@ KEEP_CLASSES = {
 #   3: early_blight
 
 ORIGINAL_CLASSES = [
-    "Healthy",
-    "Leaf Curl",
-    "Leaf Spot",
-    "ellow Leaves" ,
+   "Chilli",
+  "Green Chilli",
+  "chili",
+  "disease"
 ]
 
 

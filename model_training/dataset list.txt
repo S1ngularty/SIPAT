@@ -4,14 +4,16 @@ eggpant:
 	https://www.kaggle.com/datasets/sujaykapadnis/eggplant-disease-recognition-dataset (recommended set so far)
 	https://www.kaggle.com/datasets/ahsanurparul/brinjal-460x460(could be helpful)
 	https://universe.roboflow.com/bscs-sdztk/eggplant-fruit-disease-detection
+	https://app.roboflow.com/singularity-rdlzv/eggplant-disease-detection-gzmzs/browse?queryText=class%3A%22Fruit+Rot%22&pageSize=1000&startingIndex=0&browseQuery=true(very very good)
 	https://universe.roboflow.com/bohol-island-state-university-vgjlb/eggplant-disease-detection (
-	https://app.roboflow.com/singularity-rdlzv/eggplant-disease-detection-gzmzs/browse?queryText=class%3A%22Fruit+Rot%22&pageSize=1000&startingIndex=0&browseQuery=true(very very good)																								Healthy
+																									Healthy
 																									Fruit borer
 																									Fruit Rot
 																									Melon Thrips)
 	https://universe.roboflow.com/prattoys-workspace/final-dataset-ecobo/dataset/1/download (pest and disease)
-	https://www.kaggle.com/datasets/sujaykapadnis/eggplant-disease-recognition-dataset(small but has many leaf instances)
+	https://www.kaggle.com/datasets/sujaykapadnis/eggplant-disease-recognition-dataset (small but has many leaf instances)
 	https://www.kaggle.com/datasets/kamalmoha/eggplant-disease-recognition-dataset(small but has many leaf instances)
+	https://universe.roboflow.com/jomans-workspace-rlmua/final_eggplant_diseases/browse?queryText=class%3A%22Healthy+Plant%22&pageSize=50&startingIndex=0&browseQuery=true (eggplant fruit diseases)
 
 tomato:
 	https://www.kaggle.com/datasetds/ashishmotwani/tomato (classes: Late_blight
@@ -73,7 +75,8 @@ https://huggingface.co/datasets/lorenzoxi/tomato-leaves-dataset (
 
 Chili:
 	https://www.kaggle.com/datasets/ravindubandara3002/chilli-plant-diseases-dataset(support most of the classes )
-
+	https://universe.roboflow.com/chili-leaf-disease-uf14c/project-ta-thwek/browse?queryText=class%3AWhitefly&pageSize=50&startingIndex=0&browseQuery=true (Whitefly, Yellow Curly Spot, Healthy )
+	https://universe.roboflow.com/enrico-mendez-research-s9yeb/capsicum-rgb-6mpnd/dataset/2
 
 potato:
 	https://www.kaggle.com/datasets/arajmishra/potato-dataset(only contain 3 classes:
@@ -123,6 +126,7 @@ general dataset:
 	https://www.kaggle.com/datasets/ibrahimagabardiop/niayes-crops-disease-v2?select=labels.csv(consist of good amount of object classes and just need to filter out the other unnessary object/classes and the problem is the labels)
 	https://www.kaggle.com/datasets/kishorchettri/hybrid-solanaceae-dataset(consist of pepper, potato,tomato)
 	https://drive.google.com/drive/folders/1WpBULgS4XXJlYSvClR-btcutM_ZAxwU8?usp=sharing
+	https://universe.roboflow.com/chili-r0gnf/agrivision-dplbt
 
 
 diseases/pest:
