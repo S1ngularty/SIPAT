@@ -103,10 +103,15 @@ AUTO_RENAME_DUPLICATES = True
 #
 
 SOURCE_CLASSES = {
-  0: "cercospora",
-  1: "healthy",
-  2: "leaf curl",
-  3: "mosaic",
+ 0: "Tomato Early blight leaf",
+  1: "Tomato Septoria leaf spot",
+  2: "Tomato leaf",
+  3: "Tomato leaf bacterial spot",
+  4: "Tomato leaf late blight",
+  5: "Tomato leaf mosaic virus",
+  6: "Tomato leaf yellow virus",
+  7: "Tomato mold leaf"
+ 
 }
 
 
@@ -118,35 +123,31 @@ SOURCE_CLASSES = {
 #
 
 MAIN_CLASSES = {
-    0: "Early Blight",
-    1: "Healthy",
-    2: "Late Blight",
-    3: "Leaf Miner",
-    4: "Leaf Mold",
-    5: "Mosaic Virus",
-    6: "Septoria",
-    7: "Spider Mites",
-    8: "Yellow Leaf Curl Virus",
-    9: "anthracnose_disease",
-    10: "black_spot",
-    11: "botrytis_blight",
-    12: "cercospora_spot",
-    13: "downy_mildew",
-    14: "gray_mold",
-    15: "leaf_curl",
-    16: "mycosphaerella_leaf_blotch",
-    17: "powdery_mildew",
-    18: "rust",
-    19: "septoria_spot",
-    20: "bacterial_spot",
-
-    21:"fruit_rot",
-    22:"melon_thrips",
-    23:"fruit_borer",
-
-    24: "aphids",
-    25: "flea_beetles",
-    26: "bacterial_wilt"
+ 0:   " Early Blight",
+1: "Healthy",
+2:"Late Blight",
+3:"Leaf Miner",
+4:"Leaf Mold",
+5:"Mosaic Virus",
+6:"Septoria Leaf Spot",
+7:"Spider Mites",
+8:"Yellow Leaf Curl Virus",
+9: "Anthracnose",
+10: "Black Spot",
+11: "Botrytis Gray Mold",
+12: "Cercospora Leaf Spot",
+13:"Downy Mildew",
+14:"Leaf Curl",
+15: "Mycosphaerella Leaf Blotch",
+16: "Powdery Mildew",
+17: "Rust",
+18: "Bacterial Spot",
+19: "Fruit Rot",
+20: "Melon Thrips",
+21: "Fruit Borer",
+22: "Aphids",
+23: "Flea Beetles",
+24:"Wilt"
 }
 
 
@@ -182,10 +183,14 @@ MAIN_CLASSES = {
 #
 
 CLASS_MAPPING = {
-    0:12,
-    1:1,
-    2:15,
-    3:5,
+    0:0,
+    1:6,
+    2:1,
+    3:18,
+    4:2,
+    5:5,
+    
+
    
 }
 

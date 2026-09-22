@@ -107,7 +107,7 @@ NEW_CLASSES = [
     "Fruit Borer",
     "Aphids",
     "Flea Beetles",
-    "Bacterial Wilt",
+    "Wilt",
 ]
 
 
