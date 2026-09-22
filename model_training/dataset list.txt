@@ -68,6 +68,8 @@ https://huggingface.co/datasets/lorenzoxi/tomato-leaves-dataset (
 	https://universe.roboflow.com/student-nrpvc/tomata-leaf-disease/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
 	https://www.scidb.cn/en/detail?dataSetId=a380b0183f5441dc944e2eaf45cb3552	(pest and disease)
 	https://universe.roboflow.com/paulinhofernandes/tom-qti1n (tomato fruit)
+	https://universe.roboflow.com/disease/tomato-diseases-4n1d8/dataset/2
+	https://universe.roboflow.com/plantdoc-xztat/proposed-1/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
 
 Chili:
 	https://www.kaggle.com/datasets/ravindubandara3002/chilli-plant-diseases-dataset(support most of the classes )

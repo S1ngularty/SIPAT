@@ -1,67 +1,27 @@
 
 # Classes not previously listed
-Early Blight - 1783 images / 2530 annotations / 2530 target
-Healthy - 1794 images / 3909 annotations / 3342 target
-Late Blight - 2493 images / 3888 annotations / 3888 target
-Leaf Miner - 1278 images / 1913 annotations / 1913 target
-Leaf Mold - 1647 images / 2873 annotations / 2873 target
-Mosaic Virus - 3113 images / 4677 annotations / 4289 target
-Septoria - 1529 images / 2770 annotations / 2770 target
-Spider Mites - 1038 images / 1688 annotations / 1688 target
-Yellow Leaf Curl Virus - 1127 images / 3807 annotations / 3807 target
-anthracnose_disease - 70 images / 566 annotations / 566 target
-black_spot - 66 images / 468 annotations / 468 target
-botrytis_blight - 40 images / 107 annotations / 107 target
-cercospora_spot - 1629 images / 3936 annotations / 3118 target
-downy_mildew - 51 images / 177 annotations / 177 target
-gray_mold - 3 images / 19 annotations / 19 target
-leaf_curl - 605 images / 2061 annotations / 212 target
-mycosphaerella_leaf_blotch - 54 images / 219 annotations / 219 target
-powdery_mildew - 533 images / 2273 annotations / 2273 target
-rust - 62 images / 220 annotations / 220 target
-bacterial_spot - 936 images / 1948 annotations / 1948 target
-
-# Classes not previously listed
-Septoria - 1529 images / 2770 annotations / 2770 target
-fruit_rot - 581 images / 2350 annotations / 2350 target
-melon_thrips - 929 images / 1793 annotations / 1793 target
-fruit_borer - 1055 images / 1447 annotations / 1447 target
-
-# Classes not previously listed
-Septoria - 1529 images / 2770 annotations / 2770 target
-aphids, - 381 images / 851 annotations / 851 target
-flea_beetles, - 848 images / 2116 annotations / 2116 target
-bacterial_wilt - 343 images / 619 annotations / 619 target
-
-# Classes not previously listed
-Septoria - 1529 images / 2770 annotations / 151 target
-
-# Classes not previously listed
-septoria_spot - 54 images / 151 annotations
-
-
-0  Early Blight
-1  Healthy
-2  Late Blight
-3  Leaf Miner
-4  Leaf Mold
-5  Mosaic Virus
-6  Septoria Leaf Spot
-7  Spider Mites
-8  Yellow Leaf Curl Virus
-9  Anthracnose
-10 Black Spot
-11 Botrytis Gray Mold
-12 Cercospora Leaf Spot
-13 Downy Mildew
-14 Leaf Curl
-15 Mycosphaerella Leaf Blotch
-16 Powdery Mildew
-17 Rust
-18 Bacterial Spot
-19 Fruit Rot
-20 Melon Thrips
-21 Fruit Borer
-22 Aphids
-23 Flea Beetles
-24 Bacterial Wilt
+Early Blight - 1783 images / 2530 annotations
+Healthy - 1794 images / 3909 annotations
+Late Blight - 2493 images / 3888 annotations
+Leaf Miner - 1278 images / 1913 annotations
+Leaf Mold - 1647 images / 2873 annotations
+Mosaic Virus - 3113 images / 4677 annotations
+Septoria Leaf Spot - 1583 images / 2921 annotations
+Spider Mites - 1038 images / 1688 annotations
+Yellow Leaf Curl Virus - 1127 images / 3807 annotations
+Anthracnose - 70 images / 566 annotations
+Black Spot - 66 images / 468 annotations
+Botrytis Gray Mold - 43 images / 126 annotations
+Cercospora Leaf Spot - 1629 images / 3936 annotations
+Downy Mildew - 51 images / 177 annotations
+Leaf Curl - 605 images / 2061 annotations
+Mycosphaerella Leaf Blotch - 54 images / 219 annotations
+Powdery Mildew - 533 images / 2273 annotations
+Rust - 62 images / 220 annotations
+Bacterial Spot - 936 images / 1948 annotations
+Fruit Rot - 581 images / 2350 annotations
+Melon Thrips - 929 images / 1793 annotations
+Fruit Borer - 1055 images / 1447 annotations
+Aphids - 381 images / 851 annotations
+Flea Beetles - 848 images / 2116 annotations
+Bacterial Wilt - 343 images / 619 annotations
