@@ -28,7 +28,7 @@ import shutil
 #
 
 SOURCE_DATASET = Path(
-    "/home/singularity/Downloads/crop_identification_datasets/Capsicum RGB.v2i.yolov8-obb"
+    "/home/singularity/Downloads/crop_identification_datasets/filtered_dataset"
 )
 
 
@@ -61,7 +61,7 @@ MAIN_DATASET = Path(
 #   Actually merge the dataset.
 #
 
-DRY_RUN = False
+DRY_RUN = True
 
 
 # ------------------------------------------------------------
@@ -103,7 +103,8 @@ AUTO_RENAME_DUPLICATES = True
 #
 
 SOURCE_CLASSES = {
-     0: "Pepper",
+    0: "Fungi",
+    1:"Healthy"
 }
 
 
@@ -115,14 +116,10 @@ SOURCE_CLASSES = {
 #
 
 MAIN_CLASSES = {
-      0: "eggplant_fruit",
-  1: "eggplant_leaf",
-  2:"potato_leaf",
-  3:"tomato_leaf",
-  4: "tomato_fruit",
-  5:"chili_leaves",
-  6:"chili_fruit",
-  7:"bell_pepper"
+  0: "eggplant_leaf",
+  1:"potato_leaf",
+  2:"tomato_leaf",
+  3:"chili_leaves",
 
     #crop pest and disease identification classes
 #  0:   " Early Blight",
@@ -185,8 +182,8 @@ MAIN_CLASSES = {
 #
 
 CLASS_MAPPING = {
-    0:7,
-  
+    0:1,
+    1:1
 }
 
 

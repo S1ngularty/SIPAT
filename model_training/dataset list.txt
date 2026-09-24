@@ -72,11 +72,13 @@ https://huggingface.co/datasets/lorenzoxi/tomato-leaves-dataset (
 	https://universe.roboflow.com/paulinhofernandes/tom-qti1n (tomato fruit)
 	https://universe.roboflow.com/disease/tomato-diseases-4n1d8/dataset/2
 	https://universe.roboflow.com/plantdoc-xztat/proposed-1/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
+	https://universe.roboflow.com/universitas-atma-jaya/tomato-leaf-disease-rxcft/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true(8k images and 11 classes of diseases)
 
 Chili:
 	https://www.kaggle.com/datasets/ravindubandara3002/chilli-plant-diseases-dataset(support most of the classes )
 	https://universe.roboflow.com/chili-leaf-disease-uf14c/project-ta-thwek/browse?queryText=class%3AWhitefly&pageSize=50&startingIndex=0&browseQuery=true (Whitefly, Yellow Curly Spot, Healthy )
 	https://universe.roboflow.com/enrico-mendez-research-s9yeb/capsicum-rgb-6mpnd/dataset/2
+	https://universe.roboflow.com/deeplearning-bjbks/yolocabairus/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
 
 potato:
 	https://www.kaggle.com/datasets/arajmishra/potato-dataset(only contain 3 classes:
@@ -116,6 +118,7 @@ potato:
 
 	https://universe.roboflow.com/doudi-said-workspace/potato-ysgwg/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true(scattered objects)
 
+https://universe.roboflow.com/potato-leaf-diseases/potato_leaf_disease/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true (good set for close ups)
 
 
 

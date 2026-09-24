@@ -8,7 +8,7 @@ import os
 # LOAD MODEL
 # ==============================
 
-model = YOLO("../models/pest_disease/best.pt")
+model = YOLO("../models/crop_identification/best.pt")
 
 
 # ==============================
