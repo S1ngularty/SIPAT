@@ -10,7 +10,7 @@ import yaml
 
 # Raw dataset
 SOURCE_DATASET = Path(
-    "/home/singularity/Downloads/crop_identification_datasets/Cabai_Rawit.v5i.yolov8-obb"
+    "/home/singularity/Downloads/crop_identification_datasets/eggplant_set(1202)"
 )
 
 # Where the processed dataset will be created

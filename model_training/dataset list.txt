@@ -1,4 +1,4 @@
-eggpant:
+eggplant:
 	https://www.kaggle.com/datasets/researchforus/eggplant-leaf-disease-dataset (leaf)
 	https://data.mendeley.com/datasets/d3ypkphghb/2 (unknown parts covered)
 	https://www.kaggle.com/datasets/sujaykapadnis/eggplant-disease-recognition-dataset (recommended set so far)
@@ -14,6 +14,8 @@ eggpant:
 	https://www.kaggle.com/datasets/sujaykapadnis/eggplant-disease-recognition-dataset (small but has many leaf instances)
 	https://www.kaggle.com/datasets/kamalmoha/eggplant-disease-recognition-dataset(small but has many leaf instances)
 	https://universe.roboflow.com/jomans-workspace-rlmua/final_eggplant_diseases/browse?queryText=class%3A%22Healthy+Plant%22&pageSize=50&startingIndex=0&browseQuery=true (eggplant fruit diseases)
+
+	https://universe.roboflow.com/haha-bgzom/terra-kwpba/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
 
 tomato:
 	https://www.kaggle.com/datasetds/ashishmotwani/tomato (classes: Late_blight
@@ -74,11 +76,17 @@ https://huggingface.co/datasets/lorenzoxi/tomato-leaves-dataset (
 	https://universe.roboflow.com/plantdoc-xztat/proposed-1/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
 	https://universe.roboflow.com/universitas-atma-jaya/tomato-leaf-disease-rxcft/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true(8k images and 11 classes of diseases)
 
+	https://universe.roboflow.com/tomato-project-icytc/project_2-sdexq/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
+	https://universe.roboflow.com/tomatodiseases-5j0x7/tomatodiseases-l2rag
+	https://universe.roboflow.com/hs12/tomatoes-msy1t/dataset/3
+
 Chili:
 	https://www.kaggle.com/datasets/ravindubandara3002/chilli-plant-diseases-dataset(support most of the classes )
 	https://universe.roboflow.com/chili-leaf-disease-uf14c/project-ta-thwek/browse?queryText=class%3AWhitefly&pageSize=50&startingIndex=0&browseQuery=true (Whitefly, Yellow Curly Spot, Healthy )
 	https://universe.roboflow.com/enrico-mendez-research-s9yeb/capsicum-rgb-6mpnd/dataset/2
 	https://universe.roboflow.com/deeplearning-bjbks/yolocabairus/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
+	https://universe.roboflow.com/workspace-4hztr/pepper-cqwhc/dataset/1 (chili fruit 1.7k images)
+	https://universe.roboflow.com/undergraduate-thesis-research/cabai-vm213/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
 
 potato:
 	https://www.kaggle.com/datasets/arajmishra/potato-dataset(only contain 3 classes:
@@ -120,7 +128,10 @@ potato:
 
 https://universe.roboflow.com/potato-leaf-diseases/potato_leaf_disease/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true (good set for close ups)
 
-
+https://universe.roboflow.com/leander-zkdyw/potato-disease-sjuk2/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
+https://universe.roboflow.com/jose-franciscus/tugas-akhir-ev703/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
+https://universe.roboflow.com/xarexus/potato-disease-detection-1eumu/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
+https://universe.roboflow.com/wpoagj/p1-kroki/browse?queryText=class%3Aba&pageSize=50&startingIndex=0&browseQuery=true (potato type disease)
 
 general dataset:
 	https://universe.roboflow.com/kan-jur7t/kkkk-7dqdf (support 20 pest and disease in plant leafs)

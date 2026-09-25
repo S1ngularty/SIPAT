@@ -6,7 +6,7 @@ import shutil
 # CONFIGURATION
 # ============================================================
 
-INPUT_DATASET = Path("/home/singularity/Downloads/crop_identification_datasets/Potato_leaf_disease.v1i.yolov8-obb")
+INPUT_DATASET = Path("/home/singularity/Downloads/crop_identification_datasets/tomatoes.v3i.yolov8-obb")
 OUTPUT_DATASET = Path("/home/singularity/Downloads/filtered_dataset")
 
 # Classes you WANT to keep.
@@ -29,8 +29,8 @@ OUTPUT_DATASET = Path("/home/singularity/Downloads/filtered_dataset")
 # The names here must match your original data.yaml classes.
 
 KEEP_CLASSES = {
-   "Fungi":0,
-   "Healthy":1,
+ "Diseased":0,
+   "Healthy_leaf":1
 }
 
 # Original class names.
@@ -44,12 +44,14 @@ KEEP_CLASSES = {
 #   3: early_blight
 
 ORIGINAL_CLASSES = [
-      "Bacteria",
-        "Fungi",
-        "Healthy",
-        "Nematode",
-        "Pest",
-        "Phytophthora"
+ "Disease that needs pesticides",
+ "Diseased",
+   "Healthy_leaf",
+   "tomato_half_ripe",
+   "tomato_overripe",
+   "tomato_ripe",
+   "tomato_rotten",
+   "tomato_unripe",
 ]
 
 

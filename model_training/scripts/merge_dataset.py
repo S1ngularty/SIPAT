@@ -28,7 +28,7 @@ import shutil
 #
 
 SOURCE_DATASET = Path(
-    "/home/singularity/Downloads/crop_identification_datasets/filtered_dataset"
+    "/home/singularity/Downloads/crop_identification_datasets/tomato5k"
 )
 
 
@@ -61,7 +61,7 @@ MAIN_DATASET = Path(
 #   Actually merge the dataset.
 #
 
-DRY_RUN = True
+DRY_RUN = False
 
 
 # ------------------------------------------------------------
@@ -103,8 +103,10 @@ AUTO_RENAME_DUPLICATES = True
 #
 
 SOURCE_CLASSES = {
-    0: "Fungi",
-    1:"Healthy"
+    0:"Diseased",
+1:"Healthy_leaf", 
+
+  
 }
 
 
@@ -182,8 +184,10 @@ MAIN_CLASSES = {
 #
 
 CLASS_MAPPING = {
-    0:1,
-    1:1
+    0:2,
+    1:2,
+
+   
 }
 
 
