@@ -5,7 +5,7 @@ import shutil
 # CONFIG
 # ============================================================
 
-DATASET_DIR = Path("/home/singularity/Downloads/eggplant_leaf2d")
+DATASET_DIR = Path("/home/singularity/Downloads/crop_identification_datasets/tomatoes.v3i.yolov8-obb")
 
 SPLITS = [
     "train",
