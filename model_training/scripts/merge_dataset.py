@@ -61,7 +61,7 @@ MAIN_DATASET = Path(
 #   Actually merge the dataset.
 #
 
-DRY_RUN = False
+DRY_RUN = True
 
 
 # ------------------------------------------------------------
@@ -90,7 +90,7 @@ DRY_RUN = False
 #   Stop with an error.
 #
 
-AUTO_RENAME_DUPLICATES = True
+AUTO_RENAME_DUPLICATES = False
 
 
 # ============================================================
@@ -119,9 +119,10 @@ SOURCE_CLASSES = {
 
 MAIN_CLASSES = {
   0: "eggplant_leaf",
-  1:"potato_leaf",
-  2:"tomato_leaf",
-  3:"chili_leaves",
+  1:"potato_leaf", 
+  2:"chili_leaves",
+  3:"tomato_leaf",
+ 
 
     #crop pest and disease identification classes
 #  0:   " Early Blight",
@@ -184,8 +185,8 @@ MAIN_CLASSES = {
 #
 
 CLASS_MAPPING = {
-    0:2,
-    1:2,
+    0:3,
+    1:3,
 
    
 }
