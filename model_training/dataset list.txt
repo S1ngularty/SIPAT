@@ -16,6 +16,7 @@ eggplant:
 	https://universe.roboflow.com/jomans-workspace-rlmua/final_eggplant_diseases/browse?queryText=class%3A%22Healthy+Plant%22&pageSize=50&startingIndex=0&browseQuery=true (eggplant fruit diseases)
 
 	https://universe.roboflow.com/haha-bgzom/terra-kwpba/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
+	https://universe.roboflow.com/projects-wivhq/ver2-test_set-final_ver3_no-deformed-e-leads-dataset-3/browse?queryText=class%3Aeggplant_leaf&pageSize=100&startingIndex=2100&browseQuery=true(diseased leafs)
 
 tomato:
 	https://www.kaggle.com/datasetds/ashishmotwani/tomato (classes: Late_blight
@@ -79,6 +80,7 @@ https://huggingface.co/datasets/lorenzoxi/tomato-leaves-dataset (
 	https://universe.roboflow.com/tomato-project-icytc/project_2-sdexq/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
 	https://universe.roboflow.com/tomatodiseases-5j0x7/tomatodiseases-l2rag
 	https://universe.roboflow.com/hs12/tomatoes-msy1t/dataset/3
+	https://universe.roboflow.com/test-7/tomato-leaf-disease-1ilgo/browse?queryText=class%3A%22Tomato+leaf+bacterial+spot%22&pageSize=100&startingIndex=0&browseQuery=true (leaf diseases)
 
 Chili:
 	https://www.kaggle.com/datasets/ravindubandara3002/chilli-plant-diseases-dataset(support most of the classes )
@@ -87,6 +89,7 @@ Chili:
 	https://universe.roboflow.com/deeplearning-bjbks/yolocabairus/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
 	https://universe.roboflow.com/workspace-4hztr/pepper-cqwhc/dataset/1 (chili fruit 1.7k images)
 	https://universe.roboflow.com/undergraduate-thesis-research/cabai-vm213/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
+	https://universe.roboflow.com/vccohexa/chili-disease-qlpmd(chili diseased fruits)
 
 potato:
 	https://www.kaggle.com/datasets/arajmishra/potato-dataset(only contain 3 classes:
@@ -145,3 +148,7 @@ general dataset:
 
 diseases/pest:
 https://data.mendeley.com/datasets/5c8h6sh495/1 Downy Mildew and Powdery Mildew Symptoms
+https://universe.roboflow.com/kavyas-workspace-8szvb/aphids-auto/browse?queryText=class%3AAphids-auto&pageSize=100&startingIndex=200&browseQuery=true (aphids)
+
+to be added in pest_disease detection dataset:
+https://universe.roboflow.com/test-7/tomato-leaf-disease-1ilgo/browse?queryText=class%3A%22Tomato+leaf+bacterial+spot%22&pageSize=100&startingIndex=0&browseQuery=true(tomato)
