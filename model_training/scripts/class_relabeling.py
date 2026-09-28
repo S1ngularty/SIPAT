@@ -75,7 +75,7 @@ CLASSES_FILE = DATASET_DIR / "classes.txt"
 #     └── image002.txt
 #
 
-CREATE_BACKUP = True
+CREATE_BACKUP = False
 
 BACKUP_DIR = LABELS_DIR / "backup"
 
