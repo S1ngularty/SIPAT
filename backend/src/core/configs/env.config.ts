@@ -20,6 +20,7 @@ export const env = {
   },
 
   redis: {
-    redis_url: requiredEnv("REDIS_URL"),
+    redis_host: requiredEnv("REDIS_HOST"),
+    redis_port: requiredEnv("REDIS_PORT"),
   },
 };
