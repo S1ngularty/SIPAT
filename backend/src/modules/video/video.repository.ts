@@ -124,7 +124,7 @@ class VideoRepository {
     return VideoModel.findByIdAndUpdate(
       videoId,
       { $set: updates },
-      { new: true, runValidators: true },
+      { returnDocument: 'after', runValidators: true },
     ).exec();
   }
 
@@ -140,7 +140,7 @@ class VideoRepository {
           processedAt: processedAt ?? null,
         },
       },
-      { new: true, runValidators: true },
+      { returnDocument: 'after', runValidators: true },
     ).exec();
   }
 
@@ -148,7 +148,7 @@ class VideoRepository {
     return VideoModel.findByIdAndUpdate(
       videoId,
       { $set: { status: "processing" } },
-      { new: true },
+      { returnDocument: 'after' },
     ).exec();
   }
 
@@ -159,7 +159,7 @@ class VideoRepository {
     return VideoModel.findByIdAndUpdate(
       videoId,
       { $set: { status: "completed", processedAt } },
-      { new: true },
+      { returnDocument: 'after' },
     ).exec();
   }
 
@@ -170,7 +170,7 @@ class VideoRepository {
     return VideoModel.findByIdAndUpdate(
       videoId,
       { $set: { status: "failed", processedAt } },
-      { new: true },
+      { returnDocument: 'after' },
     ).exec();
   }
 
@@ -178,7 +178,7 @@ class VideoRepository {
     return VideoModel.findByIdAndUpdate(
       videoId,
       { $set: { status: "uploaded" } },
-      { new: true },
+      { returnDocument: 'after' },
     ).exec();
   }
 
