@@ -21,6 +21,5 @@ async def process_video(
 ):
     return await detection_service.process_video(
         request.video_url,
-        request.video_id,
-        request.user_id
+        request.storage_key
     )

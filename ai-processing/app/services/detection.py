@@ -1,5 +1,6 @@
 from __future__ import annotations
 from integrations.storage.r2 import R2Storage
+from pathlib import PurePosixPath
 
 import tempfile
 from dataclasses import dataclass, field
@@ -99,8 +100,7 @@ class DetectionService:
     async def process_video(
         self,
         video_url: str,
-        video_id:str,
-        user_id:str
+        storage_key:str
     ) -> dict:
 
         video_path = await self._download_video(
@@ -111,8 +111,7 @@ class DetectionService:
 
             return self._process_video(
                 video_path,
-                video_id,
-                user_id
+                storage_key
                 )
 
         finally:
@@ -128,8 +127,7 @@ class DetectionService:
     def _process_video(
         self,
         video_path: str,
-        video_id:str,
-        user_id:str
+        storage_key:str,
     ) -> dict:
 
         capture = cv2.VideoCapture(
@@ -276,29 +274,30 @@ class DetectionService:
                     track.best_bbox = detection["bbox"]
 
                     if crop is not None:
+
                         track.best_crop_bbox = crop["bbox"]
 
-                    crop_label = crop["label"]
+                        crop_label = crop["label"]
 
-                    track.crop_votes[
-                        crop_label
-                    ] = (
-                        track.crop_votes.get(
-                            crop_label,
-                            0,
+                        track.crop_votes[
+                            crop_label
+                        ] = (
+                            track.crop_votes.get(
+                                crop_label,
+                                0,
+                            )
+                            + 1
                         )
-                        + 1
-                    )
 
-                    track.crop_confidences[
-                        crop_label
-                    ] = max(
-                        track.crop_confidences.get(
-                            crop_label,
-                            0.0,
-                        ),
-                        crop["confidence"],
-                    )
+                        track.crop_confidences[
+                            crop_label
+                        ] = max(
+                            track.crop_confidences.get(
+                                crop_label,
+                                0.0,
+                            ),
+                            crop["confidence"],
+                        )
 
             # ------------------------------------------------
             # Handle tracks that weren't detected this frame
@@ -322,8 +321,7 @@ class DetectionService:
                     result = (
                         self._finalize_track(
                             track,
-                            video_id,
-                            user_id
+                            storage_key
                         )
                     )
 
@@ -353,8 +351,7 @@ class DetectionService:
 
             result = self._finalize_track(
                 track,
-                video_id,
-                user_id
+               storage_key
             )
 
             if result is not None:
@@ -550,8 +547,7 @@ class DetectionService:
     def _finalize_track(
         self,
         track: TrackState,
-        video_id:str,
-        user_id:str
+        storage_key:str
     ) -> dict | None:
 
         duration = (
@@ -577,7 +573,9 @@ class DetectionService:
         crop_label = self._get_best_crop(
             track
         )
-        evidence_key = self._create_and_upload_evidence(track,video_id,user_id)
+        video_path = PurePosixPath(storage_key)
+
+        evidence_key = self._create_and_upload_evidence(track,video_path.parent)
       
         return {
             "track_id": track.track_id,
@@ -610,8 +608,7 @@ class DetectionService:
     def _create_and_upload_evidence(
             self,
             track: TrackState,
-            video_id:str,
-            user_id:str
+           evidence_prefix:str
         ) -> str | None:
 
         if (
@@ -702,10 +699,7 @@ class DetectionService:
             # ----------------------------------------------------
 
             object_key = (
-                f"videos/"
-                f"{user_id}/"
-                f"{video_id}/"
-                f"evidence/"
+                f"{str(evidence_prefix) + "/evidence/"}"
                 f"track-{track.track_id}.jpg"
             )
 
