@@ -56,6 +56,9 @@ class TrackState:
 
     missed_frames: int = 0
 
+    best_frame: object | None = None
+    best_bbox: tuple[int, int, int, int] | None = None
+
     # Crop predictions observed while this disease track
     # was alive.
     crop_votes: dict[str, int] = field(
@@ -249,10 +252,14 @@ class DetectionService:
 
                 track.observations += 1
 
-                track.best_confidence = max(
-                    track.best_confidence,
-                    detection["confidence"],
-                )
+                
+                if detection["confidence"] > track.best_confidence:
+
+                    track.best_confidence = detection["confidence"]
+
+                    track.best_frame = frame.copy()
+
+                    track.best_bbox = detection["bbox"]
 
                 if crop is not None:
 
@@ -549,6 +556,7 @@ class DetectionService:
         crop_label = self._get_best_crop(
             track
         )
+        evidence_path = self._create_evidence_image(track)
 
         return {
             "track_id": track.track_id,
@@ -574,7 +582,57 @@ class DetectionService:
             "observations": (
                 track.observations
             ),
+             "evidence_path": evidence_path,
         }
+
+    def _create_evidence_image(
+        self,
+        track: TrackState,
+    ) -> str | None:
+
+        if (
+            track.best_frame is None
+            or track.best_bbox is None
+        ):
+            return None
+
+        frame = track.best_frame
+
+        x1, y1, x2, y2 = track.best_bbox
+
+        height, width = frame.shape[:2]
+
+        # Add some padding around the detection.
+        padding_x = int((x2 - x1) * 0.25)
+        padding_y = int((y2 - y1) * 0.25)
+
+        x1 = max(0, x1 - padding_x)
+        y1 = max(0, y1 - padding_y)
+
+        x2 = min(width, x2 + padding_x)
+        y2 = min(height, y2 + padding_y)
+
+        cropped = frame[
+            y1:y2,
+            x1:x2,
+        ]
+
+        if cropped.size == 0:
+            return None
+
+        temporary_file = tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=".jpg",
+        )
+
+        temporary_file.close()
+
+        cv2.imwrite(
+            temporary_file.name,
+            cropped,
+        )
+
+        return temporary_file.name
 
     # ========================================================
     # BEST CROP

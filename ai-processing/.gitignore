@@ -1,3 +1,4 @@
 .venv/
+.env
 app/models/pest_disease_identification/
 app/models/crop_identification/
