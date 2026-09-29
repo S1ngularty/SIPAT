@@ -1,4 +1,5 @@
 from __future__ import annotations
+from integrations.storage.r2 import R2Storage
 
 import tempfile
 from dataclasses import dataclass, field
@@ -58,6 +59,8 @@ class TrackState:
 
     best_frame: object | None = None
     best_bbox: tuple[int, int, int, int] | None = None
+    best_crop_bbox: tuple[int, int, int, int] | None = None
+
 
     # Crop predictions observed while this disease track
     # was alive.
@@ -79,10 +82,15 @@ class DetectionService:
     def __init__(
         self
     ):
-       self.models = AIModels(
-            "app/models/crop_identification/v2.pt",
-            "app/models/pest_disease_identification/v2.pt"
-        )
+        
+        self.models = AIModels(
+                "app/models/crop_identification/v2.pt",
+                "app/models/pest_disease_identification/v2.pt"
+            )
+        
+        self.storage = R2Storage()
+
+
 
     # ========================================================
     # PUBLIC
@@ -91,6 +99,8 @@ class DetectionService:
     async def process_video(
         self,
         video_url: str,
+        video_id:str,
+        user_id:str
     ) -> dict:
 
         video_path = await self._download_video(
@@ -100,8 +110,10 @@ class DetectionService:
         try:
 
             return self._process_video(
-                video_path
-            )
+                video_path,
+                video_id,
+                user_id
+                )
 
         finally:
 
@@ -116,6 +128,8 @@ class DetectionService:
     def _process_video(
         self,
         video_path: str,
+        video_id:str,
+        user_id:str
     ) -> dict:
 
         capture = cv2.VideoCapture(
@@ -261,7 +275,8 @@ class DetectionService:
 
                     track.best_bbox = detection["bbox"]
 
-                if crop is not None:
+                    if crop is not None:
+                        track.best_crop_bbox = crop["bbox"]
 
                     crop_label = crop["label"]
 
@@ -306,7 +321,9 @@ class DetectionService:
 
                     result = (
                         self._finalize_track(
-                            track
+                            track,
+                            video_id,
+                            user_id
                         )
                     )
 
@@ -335,7 +352,9 @@ class DetectionService:
         for track in tracks.values():
 
             result = self._finalize_track(
-                track
+                track,
+                video_id,
+                user_id
             )
 
             if result is not None:
@@ -531,6 +550,8 @@ class DetectionService:
     def _finalize_track(
         self,
         track: TrackState,
+        video_id:str,
+        user_id:str
     ) -> dict | None:
 
         duration = (
@@ -556,8 +577,8 @@ class DetectionService:
         crop_label = self._get_best_crop(
             track
         )
-        evidence_path = self._create_evidence_image(track)
-
+        evidence_key = self._create_and_upload_evidence(track,video_id,user_id)
+      
         return {
             "track_id": track.track_id,
 
@@ -582,35 +603,66 @@ class DetectionService:
             "observations": (
                 track.observations
             ),
-             "evidence_path": evidence_path,
+            
+            "evidence_key": evidence_key,
         }
 
-    def _create_evidence_image(
-        self,
-        track: TrackState,
-    ) -> str | None:
+    def _create_and_upload_evidence(
+            self,
+            track: TrackState,
+            video_id:str,
+            user_id:str
+        ) -> str | None:
 
         if (
             track.best_frame is None
             or track.best_bbox is None
-        ):
-            return None
+            ):
+                return None
 
         frame = track.best_frame
 
-        x1, y1, x2, y2 = track.best_bbox
+        evidence_bbox = (
+            track.best_crop_bbox
+            if track.best_crop_bbox is not None
+            else track.best_bbox
+        )
+
+        x1, y1, x2, y2 = evidence_bbox
 
         height, width = frame.shape[:2]
 
-        # Add some padding around the detection.
-        padding_x = int((x2 - x1) * 0.25)
-        padding_y = int((y2 - y1) * 0.25)
+        # --------------------------------------------------------
+        # Add padding around the detection.
+        # --------------------------------------------------------
 
-        x1 = max(0, x1 - padding_x)
-        y1 = max(0, y1 - padding_y)
+        padding_x = int(
+            (x2 - x1) * 0.25
+        )
 
-        x2 = min(width, x2 + padding_x)
-        y2 = min(height, y2 + padding_y)
+        padding_y = int(
+            (y2 - y1) * 0.25
+        )
+
+        x1 = max(
+            0,
+            x1 - padding_x,
+        )
+
+        y1 = max(
+            0,
+            y1 - padding_y,
+        )
+
+        x2 = min(
+            width,
+            x2 + padding_x,
+        )
+
+        y2 = min(
+            height,
+            y2 + padding_y,
+        )
 
         cropped = frame[
             y1:y2,
@@ -620,19 +672,60 @@ class DetectionService:
         if cropped.size == 0:
             return None
 
+        # --------------------------------------------------------
+        # Create temporary JPG.
+        # --------------------------------------------------------
+
         temporary_file = tempfile.NamedTemporaryFile(
             delete=False,
             suffix=".jpg",
         )
 
+        temporary_path = temporary_file.name
+
         temporary_file.close()
 
-        cv2.imwrite(
-            temporary_file.name,
-            cropped,
-        )
+        try:
 
-        return temporary_file.name
+            success = cv2.imwrite(
+                temporary_path,
+                cropped,
+            )
+
+            if not success:
+                raise RuntimeError(
+                    "Failed to create evidence image"
+                )
+
+            # ----------------------------------------------------
+            # R2 object key
+            # ----------------------------------------------------
+
+            object_key = (
+                f"videos/"
+                f"{user_id}/"
+                f"{video_id}/"
+                f"evidence/"
+                f"track-{track.track_id}.jpg"
+            )
+
+            # ----------------------------------------------------
+            # Upload to R2
+            # ----------------------------------------------------
+
+            return self.storage.upload_file(
+                file_path=temporary_path,
+                object_key=object_key,
+                content_type="image/jpeg",
+            )
+
+        finally:
+
+            Path(
+                temporary_path
+            ).unlink(
+                missing_ok=True
+            )
 
     # ========================================================
     # BEST CROP

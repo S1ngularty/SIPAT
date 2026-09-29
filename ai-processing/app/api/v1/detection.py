@@ -20,5 +20,7 @@ async def process_video(
     request: DetectionRequest,
 ):
     return await detection_service.process_video(
-        request.video_url
+        request.video_url,
+        request.video_id,
+        request.user_id
     )
