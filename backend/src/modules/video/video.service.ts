@@ -6,6 +6,7 @@ import type { CreateVideoInput, Video } from "./video.types.js";
 
 import { validateVideoUpload } from "./video.validation.js";
 import type { IPresignedUploadResponse } from "./video.dto.js";
+import { AIQueue } from "../../jobs/queues/ai.queue.js";
 
 export class VideoService {
   private generateVideoMetadata(userId: string, input: CreateVideoInput) {
@@ -86,6 +87,10 @@ export class VideoService {
     });
 
     if (!result) throw new Error("Failed to find the video");
+
+    AIQueue.add("process-video", {
+      videoId: videoId,
+    });
 
     return result?.toObject();
   }

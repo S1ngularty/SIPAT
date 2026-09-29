@@ -1,0 +1,29 @@
+import { r2Client } from "../../integrations/storage/r2.client.js";
+import { videoRepository } from "./video.repository.js";
+
+class AIProcessingService {
+  async processVideo(videoId: string): Promise<void> {
+    try {
+      if (!videoId) throw new Error("Video Id is missing");
+
+      const video = await videoRepository.findById(videoId);
+
+      if (!video) throw new Error("video not found");
+
+      const downloadUrl = await r2Client.createDownloadUrl(
+        video.storageKey,
+        300,
+      );
+
+      if (!downloadUrl) throw new Error("failed to general download url");
+
+      //FastApi client statements
+
+      //then return if successfully requested
+    } catch (error) {
+        console.log(`AI processing Error: ${error}`)
+    }
+  }
+}
+
+export const AIProcessing = new AIProcessingService();

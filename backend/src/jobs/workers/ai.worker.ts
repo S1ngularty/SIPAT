@@ -1,7 +1,17 @@
-import { Worker } from "bullmq";
+import { Job, Worker } from "bullmq";
 import { redis } from "../../infrastructure/redis/redis.client.js";
+import { AIProcessing } from "../../modules/video/ai-processing.service.js";
 
-const worker = new Worker(
+interface JobData {
+  videoId: string;
+}
+
+interface JobResponse {
+  success: boolean;
+  videoId: string;
+}
+
+const worker = new Worker<JobData, JobResponse>(
   "ai-processing",
   async (job) => {
     console.log("================================");
@@ -10,6 +20,8 @@ const worker = new Worker(
     console.log("Job name:", job.name);
     console.log("Job data:", job.data);
     console.log("================================");
+
+    const processVideo = await AIProcessing.processVideo(job.data.videoId);
 
     return {
       success: true,
