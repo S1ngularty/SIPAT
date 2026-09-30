@@ -1,0 +1,12 @@
+app/models/pest_disease_identification/
+app/models/crop_identification/
+
+# Ignore Python cache directories
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore your virtual environment and environment files
+.venv/
+.env

@@ -19,7 +19,7 @@ class AIProcessingService {
       if (!downloadUrl) throw new Error("failed to general download url");
 
       const processResult = await fastAPIClient.aiProcess({
-        videoId,
+        storage_key:video.storageKey,
         video_url: downloadUrl,
       });
 

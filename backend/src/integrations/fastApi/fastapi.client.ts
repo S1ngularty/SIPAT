@@ -7,8 +7,8 @@ class FastAPIClient {
   }
 
   async aiProcess(data: {
-    videoId: string;
     video_url: string;
+    storage_key: string;
   }): Promise<unknown> {
     try {
       const response = await fetch(
