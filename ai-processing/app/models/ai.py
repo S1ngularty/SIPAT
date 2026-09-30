@@ -40,8 +40,6 @@ DISEASE_CLASSES = [
 
 class DetectionRequest(BaseModel):
     video_url: str
-    video_id:str
-    user_id:str
     storage_key:str
 
 
