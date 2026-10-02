@@ -3,10 +3,9 @@ import { diagnosisController } from "./index.js";
 
 const router = Router();
 
-router
-  .route("/")
-  .post(diagnosisController.create)
-  .get(diagnosisController.getDiagnosisList);
+router.route("/").post(diagnosisController.create);
+
+router.route("/list").get(diagnosisController.getDiagnosisList);
 
 router
   .route("/:videoId")
