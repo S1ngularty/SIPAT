@@ -42,7 +42,10 @@ export class DiagnosisController {
     res.status(200).json(response);
   }
 
-  async getById(req: Request, res: Response): Promise<void> {
+  async getById(
+    req: Request<{ diagnosisId: string }>,
+    res: Response,
+  ): Promise<void> {
     const { diagnosisId } = req.params;
 
     if (diagnosisId) throw new Error("diagosis ID is required");
@@ -60,7 +63,10 @@ export class DiagnosisController {
     res.status(200).json(response);
   }
 
-  async updateResults(req: Request, res: Response): Promise<void> {
+  async updateResults(
+    req: Request<{ videoId: string }>,
+    res: Response,
+  ): Promise<void> {
     const { videoId } = req.params;
     const { results } = req.body;
 
@@ -80,7 +86,10 @@ export class DiagnosisController {
     res.status(200).json(response);
   }
 
-  async deleteByVideoId(req: Request, res: Response): Promise<void> {
+  async deleteByVideoId(
+    req: Request<{ videoId: string }>,
+    res: Response,
+  ): Promise<void> {
     const { videoId } = req.params;
 
     if (videoId) throw new Error("video is required");
