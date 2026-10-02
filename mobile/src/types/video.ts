@@ -18,8 +18,14 @@ export interface CreateVideoUploadResponse {
   expiresIn: number;
 }
 
+export interface TopFinding {
+  crop: string;
+  condition: string;
+  confidence: number;
+}
+
 export interface IVideo {
-  id: string;
+  _id: string;
   userId: string;
   storageKey: string;
   originalFileName: string;
@@ -30,4 +36,5 @@ export interface IVideo {
   processedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  topFinding?: TopFinding; // ← add this
 }
