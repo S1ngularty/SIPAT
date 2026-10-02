@@ -1,5 +1,20 @@
 import { env } from "../../core/configs/env.config.js";
 
+interface DetectionList {
+  track_id: string;
+  crop: string;
+  condition: string;
+  confidence: string;
+  duration: string;
+  observations: string;
+  evidence_key: string;
+}
+
+interface ProcessResultResponse {
+  success: boolean;
+  results: DetectionList[] | null;
+}
+
 class FastAPIClient {
   BASED_URL: string;
   constructor() {
@@ -9,7 +24,7 @@ class FastAPIClient {
   async aiProcess(data: {
     video_url: string;
     storage_key: string;
-  }): Promise<unknown> {
+  }): Promise<ProcessResultResponse | null> {
     try {
       const response = await fetch(
         `${this.BASED_URL}/api/v1/detection/process`,
@@ -28,11 +43,12 @@ class FastAPIClient {
         throw new Error(`HTTP ${response.status}: ${errorBody}`);
       }
 
-      const result = await response.json();
+      const result = (await response.json()) as ProcessResultResponse;
 
       return result;
     } catch (error) {
       console.log("AI Worker Erorr:", error);
+      return null;
     }
   }
 }

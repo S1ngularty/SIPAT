@@ -11,7 +11,7 @@ export interface DiagnosisResult {
 }
 
 export interface CreateDiagnosisInput {
-  videoId: Types.ObjectId;
+  videoId: Types.ObjectId | string;
   results: DiagnosisResult[];
 }
 
