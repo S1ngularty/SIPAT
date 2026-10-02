@@ -5,7 +5,7 @@ import type {
   CreateVideoUploadRequest,
   CreateVideoUploadResponse,
   IVideo,
-} from "./types/videoTypes";
+} from "../../types/video";
 
 class VideoAPI {
   async requestVideoUpload(

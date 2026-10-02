@@ -17,6 +17,7 @@ export interface ApiResponse<T> {
 export interface PaginationQuery {
   page?: number;
   limit?: number;
+  total?: number;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }

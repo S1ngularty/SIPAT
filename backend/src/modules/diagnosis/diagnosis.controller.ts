@@ -28,15 +28,22 @@ export class DiagnosisController {
   };
 
   getDiagnosisList = async (
-    req: Request<{ page: number; limit: number }>,
+    req: Request<{}, {}, {}, { page: number; limit: number }>,
     res: Response,
     next: NextFunction,
   ) => {
     try {
-      const { page, limit } = req.params;
-      const result = await this.diagnosisService.getDiagnosisList(page, limit);
+      const { page, limit } = req.query;
+      const { data, meta } = await this.diagnosisService.getDiagnosisList(
+        Number(page) || 1,
+        Number(limit) || 5,
+      );
 
-      wrapResponse("OK", 200, res, result);
+      wrapResponse("OK", 200, res, data, {
+        page: meta.page,
+        limit: meta.limit,
+        total: meta.totalPages,
+      });
     } catch (error) {
       console.log("Diagnosis List erorr:", error);
 
@@ -86,7 +93,7 @@ export class DiagnosisController {
     res.status(200).json(response);
   };
 
-  updateResults = async(
+  updateResults = async (
     req: Request<{ videoId: string }>,
     res: Response,
   ): Promise<void> => {

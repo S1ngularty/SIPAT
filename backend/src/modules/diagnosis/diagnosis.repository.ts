@@ -8,7 +8,6 @@ import type {
 
 export class DiagnosisRepository {
   async create(input: CreateDiagnosisInput): Promise<Diagnosis> {
-    console.log("repository input", input);
 
     const diagnosis = await DiagnosisModel.create(input);
 

@@ -28,9 +28,7 @@ export class DiagnosisService {
     );
 
     return {
-      data: {
-        results: DiagnosisList.data,
-      },
+      data: DiagnosisList.data,
       meta: {
         page: DiagnosisList.page,
         limit: DiagnosisList.limit,
