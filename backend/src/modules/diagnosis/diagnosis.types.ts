@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import type { Video } from "../video/video.types.js";
 
 export interface DiagnosisResult {
   trackId: number;
@@ -23,4 +24,15 @@ export interface Diagnosis {
 
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface DiagnosisListResult {
+  data: Array<{
+    diagnosis: Diagnosis;
+    video: Video;
+  }>;
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
