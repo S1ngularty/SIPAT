@@ -17,6 +17,7 @@ import {
   User,
   Leaf,
   LucideIcon,
+  Microscope,
 } from "lucide-react-native";
 import Animated, {
   useAnimatedStyle,
@@ -27,6 +28,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 //Screens
 import HomeScreen from "../features/home/screens/Home";
+import { DiagnosisListScreen } from "../diagnosis/screens/DiagnosisListScreen";
 import { UserStackParamList } from "./UserNavigation"; // Import your stack param list
 
 // Define types for navigation
@@ -84,8 +86,8 @@ const PlaceholderScreen: React.FC<PlaceholderScreenProps> = ({ route }) => {
     },
     Articles: {
       icon: BookOpen,
-      title: "Articles",
-      subtitle: "Crop guides and information",
+      title: "Diagnosis",
+      subtitle: "Crop Diagnosis",
     },
     Profile: {
       icon: User,
@@ -114,8 +116,9 @@ const PlaceholderScreen: React.FC<PlaceholderScreenProps> = ({ route }) => {
 
 // Special Scan placeholder that navigates to VideoScanning
 const ScanPlaceholderScreen: React.FC = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<UserStackParamList>>();
-  
+  const navigation =
+    useNavigation<NativeStackNavigationProp<UserStackParamList>>();
+
   return (
     <View style={styles.placeholderContainer}>
       <View style={styles.placeholderIconContainer}>
@@ -165,7 +168,7 @@ const CustomTabIcon: React.FC<CustomTabIconProps> = ({
     Home: Home,
     History: History,
     Scan: ScanLine,
-    Articles: BookOpen,
+    Articles: Microscope,
     Profile: User,
   };
 
@@ -183,7 +186,8 @@ const CustomTabIcon: React.FC<CustomTabIconProps> = ({
 };
 
 const HomeTabNavigator: React.FC = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<UserStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<UserStackParamList>>();
 
   return (
     <Tab.Navigator
@@ -239,8 +243,8 @@ const HomeTabNavigator: React.FC = () => {
       />
       <Tab.Screen
         name="Articles"
-        component={PlaceholderScreen}
-        options={{ tabBarLabel: "Articles" }}
+        component={DiagnosisListScreen}
+        options={{ tabBarLabel: "Diagnosis" }}
       />
       <Tab.Screen
         name="Profile"
