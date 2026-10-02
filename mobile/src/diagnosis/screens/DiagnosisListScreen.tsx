@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from "react";
 import {
   View,
   Text,
-  FlatList,
   SectionList,
   TouchableOpacity,
   RefreshControl,
@@ -19,15 +18,99 @@ import Animated, {
   withTiming,
   Easing,
 } from "react-native-reanimated";
+import Svg, { Path, Circle, Rect } from "react-native-svg";
+
 import { useDiagnosisList } from "../hooks/useDiagnosisList";
 import type { VideoAnalysis, TrackResult } from "../diagnosisTypes";
+
+// ==========================================
+// ICONS
+// ==========================================
+
+interface IconProps {
+  size?: number;
+  color?: string;
+}
+
+const SearchIcon: React.FC<IconProps> = ({
+  size = 22,
+  color = "#9ca3af",
+}) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle
+      cx="11"
+      cy="11"
+      r="7"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M20 20L16.5 16.5"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const LeafIcon: React.FC<IconProps> = ({
+  size = 22,
+  color = "#9ca3af",
+}) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M20 4C20 4 14 3 9.5 7.5C5 12 5 20 5 20C5 20 13 20 17.5 15.5C22 11 20 4 20 4Z"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M5 20C5 20 8 15 12 12"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const VideoIcon: React.FC<IconProps> = ({
+  size = 20,
+  color = "#6b7280",
+}) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect
+      x="3"
+      y="6"
+      width="13"
+      height="12"
+      rx="2"
+      stroke={color}
+      strokeWidth="1.5"
+    />
+    <Path
+      d="M16 10L21 7.5V16.5L16 14"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
 
 // ==========================================
 // HELPERS
 // ==========================================
 
 const getTopFinding = (analysis: VideoAnalysis): TrackResult | null => {
-  if (!analysis.results || analysis.results.length === 0) return null;
+  if (!analysis.results || analysis.results.length === 0) {
+    return null;
+  }
+
   return analysis.results.reduce((best, curr) =>
     curr.confidence > best.confidence ? curr : best,
   );
@@ -35,6 +118,7 @@ const getTopFinding = (analysis: VideoAnalysis): TrackResult | null => {
 
 const formatRelativeTime = (dateString: string): string => {
   const date = new Date(dateString);
+
   const diffMs = Date.now() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
@@ -44,6 +128,7 @@ const formatRelativeTime = (dateString: string): string => {
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
+
   return date.toLocaleDateString();
 };
 
@@ -51,7 +136,12 @@ const formatRelativeTime = (dateString: string): string => {
 // DATE BUCKETS
 // ==========================================
 
-type DateBucket = "today" | "yesterday" | "last3Days" | "last7Days" | "older";
+type DateBucket =
+  | "today"
+  | "yesterday"
+  | "last3Days"
+  | "last7Days"
+  | "older";
 
 const BUCKET_ORDER: DateBucket[] = [
   "today",
@@ -78,6 +168,7 @@ const getDateBucket = (dateString: string): DateBucket => {
     now.getMonth(),
     now.getDate(),
   ).getTime();
+
   const startOfYesterday = startOfToday - 86400000;
   const startOf3DaysAgo = startOfToday - 2 * 86400000;
   const startOf7DaysAgo = startOfToday - 6 * 86400000;
@@ -88,6 +179,7 @@ const getDateBucket = (dateString: string): DateBucket => {
   if (ts >= startOfYesterday) return "yesterday";
   if (ts >= startOf3DaysAgo) return "last3Days";
   if (ts >= startOf7DaysAgo) return "last7Days";
+
   return "older";
 };
 
@@ -103,6 +195,7 @@ const FILTERS: { value: FilterValue; label: string }[] = [
   { value: "yesterday", label: "Yesterday" },
   { value: "last3Days", label: "Last 3 days" },
   { value: "last7Days", label: "Last 7 days" },
+  { value: "older", label: "Older" },
 ];
 
 interface FilterChipsProps {
@@ -110,28 +203,39 @@ interface FilterChipsProps {
   onChange: (value: FilterValue) => void;
 }
 
-const FilterChips: React.FC<FilterChipsProps> = ({ active, onChange }) => (
-  <ScrollView
-    horizontal
-    showsHorizontalScrollIndicator={false}
-    contentContainerStyle={styles.chipsContent}
-  >
-    {FILTERS.map((filter) => {
-      const isActive = filter.value === active;
-      return (
-        <TouchableOpacity
-          key={filter.value}
-          onPress={() => onChange(filter.value)}
-          activeOpacity={0.7}
-          style={[styles.chip, isActive && styles.chipActive]}
-        >
-          <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-            {filter.label}
-          </Text>
-        </TouchableOpacity>
-      );
-    })}
-  </ScrollView>
+const FilterChips: React.FC<FilterChipsProps> = ({
+  active,
+  onChange,
+}) => (
+  <View style={styles.filterContainer}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.chipsContent}
+    >
+      {FILTERS.map((filter) => {
+        const isActive = filter.value === active;
+
+        return (
+          <TouchableOpacity
+            key={filter.value}
+            onPress={() => onChange(filter.value)}
+            activeOpacity={0.7}
+            style={[styles.chip, isActive && styles.chipActive]}
+          >
+            <Text
+              style={[
+                styles.chipText,
+                isActive && styles.chipTextActive,
+              ]}
+            >
+              {filter.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </ScrollView>
+  </View>
 );
 
 // ==========================================
@@ -143,21 +247,30 @@ interface DiagnosisItemProps {
   onPress: (analysis: VideoAnalysis) => void;
 }
 
-const DiagnosisItem: React.FC<DiagnosisItemProps> = ({ analysis, onPress }) => {
+const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
+  analysis,
+  onPress,
+}) => {
   const rotation = useSharedValue(0);
+
   const status = analysis.video?.status ?? "processing";
   const topFinding = getTopFinding(analysis);
-  const isProcessing = status === "processing" || status === "uploaded";
+
+  const isProcessing =
+    status === "processing" || status === "uploaded";
 
   React.useEffect(() => {
     if (isProcessing) {
       rotation.value = withRepeat(
-        withTiming(360, { duration: 1200, easing: Easing.linear }),
+        withTiming(360, {
+          duration: 1200,
+          easing: Easing.linear,
+        }),
         -1,
         false,
       );
     }
-  }, [isProcessing]);
+  }, [isProcessing, rotation]);
 
   const spinnerStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],
@@ -167,16 +280,23 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({ analysis, onPress }) => {
     switch (status) {
       case "pending_upload":
         return "Waiting to upload";
+
       case "uploaded":
         return "Queued for analysis";
+
       case "processing":
-        return "Analyzing";
+        return "Analyzing video";
+
       case "completed":
         return topFinding
           ? `${topFinding.crop} · ${topFinding.condition}`
           : "Analysis complete";
+
       case "failed":
         return "Analysis failed";
+
+      default:
+        return "Unknown status";
     }
   };
 
@@ -184,8 +304,10 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({ analysis, onPress }) => {
     switch (status) {
       case "completed":
         return "#16a34a";
+
       case "failed":
         return "#dc2626";
+
       default:
         return "#6b7280";
     }
@@ -195,39 +317,76 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({ analysis, onPress }) => {
     <TouchableOpacity
       style={styles.item}
       onPress={() => onPress(analysis)}
-      activeOpacity={0.7}
+      activeOpacity={0.65}
     >
+      {/* Video icon */}
       <View style={styles.thumbnail}>
-        <Text style={styles.thumbnailIcon}>🎬</Text>
+        <VideoIcon size={19} color="#6b7280" />
       </View>
 
+      {/* Main content */}
       <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={1}>
+        <Text
+          style={styles.title}
+          numberOfLines={1}
+          ellipsizeMode="middle"
+        >
           {analysis.video?.originalFileName || "Untitled video"}
         </Text>
+
         <View style={styles.subtitleRow}>
           <View
-            style={[styles.statusDot, { backgroundColor: getStatusColor() }]}
+            style={[
+              styles.statusDot,
+              { backgroundColor: getStatusColor() },
+            ]}
           />
-          <Text style={styles.subtitle} numberOfLines={1}>
+
+          <Text
+            style={styles.subtitle}
+            numberOfLines={1}
+          >
             {getStatusLabel()}
           </Text>
         </View>
-        <Text style={styles.meta}>{formatRelativeTime(analysis.createdAt)}</Text>
+
+        <Text style={styles.meta}>
+          {formatRelativeTime(analysis.createdAt)}
+          {analysis.results?.length
+            ? ` · ${analysis.results.length} finding${
+                analysis.results.length !== 1 ? "s" : ""
+              }`
+            : ""}
+        </Text>
       </View>
 
+      {/* Trailing */}
       <View style={styles.trailing}>
         {isProcessing && (
-          <Animated.Text style={[styles.spinner, spinnerStyle]}>
+          <Animated.Text
+            style={[styles.spinner, spinnerStyle]}
+          >
             ⟳
           </Animated.Text>
         )}
+
         {status === "completed" && topFinding && (
-          <Text style={styles.percent}>
-            {Math.round(topFinding.confidence * 100)}%
-          </Text>
+          <View style={styles.confidenceContainer}>
+            <Text style={styles.percent}>
+              {Math.round(topFinding.confidence * 100)}%
+            </Text>
+
+            <Text style={styles.confidenceLabel}>
+              confidence
+            </Text>
+          </View>
         )}
-        {status === "failed" && <Text style={styles.failed}>!</Text>}
+
+        {status === "failed" && (
+          <View style={styles.failedCircle}>
+            <Text style={styles.failed}>!</Text>
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -237,13 +396,18 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({ analysis, onPress }) => {
 // SECTION HEADER
 // ==========================================
 
-const SectionHeader: React.FC<{ title: string; count: number }> = ({
-  title,
-  count,
-}) => (
+const SectionHeader: React.FC<{
+  title: string;
+  count: number;
+}> = ({ title, count }) => (
   <View style={styles.sectionHeader}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    <Text style={styles.sectionCount}>{count}</Text>
+    <View style={styles.sectionHeaderLeft}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+
+      <View style={styles.sectionCountContainer}>
+        <Text style={styles.sectionCount}>{count}</Text>
+      </View>
+    </View>
   </View>
 );
 
@@ -256,25 +420,37 @@ interface EmptyStateProps {
   hasFilter: boolean;
 }
 
-const EmptyState: React.FC<EmptyStateProps> = ({ onRecord, hasFilter }) => (
+const EmptyState: React.FC<EmptyStateProps> = ({
+  onRecord,
+  hasFilter,
+}) => (
   <View style={styles.empty}>
     <View style={styles.emptyIconContainer}>
-      <Text style={styles.emptyIcon}>{hasFilter ? "🔍" : "🌱"}</Text>
+      {hasFilter ? (
+        <SearchIcon size={22} />
+      ) : (
+        <LeafIcon size={22} />
+      )}
     </View>
+
     <Text style={styles.emptyTitle}>
       {hasFilter ? "No results" : "No diagnoses yet"}
     </Text>
+
     <Text style={styles.emptyText}>
       {hasFilter
         ? "Try a different filter or record a new video."
         : "Record a short video of your crops to get started."}
     </Text>
+
     <TouchableOpacity
       style={styles.emptyButton}
       onPress={onRecord}
       activeOpacity={0.7}
     >
-      <Text style={styles.emptyButtonText}>Record Video</Text>
+      <Text style={styles.emptyButtonText}>
+        Record Video
+      </Text>
     </TouchableOpacity>
   </View>
 );
@@ -286,7 +462,10 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onRecord, hasFilter }) => (
 const Header: React.FC = () => (
   <View style={styles.header}>
     <Text style={styles.headerTitle}>Diagnoses</Text>
-    <Text style={styles.headerSubtitle}>Your crop analysis history</Text>
+
+    <Text style={styles.headerSubtitle}>
+      Your crop analysis history
+    </Text>
   </View>
 );
 
@@ -296,10 +475,18 @@ const Header: React.FC = () => (
 
 export const DiagnosisListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const { analyses, isLoading, isRefreshing, refresh, loadMore, hasMore } =
-    useDiagnosisList();
 
-  const [activeFilter, setActiveFilter] = useState<FilterValue>("all");
+  const {
+    analyses,
+    isLoading,
+    isRefreshing,
+    refresh,
+    loadMore,
+    hasMore,
+  } = useDiagnosisList();
+
+  const [activeFilter, setActiveFilter] =
+    useState<FilterValue>("all");
 
   useFocusEffect(
     useCallback(() => {
@@ -308,19 +495,24 @@ export const DiagnosisListScreen: React.FC = () => {
   );
 
   const handleItemPress = (analysis: VideoAnalysis) => {
-    navigation.navigate("DiagnosisDetail", { videoId: analysis.videoId });
+    navigation.navigate("DiagnosisDetail", {
+      videoId: analysis.videoId,
+    });
   };
 
   const handleRecord = () => {
     navigation.getParent()?.navigate("VideoScanning");
   };
 
-  // Build sections from filtered analyses
   const sections = useMemo(() => {
     const filtered =
       activeFilter === "all"
         ? analyses
-        : analyses.filter((a) => getDateBucket(a.createdAt) === activeFilter);
+        : analyses.filter(
+            (analysis) =>
+              getDateBucket(analysis.createdAt) ===
+              activeFilter,
+          );
 
     const grouped: Record<DateBucket, VideoAnalysis[]> = {
       today: [],
@@ -331,27 +523,37 @@ export const DiagnosisListScreen: React.FC = () => {
     };
 
     filtered.forEach((analysis) => {
-      grouped[getDateBucket(analysis.createdAt)].push(analysis);
+      grouped[getDateBucket(analysis.createdAt)].push(
+        analysis,
+      );
     });
 
-    return BUCKET_ORDER.filter((bucket) => grouped[bucket].length > 0).map(
-      (bucket) => ({
+    return BUCKET_ORDER
+      .filter((bucket) => grouped[bucket].length > 0)
+      .map((bucket) => ({
         key: bucket,
         title: BUCKET_LABELS[bucket],
         data: grouped[bucket],
-      }),
-    );
+      }));
   }, [analyses, activeFilter]);
 
   const hasFilter = activeFilter !== "all";
 
   if (isLoading && analyses.length === 0) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={["top"]}>
         <Header />
-        <FilterChips active={activeFilter} onChange={setActiveFilter} />
+
+        <FilterChips
+          active={activeFilter}
+          onChange={setActiveFilter}
+        />
+
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#6b7280" />
+          <ActivityIndicator
+            size="large"
+            color="#6b7280"
+          />
         </View>
       </SafeAreaView>
     );
@@ -360,20 +562,32 @@ export const DiagnosisListScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <Header />
-      <FilterChips active={activeFilter} onChange={setActiveFilter} />
+
+      <FilterChips
+        active={activeFilter}
+        onChange={setActiveFilter}
+      />
 
       <SectionList
         sections={sections}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
-          <DiagnosisItem analysis={item} onPress={handleItemPress} />
+          <DiagnosisItem
+            analysis={item}
+            onPress={handleItemPress}
+          />
         )}
         renderSectionHeader={({ section }) => (
-          <SectionHeader title={section.title} count={section.data.length} />
+          <SectionHeader
+            title={section.title}
+            count={section.data.length}
+          />
         )}
         stickySectionHeadersEnabled={false}
         contentContainerStyle={
-          sections.length === 0 ? styles.listEmpty : styles.list
+          sections.length === 0
+            ? styles.listEmpty
+            : styles.list
         }
         refreshControl={
           <RefreshControl
@@ -382,10 +596,17 @@ export const DiagnosisListScreen: React.FC = () => {
             tintColor="#6b7280"
           />
         }
-        onEndReached={hasMore && activeFilter === "all" ? loadMore : undefined}
+        onEndReached={
+          hasMore && activeFilter === "all"
+            ? loadMore
+            : undefined
+        }
         onEndReachedThreshold={0.5}
         ListEmptyComponent={
-          <EmptyState onRecord={handleRecord} hasFilter={hasFilter} />
+          <EmptyState
+            onRecord={handleRecord}
+            hasFilter={hasFilter}
+          />
         }
         ListFooterComponent={
           hasMore && activeFilter === "all" ? (
@@ -395,7 +616,9 @@ export const DiagnosisListScreen: React.FC = () => {
           ) : null
         }
         showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        SectionSeparatorComponent={() => (
+          <View style={styles.sectionSeparator} />
+        )}
       />
     </SafeAreaView>
   );
@@ -410,211 +633,307 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#ffffff",
   },
+
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  // Header
+  // ========================================
+  // HEADER
+  // ========================================
+
   header: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     paddingTop: 16,
-    paddingBottom: 12,
+    paddingBottom: 10,
     backgroundColor: "#ffffff",
   },
+
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "700",
     color: "#111827",
-    letterSpacing: -0.5,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: "#9ca3af",
-    marginTop: 4,
+    letterSpacing: -0.6,
   },
 
-  // Chips
+  headerSubtitle: {
+    fontSize: 13,
+    color: "#9ca3af",
+    marginTop: 3,
+  },
+
+  // ========================================
+  // FILTERS
+  // ========================================
+
+  filterContainer: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+  },
+
   chipsContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
+    paddingTop: 4,
     paddingBottom: 12,
-    gap: 8,
+    gap: 10,
     flexDirection: "row",
     alignItems: "center",
   },
+
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: "#e5e7eb",
     backgroundColor: "#ffffff",
   },
+
   chipActive: {
     backgroundColor: "#111827",
     borderColor: "#111827",
   },
+
   chipText: {
     fontSize: 13,
     fontWeight: "500",
     color: "#6b7280",
   },
+
   chipTextActive: {
     color: "#ffffff",
     fontWeight: "600",
   },
 
-  // Section header
+  // ========================================
+  // SECTION HEADER
+  // ========================================
+
   sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 8,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 6,
     backgroundColor: "#ffffff",
   },
+
+  sectionHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: "600",
+    fontSize: 11,
+    fontWeight: "700",
     color: "#6b7280",
-    letterSpacing: 0.3,
+    letterSpacing: 0.7,
     textTransform: "uppercase",
   },
-  sectionCount: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#9ca3af",
-  },
 
-  // List
-  list: {
-    paddingBottom: 24,
-  },
-  listEmpty: {
-    flexGrow: 1,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: "#f3f4f6",
-    marginLeft: 76,
-  },
-
-  // Item
-  item: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: "#ffffff",
-    gap: 14,
-  },
-  thumbnail: {
-    width: 48,
-    height: 48,
+  sectionCountContainer: {
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 6,
     borderRadius: 10,
     backgroundColor: "#f3f4f6",
     justifyContent: "center",
     alignItems: "center",
   },
-  thumbnailIcon: {
-    fontSize: 22,
+
+  sectionCount: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#6b7280",
   },
+
+  // ========================================
+  // LIST
+  // ========================================
+
+  list: {
+    paddingBottom: 20,
+  },
+
+  listEmpty: {
+    flexGrow: 1,
+  },
+
+  sectionSeparator: {
+    height: 6,
+  },
+
+  // ========================================
+  // DIAGNOSIS ITEM
+  // ========================================
+
+  item: {
+    minHeight: 68,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    marginHorizontal: 14,
+    marginVertical: 4,
+    borderRadius: 12,
+    backgroundColor: "#ffffff",
+    gap: 14,
+    borderWidth: 1,
+    borderColor: "#f3f4f6",
+  },
+
+  thumbnail: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    backgroundColor: "#f3f4f6",
+    justifyContent: "center",
+    alignItems: "center",
+    flexShrink: 0,
+  },
+
   content: {
     flex: 1,
-    gap: 4,
+    minWidth: 0,
+    gap: 3,
   },
+
   title: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "600",
     color: "#111827",
   },
+
   subtitleRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
+
   statusDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
+    flexShrink: 0,
   },
+
   subtitle: {
-    fontSize: 13,
-    color: "#6b7280",
     flex: 1,
-  },
-  meta: {
     fontSize: 12,
+    color: "#6b7280",
+  },
+
+  meta: {
+    fontSize: 11,
     color: "#9ca3af",
   },
+
+  // ========================================
+  // TRAILING
+  // ========================================
+
   trailing: {
-    width: 44,
+    width: 58,
     alignItems: "flex-end",
+    justifyContent: "center",
+    flexShrink: 0,
   },
+
   spinner: {
     fontSize: 18,
     color: "#6b7280",
   },
+
+  confidenceContainer: {
+    alignItems: "flex-end",
+  },
+
   percent: {
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#16a34a",
   },
+
+  confidenceLabel: {
+    fontSize: 8,
+    color: "#9ca3af",
+    marginTop: 1,
+  },
+
+  failedCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#fef2f2",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
   failed: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "700",
     color: "#dc2626",
   },
 
-  // Empty
+  // ========================================
+  // EMPTY STATE
+  // ========================================
+
   empty: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 32,
-    paddingBottom: 60,
+    paddingBottom: 40,
   },
+
   emptyIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 16,
     backgroundColor: "#f3f4f6",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  emptyIcon: {
-    fontSize: 36,
-  },
+
   emptyTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "600",
     color: "#111827",
-    marginBottom: 6,
+    marginBottom: 5,
   },
+
   emptyText: {
-    fontSize: 14,
+    maxWidth: 280,
+    fontSize: 13,
     color: "#6b7280",
     textAlign: "center",
-    marginBottom: 24,
-    lineHeight: 20,
+    marginBottom: 18,
+    lineHeight: 19,
   },
+
   emptyButton: {
-    backgroundColor: "#16a34a",
-    paddingHorizontal: 28,
-    paddingVertical: 12,
-    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "#16a34a",
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+    borderRadius: 999,
   },
+
   emptyButtonText: {
-    color: "#ffffff",
-    fontSize: 14,
+    color: "#16a34a",
+    fontSize: 13,
     fontWeight: "600",
   },
 
-  // Footer
+  // ========================================
+  // FOOTER
+  // ========================================
+
   footer: {
-    paddingVertical: 20,
+    paddingVertical: 14,
   },
 });
