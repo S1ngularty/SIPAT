@@ -18,4 +18,13 @@ export const env = {
   mongoose: {
     db_uri: requiredEnv("DB_URI"),
   },
+
+  redis: {
+    redis_host: requiredEnv("REDIS_HOST"),
+    redis_port: requiredEnv("REDIS_PORT"),
+  },
+
+  fastapi:{
+    based_url: requiredEnv("FASTAPI_URL")
+  }
 };
