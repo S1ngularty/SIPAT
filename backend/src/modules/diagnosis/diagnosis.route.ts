@@ -8,11 +8,11 @@ router.route("/").post(diagnosisController.create);
 router.route("/list").get(diagnosisController.getDiagnosisList);
 
 router
-  .route("/:videoId")
-  .get(diagnosisController.getByVideoId)
+  .route("/:diagnosisId")
+  .get(diagnosisController.getById)
   .put(diagnosisController.updateResults)
   .delete(diagnosisController.deleteByVideoId);
 
-router.route("/:videoId").get(diagnosisController.getByVideoId);
+router.route("/video/:videoId").get(diagnosisController.getByVideoId);
 
 export default router;
