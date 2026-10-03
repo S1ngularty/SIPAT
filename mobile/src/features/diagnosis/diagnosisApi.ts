@@ -1,4 +1,4 @@
-import { client } from "../api/apiClient";
+import { client } from "../../api/apiClient";
 import type { VideoAnalysis } from "./diagnosisTypes";
 
 export interface AnalysisListResult {
