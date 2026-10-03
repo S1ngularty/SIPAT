@@ -4,7 +4,9 @@ import type {
   CreateDiagnosisInput,
   Diagnosis,
   DiagnosisResult,
+  DiagnosisWIthDownloadUrls,
 } from "./diagnosis.types.js";
+import { r2Client } from "../../integrations/storage/r2.client.js";
 
 export class DiagnosisService {
   constructor(private readonly diagnosisRepository: DiagnosisRepository) {}
@@ -47,14 +49,26 @@ export class DiagnosisService {
     return diagnosis;
   }
 
-  async getDiagnosisById(diagnosisId: Types.ObjectId): Promise<Diagnosis> {
+  async getDiagnosisById(
+    diagnosisId: Types.ObjectId,
+  ): Promise<DiagnosisWIthDownloadUrls> {
     const diagnosis = await this.diagnosisRepository.findById(diagnosisId);
 
     if (!diagnosis) {
       throw new Error("Diagnosis not found");
     }
 
-    return diagnosis;
+    const urls = await Promise.all(
+      diagnosis.results.map(async (data) => ({
+        ...data,
+        evidenceUrl: await r2Client.createDownloadUrl(data.evidenceKey),
+      })),
+    );
+
+    diagnosis.results = urls;
+    const serializeData: unknown = diagnosis;
+
+    return serializeData as DiagnosisWIthDownloadUrls;
   }
 
   async updateDiagnosisResults(
