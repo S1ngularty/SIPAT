@@ -26,6 +26,16 @@ export interface Diagnosis {
   updatedAt: Date;
 }
 
+export interface DiagnosisWIthDownloadUrls {
+  _id: Types.ObjectId;
+  videoId: Types.ObjectId;
+
+  results: DiagnosisResult & { evidenceUrl: string }[];
+
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface DiagnosisListResult {
   data: Array<{
     diagnosis: Diagnosis;
