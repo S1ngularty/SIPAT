@@ -43,7 +43,6 @@ class DiagnosisAPI {
    *   { _id, videoId, results: TrackResult[], createdAt, updatedAt }
    */
   async diagnosisDetail(diagnosisId: string): Promise<VideoAnalysis> {
-    console.log(diagnosisId)
     const response = await client.request<VideoAnalysis>(
       `/api/v1/diagnosis/${diagnosisId}`,
       { method: "GET" },

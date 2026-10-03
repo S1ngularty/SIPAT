@@ -7,6 +7,7 @@ export interface TrackResult {
   duration: number;
   observations: number;
   evidenceKey: string; // storage path, e.g. "videos/.../evidence/track-59.jpg"
+  evidenceUrl: string;
 }
 
 export type VideoStatus =
