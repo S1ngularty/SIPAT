@@ -28,7 +28,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 //Screens
 import HomeScreen from "../features/home/screens/Home";
-import { DiagnosisListScreen } from "../diagnosis/screens/DiagnosisListScreen";
+import { DiagnosisListScreen } from "../features/diagnosis/screens/DiagnosisListScreen";
 import { UserStackParamList } from "./UserNavigation"; // Import your stack param list
 
 // Define types for navigation
