@@ -3,6 +3,7 @@ import HomeTabNavigator from "./HomeTabNavigation";
 import VideoScanningScreen from "../features/scan/screens/VideoScanning";
 import VideoPreviewScreen from "../features/scan/screens/VideoPreview";
 import { DiagnosisDetailScreen } from "../features/diagnosis/screens/DiagnosisDetailScreen";
+import { EvidencePreviewScreen } from "../features/diagnosis/screens/EvidencePreviewScreen";
 
 export type UserStackParamList = {
   HomeTabs: undefined;
@@ -12,6 +13,21 @@ export type UserStackParamList = {
   };
   DiagnosisDetail: {
     videoId: string;
+  };
+  EvidencePreview: {
+    crop: string;
+    condition: string;
+    detections: {
+      _id: string;
+      trackId: number;
+      crop: string;
+      condition: string;
+      confidence: number;
+      duration: number;
+      observations: number;
+      evidenceKey: string;
+      evidenceUrl: string;
+    }[];
   };
 };
 
@@ -39,7 +55,14 @@ export default function UserNavigation() {
         component={DiagnosisDetailScreen}
         name="DiagnosisDetail"
         options={{
-          animation: "slide_from_left", // Optional: nice animation for scanner
+          animation: "slide_from_right", // Optional: nice animation for scanner
+        }}
+      />
+      <UserStack.Screen
+        component={EvidencePreviewScreen}
+        name="EvidencePreview"
+        options={{
+          animation: "slide_from_right", // Optional: nice animation for scanner
         }}
       />
     </UserStack.Navigator>
