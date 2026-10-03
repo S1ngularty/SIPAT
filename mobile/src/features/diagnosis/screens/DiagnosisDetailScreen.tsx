@@ -10,11 +10,7 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  useNavigation,
-  useRoute,
-  RouteProp,
-} from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import Svg, { Path, Circle, Rect } from "react-native-svg";
 
 import { useDiagnosisDetail } from "../hooks/useDiagnosisDetail";
@@ -29,10 +25,7 @@ interface IconProps {
   color?: string;
 }
 
-const BackIcon: React.FC<IconProps> = ({
-  size = 20,
-  color = "#111827",
-}) => (
+const BackIcon: React.FC<IconProps> = ({ size = 20, color = "#111827" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M15 6L9 12L15 18"
@@ -44,10 +37,7 @@ const BackIcon: React.FC<IconProps> = ({
   </Svg>
 );
 
-const VideoIcon: React.FC<IconProps> = ({
-  size = 20,
-  color = "#6b7280",
-}) => (
+const VideoIcon: React.FC<IconProps> = ({ size = 20, color = "#6b7280" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Rect
       x="3"
@@ -83,10 +73,7 @@ const ChevronRightIcon: React.FC<IconProps> = ({
   </Svg>
 );
 
-const SparkleIcon: React.FC<IconProps> = ({
-  size = 16,
-  color = "#111827",
-}) => (
+const SparkleIcon: React.FC<IconProps> = ({ size = 16, color = "#111827" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M12 3L13.6 9.4L20 11L13.6 12.6L12 19L10.4 12.6L4 11L10.4 9.4L12 3Z"
@@ -97,10 +84,7 @@ const SparkleIcon: React.FC<IconProps> = ({
   </Svg>
 );
 
-const AlertIcon: React.FC<IconProps> = ({
-  size = 20,
-  color = "#dc2626",
-}) => (
+const AlertIcon: React.FC<IconProps> = ({ size = 20, color = "#dc2626" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M12 3L22 20H2L12 3Z"
@@ -133,18 +117,8 @@ type DiagnosisDetailRoute = RouteProp<
 
 const STORAGE_BASE = "https://your-cdn.example.com";
 
-const resolveStorageUrl = (
-  key: string | undefined | null,
-): string | null => {
-  if (!key) return null;
-  if (key.startsWith("http")) return key;
-  return `${STORAGE_BASE}/${key}`;
-};
-
 const prettifyLabel = (raw: string): string =>
-  raw
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  raw.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 interface EvidenceGroup {
   key: string;
@@ -163,14 +137,11 @@ const groupIntoEvidence = (results: TrackResult[]): EvidenceGroup[] => {
   results.forEach((r) => {
     const key = `${r.crop}__${r.condition}`;
     const existing = map.get(key);
-    const url = resolveStorageUrl(r.evidenceKey);
+    const url = r.evidenceUrl;
 
     if (existing) {
       existing.detections.push(r);
-      existing.topConfidence = Math.max(
-        existing.topConfidence,
-        r.confidence,
-      );
+      existing.topConfidence = Math.max(existing.topConfidence, r.confidence);
       existing.totalObservations += r.observations ?? 0;
       existing.totalDuration += r.duration ?? 0;
       if (url) existing.imageUrls.push(url);
@@ -226,12 +197,7 @@ const StackedThumbnails: React.FC<StackedThumbnailsProps> = ({
 
   if (visible.length === 0) {
     return (
-      <View
-        style={[
-          styles.stackContainer,
-          { width: size, height: size },
-        ]}
-      >
+      <View style={[styles.stackContainer, { width: size, height: size }]}>
         <View style={[styles.stackItem, { width: size, height: size }]}>
           <AlertIcon size={18} color="#dc2626" />
         </View>
@@ -241,10 +207,7 @@ const StackedThumbnails: React.FC<StackedThumbnailsProps> = ({
 
   return (
     <View
-      style={[
-        styles.stackContainer,
-        { width: containerWidth, height: size },
-      ]}
+      style={[styles.stackContainer, { width: containerWidth, height: size }]}
     >
       {visible.map((url, idx) => {
         const zIndex = visible.length - idx;
@@ -320,8 +283,8 @@ const AISummaryCard: React.FC<AISummaryCardProps> = ({
       ) : (
         <Text style={styles.aiText}>
           {totalDetections} detection
-          {totalDetections !== 1 ? "s" : ""} across{" "}
-          {evidenceGroups.length} condition
+          {totalDetections !== 1 ? "s" : ""} across {evidenceGroups.length}{" "}
+          condition
           {evidenceGroups.length !== 1 ? "s" : ""}.
           {topGroup
             ? ` Most prominent: ${topGroup.condition} on ${prettifyLabel(
@@ -343,10 +306,7 @@ interface EvidenceCardProps {
   onPress: (group: EvidenceGroup) => void;
 }
 
-const EvidenceCard: React.FC<EvidenceCardProps> = ({
-  group,
-  onPress,
-}) => {
+const EvidenceCard: React.FC<EvidenceCardProps> = ({ group, onPress }) => {
   const count = group.detections.length;
   const confidence = Math.round(group.topConfidence * 100);
 
@@ -479,9 +439,7 @@ export const DiagnosisDetailScreen: React.FC = () => {
         <View style={styles.videoWrapper}>
           <View style={styles.videoPlaceholder}>
             <VideoIcon size={26} color="#9ca3af" />
-            <Text style={styles.videoPlaceholderText}>
-              Video player here
-            </Text>
+            <Text style={styles.videoPlaceholderText}>Video player here</Text>
           </View>
         </View>
 
@@ -508,9 +466,7 @@ export const DiagnosisDetailScreen: React.FC = () => {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Evidence</Text>
             <View style={styles.sectionCountContainer}>
-              <Text style={styles.sectionCount}>
-                {evidenceGroups.length}
-              </Text>
+              <Text style={styles.sectionCount}>{evidenceGroups.length}</Text>
             </View>
           </View>
 
