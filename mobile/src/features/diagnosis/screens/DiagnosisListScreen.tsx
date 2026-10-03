@@ -32,10 +32,7 @@ interface IconProps {
   color?: string;
 }
 
-const SearchIcon: React.FC<IconProps> = ({
-  size = 22,
-  color = "#9ca3af",
-}) => (
+const SearchIcon: React.FC<IconProps> = ({ size = 22, color = "#9ca3af" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Circle
       cx="11"
@@ -56,10 +53,7 @@ const SearchIcon: React.FC<IconProps> = ({
   </Svg>
 );
 
-const LeafIcon: React.FC<IconProps> = ({
-  size = 22,
-  color = "#9ca3af",
-}) => (
+const LeafIcon: React.FC<IconProps> = ({ size = 22, color = "#9ca3af" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M20 4C20 4 14 3 9.5 7.5C5 12 5 20 5 20C5 20 13 20 17.5 15.5C22 11 20 4 20 4Z"
@@ -78,10 +72,7 @@ const LeafIcon: React.FC<IconProps> = ({
   </Svg>
 );
 
-const VideoIcon: React.FC<IconProps> = ({
-  size = 20,
-  color = "#6b7280",
-}) => (
+const VideoIcon: React.FC<IconProps> = ({ size = 20, color = "#6b7280" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Rect
       x="3"
@@ -136,12 +127,7 @@ const formatRelativeTime = (dateString: string): string => {
 // DATE BUCKETS
 // ==========================================
 
-type DateBucket =
-  | "today"
-  | "yesterday"
-  | "last3Days"
-  | "last7Days"
-  | "older";
+type DateBucket = "today" | "yesterday" | "last3Days" | "last7Days" | "older";
 
 const BUCKET_ORDER: DateBucket[] = [
   "today",
@@ -203,10 +189,7 @@ interface FilterChipsProps {
   onChange: (value: FilterValue) => void;
 }
 
-const FilterChips: React.FC<FilterChipsProps> = ({
-  active,
-  onChange,
-}) => (
+const FilterChips: React.FC<FilterChipsProps> = ({ active, onChange }) => (
   <View style={styles.filterContainer}>
     <ScrollView
       horizontal
@@ -223,12 +206,7 @@ const FilterChips: React.FC<FilterChipsProps> = ({
             activeOpacity={0.7}
             style={[styles.chip, isActive && styles.chipActive]}
           >
-            <Text
-              style={[
-                styles.chipText,
-                isActive && styles.chipTextActive,
-              ]}
-            >
+            <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
               {filter.label}
             </Text>
           </TouchableOpacity>
@@ -247,17 +225,13 @@ interface DiagnosisItemProps {
   onPress: (analysis: VideoAnalysis) => void;
 }
 
-const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
-  analysis,
-  onPress,
-}) => {
+const DiagnosisItem: React.FC<DiagnosisItemProps> = ({ analysis, onPress }) => {
   const rotation = useSharedValue(0);
 
   const status = analysis.video?.status ?? "processing";
   const topFinding = getTopFinding(analysis);
 
-  const isProcessing =
-    status === "processing" || status === "uploaded";
+  const isProcessing = status === "processing" || status === "uploaded";
 
   React.useEffect(() => {
     if (isProcessing) {
@@ -326,26 +300,16 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
 
       {/* Main content */}
       <View style={styles.content}>
-        <Text
-          style={styles.title}
-          numberOfLines={1}
-          ellipsizeMode="middle"
-        >
+        <Text style={styles.title} numberOfLines={1} ellipsizeMode="middle">
           {analysis.video?.originalFileName || "Untitled video"}
         </Text>
 
         <View style={styles.subtitleRow}>
           <View
-            style={[
-              styles.statusDot,
-              { backgroundColor: getStatusColor() },
-            ]}
+            style={[styles.statusDot, { backgroundColor: getStatusColor() }]}
           />
 
-          <Text
-            style={styles.subtitle}
-            numberOfLines={1}
-          >
+          <Text style={styles.subtitle} numberOfLines={1}>
             {getStatusLabel()}
           </Text>
         </View>
@@ -363,9 +327,7 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
       {/* Trailing */}
       <View style={styles.trailing}>
         {isProcessing && (
-          <Animated.Text
-            style={[styles.spinner, spinnerStyle]}
-          >
+          <Animated.Text style={[styles.spinner, spinnerStyle]}>
             ⟳
           </Animated.Text>
         )}
@@ -376,9 +338,7 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
               {Math.round(topFinding.confidence * 100)}%
             </Text>
 
-            <Text style={styles.confidenceLabel}>
-              confidence
-            </Text>
+            <Text style={styles.confidenceLabel}>confidence</Text>
           </View>
         )}
 
@@ -420,17 +380,10 @@ interface EmptyStateProps {
   hasFilter: boolean;
 }
 
-const EmptyState: React.FC<EmptyStateProps> = ({
-  onRecord,
-  hasFilter,
-}) => (
+const EmptyState: React.FC<EmptyStateProps> = ({ onRecord, hasFilter }) => (
   <View style={styles.empty}>
     <View style={styles.emptyIconContainer}>
-      {hasFilter ? (
-        <SearchIcon size={22} />
-      ) : (
-        <LeafIcon size={22} />
-      )}
+      {hasFilter ? <SearchIcon size={22} /> : <LeafIcon size={22} />}
     </View>
 
     <Text style={styles.emptyTitle}>
@@ -448,9 +401,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       onPress={onRecord}
       activeOpacity={0.7}
     >
-      <Text style={styles.emptyButtonText}>
-        Record Video
-      </Text>
+      <Text style={styles.emptyButtonText}>Record Video</Text>
     </TouchableOpacity>
   </View>
 );
@@ -463,9 +414,7 @@ const Header: React.FC = () => (
   <View style={styles.header}>
     <Text style={styles.headerTitle}>Diagnoses</Text>
 
-    <Text style={styles.headerSubtitle}>
-      Your crop analysis history
-    </Text>
+    <Text style={styles.headerSubtitle}>Your crop analysis history</Text>
   </View>
 );
 
@@ -476,17 +425,10 @@ const Header: React.FC = () => (
 export const DiagnosisListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
 
-  const {
-    analyses,
-    isLoading,
-    isRefreshing,
-    refresh,
-    loadMore,
-    hasMore,
-  } = useDiagnosisList();
+  const { analyses, isLoading, isRefreshing, refresh, loadMore, hasMore } =
+    useDiagnosisList();
 
-  const [activeFilter, setActiveFilter] =
-    useState<FilterValue>("all");
+  const [activeFilter, setActiveFilter] = useState<FilterValue>("all");
 
   useFocusEffect(
     useCallback(() => {
@@ -495,9 +437,13 @@ export const DiagnosisListScreen: React.FC = () => {
   );
 
   const handleItemPress = (analysis: VideoAnalysis) => {
-    navigation.navigate("DiagnosisDetail", {
-      videoId: analysis.videoId,
+    navigation.getParent().navigate("DiagnosisDetail", {
+      videoId: analysis._id,
     });
+
+    // navigation.navigate("DiagnosisDetail", {
+    //   videoId: analysis.videoId,
+    // });
   };
 
   const handleRecord = () => {
@@ -509,9 +455,7 @@ export const DiagnosisListScreen: React.FC = () => {
       activeFilter === "all"
         ? analyses
         : analyses.filter(
-            (analysis) =>
-              getDateBucket(analysis.createdAt) ===
-              activeFilter,
+            (analysis) => getDateBucket(analysis.createdAt) === activeFilter,
           );
 
     const grouped: Record<DateBucket, VideoAnalysis[]> = {
@@ -523,18 +467,16 @@ export const DiagnosisListScreen: React.FC = () => {
     };
 
     filtered.forEach((analysis) => {
-      grouped[getDateBucket(analysis.createdAt)].push(
-        analysis,
-      );
+      grouped[getDateBucket(analysis.createdAt)].push(analysis);
     });
 
-    return BUCKET_ORDER
-      .filter((bucket) => grouped[bucket].length > 0)
-      .map((bucket) => ({
+    return BUCKET_ORDER.filter((bucket) => grouped[bucket].length > 0).map(
+      (bucket) => ({
         key: bucket,
         title: BUCKET_LABELS[bucket],
         data: grouped[bucket],
-      }));
+      }),
+    );
   }, [analyses, activeFilter]);
 
   const hasFilter = activeFilter !== "all";
@@ -544,16 +486,10 @@ export const DiagnosisListScreen: React.FC = () => {
       <SafeAreaView style={styles.safe} edges={["top"]}>
         <Header />
 
-        <FilterChips
-          active={activeFilter}
-          onChange={setActiveFilter}
-        />
+        <FilterChips active={activeFilter} onChange={setActiveFilter} />
 
         <View style={styles.center}>
-          <ActivityIndicator
-            size="large"
-            color="#6b7280"
-          />
+          <ActivityIndicator size="large" color="#6b7280" />
         </View>
       </SafeAreaView>
     );
@@ -563,31 +499,20 @@ export const DiagnosisListScreen: React.FC = () => {
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <Header />
 
-      <FilterChips
-        active={activeFilter}
-        onChange={setActiveFilter}
-      />
+      <FilterChips active={activeFilter} onChange={setActiveFilter} />
 
       <SectionList
         sections={sections}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
-          <DiagnosisItem
-            analysis={item}
-            onPress={handleItemPress}
-          />
+          <DiagnosisItem analysis={item} onPress={handleItemPress} />
         )}
         renderSectionHeader={({ section }) => (
-          <SectionHeader
-            title={section.title}
-            count={section.data.length}
-          />
+          <SectionHeader title={section.title} count={section.data.length} />
         )}
         stickySectionHeadersEnabled={false}
         contentContainerStyle={
-          sections.length === 0
-            ? styles.listEmpty
-            : styles.list
+          sections.length === 0 ? styles.listEmpty : styles.list
         }
         refreshControl={
           <RefreshControl
@@ -596,17 +521,10 @@ export const DiagnosisListScreen: React.FC = () => {
             tintColor="#6b7280"
           />
         }
-        onEndReached={
-          hasMore && activeFilter === "all"
-            ? loadMore
-            : undefined
-        }
+        onEndReached={hasMore && activeFilter === "all" ? loadMore : undefined}
         onEndReachedThreshold={0.5}
         ListEmptyComponent={
-          <EmptyState
-            onRecord={handleRecord}
-            hasFilter={hasFilter}
-          />
+          <EmptyState onRecord={handleRecord} hasFilter={hasFilter} />
         }
         ListFooterComponent={
           hasMore && activeFilter === "all" ? (
