@@ -115,8 +115,6 @@ type DiagnosisDetailRoute = RouteProp<
 // HELPERS
 // ==========================================
 
-const STORAGE_BASE = "https://your-cdn.example.com";
-
 const prettifyLabel = (raw: string): string =>
   raw.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -185,21 +183,26 @@ interface StackedThumbnailsProps {
 }
 
 const MAX_VISIBLE = 3;
-const STACK_OFFSET = 10;
 
 const StackedThumbnails: React.FC<StackedThumbnailsProps> = ({
   urls,
-  size = 48,
+  size = 60,
 }) => {
+  // Offset scales with size so stacks stay proportional
+  const STACK_OFFSET = Math.round(size * 0.28);
+
   const visible = urls.slice(0, MAX_VISIBLE);
   const hasMore = urls.length > MAX_VISIBLE;
-  const containerWidth = size + (visible.length - 1) * STACK_OFFSET;
+  const containerWidth =
+    visible.length > 0 ? size + (visible.length - 1) * STACK_OFFSET : size;
 
   if (visible.length === 0) {
     return (
       <View style={[styles.stackContainer, { width: size, height: size }]}>
-        <View style={[styles.stackItem, { width: size, height: size }]}>
-          <AlertIcon size={18} color="#dc2626" />
+        <View
+          style={[styles.stackItem, { width: size, height: size, left: 0 }]}
+        >
+          <AlertIcon size={22} color="#dc2626" />
         </View>
       </View>
     );
@@ -212,6 +215,7 @@ const StackedThumbnails: React.FC<StackedThumbnailsProps> = ({
       {visible.map((url, idx) => {
         const zIndex = visible.length - idx;
         const left = idx * STACK_OFFSET;
+        const isLastVisible = idx === visible.length - 1;
 
         return (
           <View
@@ -231,7 +235,7 @@ const StackedThumbnails: React.FC<StackedThumbnailsProps> = ({
               style={styles.stackImage}
               resizeMode="cover"
             />
-            {hasMore && idx === visible.length - 1 && (
+            {hasMore && isLastVisible && (
               <View style={styles.stackMoreOverlay}>
                 <Text style={styles.stackMoreText}>
                   +{urls.length - MAX_VISIBLE + 1}
@@ -316,7 +320,7 @@ const EvidenceCard: React.FC<EvidenceCardProps> = ({ group, onPress }) => {
       onPress={() => onPress(group)}
       activeOpacity={0.7}
     >
-      <StackedThumbnails urls={group.imageUrls} size={44} />
+      <StackedThumbnails urls={group.imageUrls} size={60} />
 
       <View style={styles.evidenceContent}>
         <Text style={styles.evidenceTitle} numberOfLines={1}>
@@ -658,13 +662,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
     marginBottom: 8,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#f3f4f6",
     backgroundColor: "#ffffff",
-    gap: 12,
+    gap: 14,
   },
   evidenceContent: {
     flex: 1,
@@ -723,13 +727,13 @@ const styles = StyleSheet.create({
   },
   stackMoreOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(17, 24, 39, 0.01)",
+    backgroundColor: "rgba(17, 24, 39, 0.55)",
     justifyContent: "center",
     alignItems: "center",
   },
   stackMoreText: {
     color: "#ffffff",
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "700",
   },
 
