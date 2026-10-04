@@ -58,17 +58,27 @@ export class DiagnosisService {
       throw new Error("Diagnosis not found");
     }
 
-    const urls = await Promise.all(
+    const results = await Promise.all(
       diagnosis.results.map(async (data) => ({
         ...data,
         evidenceUrl: await r2Client.createDownloadUrl(data.evidenceKey),
       })),
     );
 
-    diagnosis.results = urls;
-    const serializeData: unknown = diagnosis;
+    const video = {
+      ...diagnosis.video,
+      evidenceVideoUrl: await r2Client.createDownloadUrl(
+        diagnosis.video.storageKey,
+      ),
+    };
 
-    return serializeData as DiagnosisWIthDownloadUrls;
+    return {
+      _id: diagnosis._id,
+      video,
+      results,
+      createdAt: diagnosis.createdAt,
+      updatedAt: diagnosis.updatedAt,
+    };
   }
 
   async updateDiagnosisResults(

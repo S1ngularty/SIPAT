@@ -9,6 +9,7 @@ export interface DiagnosisResult {
   duration: number;
   observations: number;
   evidenceKey: string;
+  evidenceUrl: string;
 }
 
 export interface CreateDiagnosisInput {
@@ -28,9 +29,28 @@ export interface Diagnosis {
 
 export interface DiagnosisWIthDownloadUrls {
   _id: Types.ObjectId;
-  videoId: Types.ObjectId;
 
-  results: DiagnosisResult & { evidenceUrl: string }[];
+  video: {
+    userId: string;
+    storageKey: string;
+    originalFileName: string;
+    contentType: string;
+    fileSize: number;
+    idempotencyKey: string;
+
+    status?:
+      | "pending_upload"
+      | "uploaded"
+      | "processing"
+      | "completed"
+      | "failed";
+
+    processedAt?: Date | null;
+
+    videoUrl: string;
+  };
+
+  results: DiagnosisResult[];
 
   createdAt: Date;
   updatedAt: Date;
