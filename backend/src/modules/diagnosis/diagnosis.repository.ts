@@ -4,11 +4,12 @@ import type {
   CreateDiagnosisInput,
   Diagnosis,
   DiagnosisListResult,
+  DiagnosisWIthDownloadUrls,
 } from "./diagnosis.types.js";
+import type { Video } from "../video/video.types.js";
 
 export class DiagnosisRepository {
   async create(input: CreateDiagnosisInput): Promise<Diagnosis> {
-
     const diagnosis = await DiagnosisModel.create(input);
 
     return diagnosis.toObject();
@@ -64,8 +65,24 @@ export class DiagnosisRepository {
     return DiagnosisModel.findOne({ videoId }).lean<Diagnosis>().exec();
   }
 
-  async findById(diagnosisId: Types.ObjectId): Promise<Diagnosis | null> {
-    return DiagnosisModel.findById(diagnosisId).lean<Diagnosis>().exec();
+  async findById(
+    diagnosisId: Types.ObjectId,
+  ): Promise<DiagnosisWIthDownloadUrls | null> {
+    const diagnosis = await DiagnosisModel.findById(diagnosisId)
+      .populate<{ videoId: Video & { videoUrl: string } }>("videoId")
+      .lean()
+      .exec();
+
+    if (!diagnosis) {
+      return null;
+    }
+
+    const { videoId, ...rest } = diagnosis;
+
+    return {
+      ...rest,
+      video: videoId,
+    };
   }
 
   async updateByVideoId(
