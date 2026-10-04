@@ -77,6 +77,26 @@ class DiagnosisAPI {
       throw err;
     }
   }
+
+  async renameDiagnosis(
+    videoId: string,
+    newName: string,
+  ): Promise<VideoAnalysis> {
+    const response = await client.request<VideoAnalysis>(
+      `/api/v1/diagnosis/${videoId}/rename`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ originalFileName: newName }),
+      },
+    );
+    return response.result;
+  }
+
+  async deleteDiagnosis(videoId: string): Promise<void> {
+    await client.request(`/api/v1/diagnosis/${videoId}`, {
+      method: "DELETE",
+    });
+  }
 }
 
 export const diagnosisApi = new DiagnosisAPI();
