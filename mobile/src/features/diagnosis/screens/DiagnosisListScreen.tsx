@@ -1,4 +1,9 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   View,
   Text,
@@ -8,6 +13,10 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
+  Modal,
+  TextInput,
+  Pressable,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -16,8 +25,14 @@ import Animated, {
   useAnimatedStyle,
   withRepeat,
   withTiming,
+  withSpring,
   Easing,
+  runOnJS,
 } from "react-native-reanimated";
+import {
+  Gesture,
+  GestureDetector,
+} from "react-native-gesture-handler";
 import Svg, { Path, Circle, Rect } from "react-native-svg";
 
 import { useDiagnosisList } from "../hooks/useDiagnosisList";
@@ -93,6 +108,45 @@ const VideoIcon: React.FC<IconProps> = ({ size = 20, color = "#6b7280" }) => (
   </Svg>
 );
 
+const PencilIcon: React.FC<IconProps> = ({ size = 18, color = "#ffffff" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M4 20L8.5 19L19 8.5C19.5 8 19.5 7 19 6.5L17.5 5C17 4.5 16 4.5 15.5 5L5 15.5L4 20Z"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    />
+    <Path d="M14.5 6L18 9.5" stroke={color} strokeWidth="1.5" />
+  </Svg>
+);
+
+const TrashIcon: React.FC<IconProps> = ({ size = 18, color = "#ffffff" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M5 7H19"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+    <Path
+      d="M9 7V5C9 4.5 9.5 4 10 4H14C14.5 4 15 4.5 15 5V7"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M7 7L8 19C8 19.5 8.5 20 9 20H15C15.5 20 16 19.5 16 19L17 7"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path d="M10 11V17" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <Path d="M14 11V17" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+  </Svg>
+);
+
 // ==========================================
 // HELPERS
 // ==========================================
@@ -109,7 +163,6 @@ const getTopFinding = (analysis: VideoAnalysis): TrackResult | null => {
 
 const formatRelativeTime = (dateString: string): string => {
   const date = new Date(dateString);
-
   const diffMs = Date.now() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
@@ -119,7 +172,6 @@ const formatRelativeTime = (dateString: string): string => {
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
-
   return date.toLocaleDateString();
 };
 
@@ -217,15 +269,155 @@ const FilterChips: React.FC<FilterChipsProps> = ({ active, onChange }) => (
 );
 
 // ==========================================
+// SWIPEABLE WRAPPER
+// ==========================================
+
+const ACTION_WIDTH = 76;
+const TOTAL_ACTIONS_WIDTH = ACTION_WIDTH * 2;
+
+interface SwipeableProps {
+  children: React.ReactNode;
+  onRename: () => void;
+  onDelete: () => void;
+  onLongPress: () => void;
+  onPress: () => void;
+}
+
+const SwipeableRow: React.FC<SwipeableProps> = ({
+  children,
+  onRename,
+  onDelete,
+  onLongPress,
+  onPress,
+}) => {
+  const translateX = useSharedValue(0);
+  const startX = useSharedValue(0);
+  const [isRevealed, setIsRevealed] = useState(false);
+
+  const springConfig = {
+    damping: 30,
+    stiffness: 400,
+    mass: 0.6,
+    overshootClamping: true,
+  };
+
+  const showActions = (show: boolean) => {
+    setIsRevealed(show);
+  };
+
+  const close = () => {
+    translateX.value = withSpring(0, springConfig);
+    showActions(false);
+  };
+
+  const panGesture = Gesture.Pan()
+    .activeOffsetX([-8, 8])
+    .failOffsetY([-12, 12])
+    .onStart(() => {
+      startX.value = translateX.value;
+      runOnJS(showActions)(true);
+    })
+    .onUpdate((e) => {
+      const next = startX.value + e.translationX;
+
+      if (next > 0) {
+        translateX.value = 0;
+      } else if (next < -TOTAL_ACTIONS_WIDTH - 30) {
+        translateX.value = -TOTAL_ACTIONS_WIDTH - 30;
+      } else {
+        translateX.value = next;
+      }
+    })
+    .onEnd((e) => {
+      const shouldOpen =
+        translateX.value < -TOTAL_ACTIONS_WIDTH / 2 || e.velocityX < -500;
+
+      if (shouldOpen) {
+        translateX.value = withSpring(-TOTAL_ACTIONS_WIDTH, springConfig);
+        runOnJS(showActions)(true);
+      } else {
+        translateX.value = withSpring(0, springConfig);
+        runOnJS(showActions)(false);
+      }
+    });
+
+  const tapGesture = Gesture.Tap()
+    .maxDuration(250)
+    .onEnd((_, success) => {
+      if (!success) return;
+      runOnJS(onPress)();
+    });
+
+  const longPressGesture = Gesture.LongPress()
+    .minDuration(400)
+    .onStart(() => {
+      runOnJS(onLongPress)();
+    });
+
+  const composed = Gesture.Race(
+    panGesture,
+    Gesture.Exclusive(longPressGesture, tapGesture),
+  );
+
+  const contentStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
+
+  return (
+    <View style={styles.swipeWrapper}>
+      {isRevealed && (
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity
+            style={[styles.action, styles.actionRename]}
+            onPress={() => {
+              close();
+              onRename();
+            }}
+            activeOpacity={0.8}
+          >
+            <PencilIcon size={22} color="#374151" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.action, styles.actionDelete]}
+            onPress={() => {
+              close();
+              onDelete();
+            }}
+            activeOpacity={0.8}
+          >
+            <TrashIcon size={22} color="#dc2626" />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <GestureDetector gesture={composed}>
+        <Animated.View style={[styles.swipeContent, contentStyle]}>
+          {children}
+        </Animated.View>
+      </GestureDetector>
+    </View>
+  );
+};
+// ==========================================
 // LIST ITEM
 // ==========================================
 
 interface DiagnosisItemProps {
   analysis: VideoAnalysis;
   onPress: (analysis: VideoAnalysis) => void;
+  onRename: (analysis: VideoAnalysis) => void;
+  onDelete: (analysis: VideoAnalysis) => void;
+  onOpenMenu: (analysis: VideoAnalysis) => void;
 }
 
-const DiagnosisItem: React.FC<DiagnosisItemProps> = ({ analysis, onPress }) => {
+const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
+  analysis,
+  onPress,
+  onRename,
+  onDelete,
+  onOpenMenu,
+}) => {
   const rotation = useSharedValue(0);
 
   const status = analysis.video?.status ?? "processing";
@@ -254,21 +446,16 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({ analysis, onPress }) => {
     switch (status) {
       case "pending_upload":
         return "Waiting to upload";
-
       case "uploaded":
         return "Queued for analysis";
-
       case "processing":
         return "Analyzing video";
-
       case "completed":
         return topFinding
           ? `${topFinding.crop} · ${topFinding.condition}`
           : "Analysis complete";
-
       case "failed":
         return "Analysis failed";
-
       default:
         return "Unknown status";
     }
@@ -278,77 +465,73 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({ analysis, onPress }) => {
     switch (status) {
       case "completed":
         return "#16a34a";
-
       case "failed":
         return "#dc2626";
-
       default:
         return "#6b7280";
     }
   };
 
   return (
-    <TouchableOpacity
-      style={styles.item}
+    <SwipeableRow
       onPress={() => onPress(analysis)}
-      activeOpacity={0.65}
+      onRename={() => onRename(analysis)}
+      onDelete={() => onDelete(analysis)}
+      onLongPress={() => onOpenMenu(analysis)}
     >
-      {/* Video icon */}
-      <View style={styles.thumbnail}>
-        <VideoIcon size={19} color="#6b7280" />
-      </View>
+      <View style={styles.item}>
+        <View style={styles.thumbnail}>
+          <VideoIcon size={19} color="#6b7280" />
+        </View>
 
-      {/* Main content */}
-      <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={1} ellipsizeMode="middle">
-          {analysis.video?.originalFileName || "Untitled video"}
-        </Text>
+        <View style={styles.content}>
+          <Text style={styles.title} numberOfLines={1} ellipsizeMode="middle">
+            {analysis.video?.originalFileName || "Untitled video"}
+          </Text>
 
-        <View style={styles.subtitleRow}>
-          <View
-            style={[styles.statusDot, { backgroundColor: getStatusColor() }]}
-          />
+          <View style={styles.subtitleRow}>
+            <View
+              style={[styles.statusDot, { backgroundColor: getStatusColor() }]}
+            />
+            <Text style={styles.subtitle} numberOfLines={1}>
+              {getStatusLabel()}
+            </Text>
+          </View>
 
-          <Text style={styles.subtitle} numberOfLines={1}>
-            {getStatusLabel()}
+          <Text style={styles.meta}>
+            {formatRelativeTime(analysis.createdAt)}
+            {analysis.results?.length
+              ? ` · ${analysis.results.length} finding${
+                  analysis.results.length !== 1 ? "s" : ""
+                }`
+              : ""}
           </Text>
         </View>
 
-        <Text style={styles.meta}>
-          {formatRelativeTime(analysis.createdAt)}
-          {analysis.results?.length
-            ? ` · ${analysis.results.length} finding${
-                analysis.results.length !== 1 ? "s" : ""
-              }`
-            : ""}
-        </Text>
+        <View style={styles.trailing}>
+          {isProcessing && (
+            <Animated.Text style={[styles.spinner, spinnerStyle]}>
+              ⟳
+            </Animated.Text>
+          )}
+
+          {status === "completed" && topFinding && (
+            <View style={styles.confidenceContainer}>
+              <Text style={styles.percent}>
+                {Math.round(topFinding.confidence * 100)}%
+              </Text>
+              <Text style={styles.confidenceLabel}>confidence</Text>
+            </View>
+          )}
+
+          {status === "failed" && (
+            <View style={styles.failedCircle}>
+              <Text style={styles.failed}>!</Text>
+            </View>
+          )}
+        </View>
       </View>
-
-      {/* Trailing */}
-      <View style={styles.trailing}>
-        {isProcessing && (
-          <Animated.Text style={[styles.spinner, spinnerStyle]}>
-            ⟳
-          </Animated.Text>
-        )}
-
-        {status === "completed" && topFinding && (
-          <View style={styles.confidenceContainer}>
-            <Text style={styles.percent}>
-              {Math.round(topFinding.confidence * 100)}%
-            </Text>
-
-            <Text style={styles.confidenceLabel}>confidence</Text>
-          </View>
-        )}
-
-        {status === "failed" && (
-          <View style={styles.failedCircle}>
-            <Text style={styles.failed}>!</Text>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
+    </SwipeableRow>
   );
 };
 
@@ -363,13 +546,145 @@ const SectionHeader: React.FC<{
   <View style={styles.sectionHeader}>
     <View style={styles.sectionHeaderLeft}>
       <Text style={styles.sectionTitle}>{title}</Text>
-
       <View style={styles.sectionCountContainer}>
         <Text style={styles.sectionCount}>{count}</Text>
       </View>
     </View>
   </View>
 );
+
+// ==========================================
+// RENAME MODAL
+// ==========================================
+
+interface RenameModalProps {
+  visible: boolean;
+  initialValue: string;
+  onCancel: () => void;
+  onSubmit: (value: string) => void;
+}
+
+const RenameModal: React.FC<RenameModalProps> = ({
+  visible,
+  initialValue,
+  onCancel,
+  onSubmit,
+}) => {
+  const [value, setValue] = useState(initialValue);
+
+  React.useEffect(() => {
+    if (visible) setValue(initialValue);
+  }, [visible, initialValue]);
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onCancel}
+    >
+      <Pressable style={styles.modalBackdrop} onPress={onCancel}>
+        <Pressable style={styles.modalCard} onPress={() => {}}>
+          <Text style={styles.modalTitle}>Rename video</Text>
+
+          <TextInput
+            value={value}
+            onChangeText={setValue}
+            autoFocus
+            placeholder="Video name"
+            placeholderTextColor="#9ca3af"
+            style={styles.modalInput}
+            selectionColor="#16a34a"
+          />
+
+          <View style={styles.modalActions}>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonGhost]}
+              onPress={onCancel}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.modalButtonGhostText}>Cancel</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonPrimary]}
+              onPress={() => onSubmit(value)}
+              activeOpacity={0.8}
+              disabled={!value.trim()}
+            >
+              <Text style={styles.modalButtonPrimaryText}>Save</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+};
+
+// ==========================================
+// ACTION SHEET (long-press menu)
+// ==========================================
+
+interface ActionSheetProps {
+  analysis: VideoAnalysis | null;
+  onClose: () => void;
+  onRename: (analysis: VideoAnalysis) => void;
+  onDelete: (analysis: VideoAnalysis) => void;
+}
+
+const ActionSheet: React.FC<ActionSheetProps> = ({
+  analysis,
+  onClose,
+  onRename,
+  onDelete,
+}) => {
+  if (!analysis) return null;
+
+  return (
+    <Modal
+      visible={!!analysis}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <Pressable style={styles.modalBackdrop} onPress={onClose}>
+        <Pressable style={styles.sheetCard} onPress={() => {}}>
+          <Text style={styles.sheetTitle} numberOfLines={1}>
+            {analysis.video?.originalFileName || "Untitled video"}
+          </Text>
+
+          <TouchableOpacity
+            style={styles.sheetAction}
+            onPress={() => {
+              onClose();
+              onRename(analysis);
+            }}
+            activeOpacity={0.7}
+          >
+            <PencilIcon size={18} color="#111827" />
+            <Text style={styles.sheetActionText}>Rename</Text>
+          </TouchableOpacity>
+
+          <View style={styles.sheetDivider} />
+
+          <TouchableOpacity
+            style={styles.sheetAction}
+            onPress={() => {
+              onClose();
+              onDelete(analysis);
+            }}
+            activeOpacity={0.7}
+          >
+            <TrashIcon size={18} color="#dc2626" />
+            <Text style={[styles.sheetActionText, styles.sheetActionTextDanger]}>
+              Delete
+            </Text>
+          </TouchableOpacity>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+};
 
 // ==========================================
 // EMPTY STATE
@@ -413,7 +728,6 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onRecord, hasFilter }) => (
 const Header: React.FC = () => (
   <View style={styles.header}>
     <Text style={styles.headerTitle}>Diagnoses</Text>
-
     <Text style={styles.headerSubtitle}>Your crop analysis history</Text>
   </View>
 );
@@ -425,10 +739,20 @@ const Header: React.FC = () => (
 export const DiagnosisListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
 
-  const { analyses, isLoading, isRefreshing, refresh, loadMore, hasMore } =
-    useDiagnosisList();
+  const {
+    analyses,
+    isLoading,
+    isRefreshing,
+    refresh,
+    loadMore,
+    hasMore,
+    renameAnalysis,
+    deleteAnalysis,
+  } = useDiagnosisList();
 
   const [activeFilter, setActiveFilter] = useState<FilterValue>("all");
+  const [menuTarget, setMenuTarget] = useState<VideoAnalysis | null>(null);
+  const [renameTarget, setRenameTarget] = useState<VideoAnalysis | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -440,14 +764,42 @@ export const DiagnosisListScreen: React.FC = () => {
     navigation.getParent().navigate("DiagnosisDetail", {
       videoId: analysis._id,
     });
-
-    // navigation.navigate("DiagnosisDetail", {
-    //   videoId: analysis.videoId,
-    // });
   };
 
   const handleRecord = () => {
     navigation.getParent()?.navigate("VideoScanning");
+  };
+
+  const handleOpenMenu = (analysis: VideoAnalysis) => {
+    setMenuTarget(analysis);
+  };
+
+  const handleOpenRename = (analysis: VideoAnalysis) => {
+    setRenameTarget(analysis);
+  };
+
+  const handleSubmitRename = async (value: string) => {
+    if (!renameTarget) return;
+    const target = renameTarget;
+    setRenameTarget(null);
+    await renameAnalysis(target._id, value);
+  };
+
+  const handleDelete = (analysis: VideoAnalysis) => {
+    Alert.alert(
+      "Delete video?",
+      `"${analysis.video?.originalFileName || "Untitled video"}" will be permanently removed.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            deleteAnalysis(analysis._id);
+          },
+        },
+      ],
+    );
   };
 
   const sections = useMemo(() => {
@@ -485,9 +837,7 @@ export const DiagnosisListScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.safe} edges={["top"]}>
         <Header />
-
         <FilterChips active={activeFilter} onChange={setActiveFilter} />
-
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#6b7280" />
         </View>
@@ -498,14 +848,19 @@ export const DiagnosisListScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <Header />
-
       <FilterChips active={activeFilter} onChange={setActiveFilter} />
 
       <SectionList
         sections={sections}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
-          <DiagnosisItem analysis={item} onPress={handleItemPress} />
+          <DiagnosisItem
+            analysis={item}
+            onPress={handleItemPress}
+            onRename={handleOpenRename}
+            onDelete={handleDelete}
+            onOpenMenu={handleOpenMenu}
+          />
         )}
         renderSectionHeader={({ section }) => (
           <SectionHeader title={section.title} count={section.data.length} />
@@ -538,6 +893,20 @@ export const DiagnosisListScreen: React.FC = () => {
           <View style={styles.sectionSeparator} />
         )}
       />
+
+      <ActionSheet
+        analysis={menuTarget}
+        onClose={() => setMenuTarget(null)}
+        onRename={handleOpenRename}
+        onDelete={handleDelete}
+      />
+
+      <RenameModal
+        visible={!!renameTarget}
+        initialValue={renameTarget?.video?.originalFileName ?? ""}
+        onCancel={() => setRenameTarget(null)}
+        onSubmit={handleSubmitRename}
+      />
     </SafeAreaView>
   );
 };
@@ -558,39 +927,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  // ========================================
-  // HEADER
-  // ========================================
-
+  // Header
   header: {
     paddingHorizontal: 18,
     paddingTop: 16,
     paddingBottom: 10,
     backgroundColor: "#ffffff",
   },
-
   headerTitle: {
     fontSize: 24,
     fontWeight: "700",
     color: "#111827",
     letterSpacing: -0.6,
   },
-
   headerSubtitle: {
     fontSize: 13,
     color: "#9ca3af",
     marginTop: 3,
   },
 
-  // ========================================
-  // FILTERS
-  // ========================================
-
+  // Filters
   filterContainer: {
     borderBottomWidth: 1,
     borderBottomColor: "#f3f4f6",
   },
-
   chipsContent: {
     paddingHorizontal: 18,
     paddingTop: 4,
@@ -599,7 +959,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-
   chip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -608,40 +967,32 @@ const styles = StyleSheet.create({
     borderColor: "#e5e7eb",
     backgroundColor: "#ffffff",
   },
-
   chipActive: {
     backgroundColor: "#111827",
     borderColor: "#111827",
   },
-
   chipText: {
     fontSize: 13,
     fontWeight: "500",
     color: "#6b7280",
   },
-
   chipTextActive: {
     color: "#ffffff",
     fontWeight: "600",
   },
 
-  // ========================================
-  // SECTION HEADER
-  // ========================================
-
+  // Section header
   sectionHeader: {
     paddingHorizontal: 18,
     paddingTop: 16,
     paddingBottom: 6,
     backgroundColor: "#ffffff",
   },
-
   sectionHeaderLeft: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
-
   sectionTitle: {
     fontSize: 11,
     fontWeight: "700",
@@ -649,7 +1000,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.7,
     textTransform: "uppercase",
   },
-
   sectionCountContainer: {
     minWidth: 20,
     height: 20,
@@ -659,48 +1009,64 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
   sectionCount: {
     fontSize: 10,
     fontWeight: "600",
     color: "#6b7280",
   },
 
-  // ========================================
-  // LIST
-  // ========================================
-
+  // List
   list: {
     paddingBottom: 20,
   },
-
   listEmpty: {
     flexGrow: 1,
   },
-
   sectionSeparator: {
     height: 6,
   },
 
-  // ========================================
-  // DIAGNOSIS ITEM
-  // ========================================
+  // Swipeable wrapper
+  swipeWrapper: {
+    marginHorizontal: 14,
+    marginVertical: 4,
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#ffffff",
+  },
+  swipeContent: {
+    backgroundColor: "#ffffff",
+  },
+  actionsContainer: {
+    ...StyleSheet.absoluteFill,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+    action: {
+    width: ACTION_WIDTH,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  actionRename: {
+    backgroundColor: "#f3f4f6",
+  },
+  actionDelete: {
+    backgroundColor: "#e5e7eb",
+  },
 
+  // Item
   item: {
     minHeight: 68,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 18,
     paddingVertical: 12,
-    marginHorizontal: 14,
-    marginVertical: 4,
     borderRadius: 12,
     backgroundColor: "#ffffff",
     gap: 14,
     borderWidth: 1,
     borderColor: "#f3f4f6",
   },
-
   thumbnail: {
     width: 42,
     height: 42,
@@ -710,75 +1076,61 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexShrink: 0,
   },
-
   content: {
     flex: 1,
     minWidth: 0,
     gap: 3,
   },
-
   title: {
     fontSize: 14,
     fontWeight: "600",
     color: "#111827",
   },
-
   subtitleRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
-
   statusDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
     flexShrink: 0,
   },
-
   subtitle: {
     flex: 1,
     fontSize: 12,
     color: "#6b7280",
   },
-
   meta: {
     fontSize: 11,
     color: "#9ca3af",
   },
 
-  // ========================================
-  // TRAILING
-  // ========================================
-
+  // Trailing
   trailing: {
     width: 58,
     alignItems: "flex-end",
     justifyContent: "center",
     flexShrink: 0,
   },
-
   spinner: {
     fontSize: 18,
     color: "#6b7280",
   },
-
   confidenceContainer: {
     alignItems: "flex-end",
   },
-
   percent: {
     fontSize: 13,
     fontWeight: "700",
     color: "#16a34a",
   },
-
   confidenceLabel: {
     fontSize: 8,
     color: "#9ca3af",
     marginTop: 1,
   },
-
   failedCircle: {
     width: 22,
     height: 22,
@@ -787,17 +1139,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
   failed: {
     fontSize: 13,
     fontWeight: "700",
     color: "#dc2626",
   },
 
-  // ========================================
-  // EMPTY STATE
-  // ========================================
-
+  // Empty
   empty: {
     flex: 1,
     justifyContent: "center",
@@ -805,7 +1153,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingBottom: 40,
   },
-
   emptyIconContainer: {
     width: 60,
     height: 60,
@@ -815,14 +1162,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
-
   emptyTitle: {
     fontSize: 16,
     fontWeight: "600",
     color: "#111827",
     marginBottom: 5,
   },
-
   emptyText: {
     maxWidth: 280,
     fontSize: 13,
@@ -831,7 +1176,6 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     lineHeight: 19,
   },
-
   emptyButton: {
     borderWidth: 1.5,
     borderColor: "#16a34a",
@@ -840,18 +1184,112 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 999,
   },
-
   emptyButtonText: {
     color: "#16a34a",
     fontSize: 13,
     fontWeight: "600",
   },
 
-  // ========================================
-  // FOOTER
-  // ========================================
-
+  // Footer
   footer: {
     paddingVertical: 14,
+  },
+
+  // Modal backdrop
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(17, 24, 39, 0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+
+  // Rename modal
+  modalCard: {
+    width: "100%",
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 20,
+    gap: 14,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: "#111827",
+    backgroundColor: "#ffffff",
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 8,
+  },
+  modalButton: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 999,
+  },
+  modalButtonGhost: {
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  modalButtonGhostText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#6b7280",
+  },
+  modalButtonPrimary: {
+    backgroundColor: "#16a34a",
+  },
+  modalButtonPrimaryText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#ffffff",
+  },
+
+  // Action sheet
+  sheetCard: {
+    width: "100%",
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  sheetTitle: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#9ca3af",
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 8,
+  },
+  sheetAction: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  sheetActionText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#111827",
+  },
+  sheetActionTextDanger: {
+    color: "#dc2626",
+  },
+  sheetDivider: {
+    height: 1,
+    backgroundColor: "#f3f4f6",
+    marginHorizontal: 16,
   },
 });

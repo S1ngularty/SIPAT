@@ -74,6 +74,58 @@ export const useDiagnosisList = () => {
     await fetchAnalyses(nextPage, false);
   }, [hasMore, isLoading, page, fetchAnalyses]);
 
+  /**
+   * Optimistically renames a video. Falls back to a refresh on failure.
+   */
+  const renameAnalysis = useCallback(
+    async (analysisId: string, newName: string): Promise<boolean> => {
+      const trimmed = newName.trim();
+      if (!trimmed) return false;
+
+      const prev = analyses;
+
+      // Optimistic update
+      setAnalyses((current) =>
+        current.map((a) =>
+          a._id === analysisId
+            ? { ...a, video: { ...a.video!, originalFileName: trimmed } }
+            : a,
+        ),
+      );
+
+      try {
+        await diagnosisApi.renameDiagnosis(analysisId, trimmed);
+        return true;
+      } catch (err) {
+        console.error("Rename failed:", err);
+        setAnalyses(prev); // rollback
+        return false;
+      }
+    },
+    [analyses],
+  );
+
+  /**
+   * Optimistically removes an item. Falls back to a refresh on failure.
+   */
+  const deleteAnalysis = useCallback(
+    async (analysisId: string): Promise<boolean> => {
+      const prev = analyses;
+
+      setAnalyses((current) => current.filter((a) => a._id !== analysisId));
+
+      try {
+        await diagnosisApi.deleteDiagnosis(analysisId);
+        return true;
+      } catch (err) {
+        console.error("Delete failed:", err);
+        setAnalyses(prev); // rollback
+        return false;
+      }
+    },
+    [analyses],
+  );
+
   return {
     analyses,
     isLoading,
@@ -81,5 +133,7 @@ export const useDiagnosisList = () => {
     refresh,
     loadMore,
     hasMore,
+    renameAnalysis,
+    deleteAnalysis,
   };
 };
