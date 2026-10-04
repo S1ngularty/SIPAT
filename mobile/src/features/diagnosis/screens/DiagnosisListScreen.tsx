@@ -1,9 +1,4 @@
-import React, {
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -29,10 +24,7 @@ import Animated, {
   Easing,
   runOnJS,
 } from "react-native-reanimated";
-import {
-  Gesture,
-  GestureDetector,
-} from "react-native-gesture-handler";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Svg, { Path, Circle, Rect } from "react-native-svg";
 
 import { useDiagnosisList } from "../hooks/useDiagnosisList";
@@ -108,7 +100,7 @@ const VideoIcon: React.FC<IconProps> = ({ size = 20, color = "#6b7280" }) => (
   </Svg>
 );
 
-const PencilIcon: React.FC<IconProps> = ({ size = 18, color = "#ffffff" }) => (
+const PencilIcon: React.FC<IconProps> = ({ size = 22, color = "#374151" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M4 20L8.5 19L19 8.5C19.5 8 19.5 7 19 6.5L17.5 5C17 4.5 16 4.5 15.5 5L5 15.5L4 20Z"
@@ -120,14 +112,9 @@ const PencilIcon: React.FC<IconProps> = ({ size = 18, color = "#ffffff" }) => (
   </Svg>
 );
 
-const TrashIcon: React.FC<IconProps> = ({ size = 18, color = "#ffffff" }) => (
+const TrashIcon: React.FC<IconProps> = ({ size = 22, color = "#dc2626" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M5 7H19"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
+    <Path d="M5 7H19" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
     <Path
       d="M9 7V5C9 4.5 9.5 4 10 4H14C14.5 4 15 4.5 15 5V7"
       stroke={color}
@@ -150,6 +137,12 @@ const TrashIcon: React.FC<IconProps> = ({ size = 18, color = "#ffffff" }) => (
 // ==========================================
 // HELPERS
 // ==========================================
+
+const getDisplayName = (analysis: VideoAnalysis): string => {
+  const named = analysis.diagnosisName?.trim();
+  if (named) return named;
+  return analysis.video?.originalFileName || "Untitled video";
+};
 
 const getTopFinding = (analysis: VideoAnalysis): TrackResult | null => {
   if (!analysis.results || analysis.results.length === 0) {
@@ -269,6 +262,54 @@ const FilterChips: React.FC<FilterChipsProps> = ({ active, onChange }) => (
 );
 
 // ==========================================
+// RIPPLE
+// ==========================================
+
+const RIPPLE_SIZE = 300;
+const RIPPLE_DURATION = 450;
+
+interface RippleProps {
+  x: number;
+  y: number;
+  onDone: () => void;
+}
+
+const Ripple: React.FC<RippleProps> = ({ x, y, onDone }) => {
+  const progress = useSharedValue(0);
+  const opacity = useSharedValue(0.15);
+
+  React.useEffect(() => {
+    progress.value = withTiming(
+      1,
+      { duration: RIPPLE_DURATION, easing: Easing.out(Easing.quad) },
+      (finished) => {
+        if (finished) runOnJS(onDone)();
+      },
+    );
+    opacity.value = withTiming(0, {
+      duration: RIPPLE_DURATION,
+      easing: Easing.out(Easing.quad),
+    });
+  }, [progress, opacity, onDone]);
+
+  const style = useAnimatedStyle(() => {
+    const size = RIPPLE_SIZE * progress.value;
+    return {
+      position: "absolute",
+      left: x - size / 2,
+      top: y - size / 2,
+      width: size,
+      height: size,
+      borderRadius: size / 2,
+      backgroundColor: "#111827",
+      opacity: opacity.value,
+    };
+  });
+
+  return <Animated.View pointerEvents="none" style={style} />;
+};
+
+// ==========================================
 // SWIPEABLE WRAPPER
 // ==========================================
 
@@ -293,6 +334,11 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
   const translateX = useSharedValue(0);
   const startX = useSharedValue(0);
   const [isRevealed, setIsRevealed] = useState(false);
+  const [ripple, setRipple] = useState<{
+    x: number;
+    y: number;
+    key: number;
+  } | null>(null);
 
   const springConfig = {
     damping: 30,
@@ -308,6 +354,10 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
   const close = () => {
     translateX.value = withSpring(0, springConfig);
     showActions(false);
+  };
+
+  const triggerRipple = (x: number, y: number) => {
+    setRipple({ x, y, key: Date.now() });
   };
 
   const panGesture = Gesture.Pan()
@@ -343,8 +393,9 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
 
   const tapGesture = Gesture.Tap()
     .maxDuration(250)
-    .onEnd((_, success) => {
+    .onEnd((e, success) => {
       if (!success) return;
+      runOnJS(triggerRipple)(e.x, e.y);
       runOnJS(onPress)();
     });
 
@@ -394,11 +445,21 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
       <GestureDetector gesture={composed}>
         <Animated.View style={[styles.swipeContent, contentStyle]}>
           {children}
+
+          {ripple && (
+            <Ripple
+              key={ripple.key}
+              x={ripple.x}
+              y={ripple.y}
+              onDone={() => setRipple(null)}
+            />
+          )}
         </Animated.View>
       </GestureDetector>
     </View>
   );
 };
+
 // ==========================================
 // LIST ITEM
 // ==========================================
@@ -486,7 +547,7 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
 
         <View style={styles.content}>
           <Text style={styles.title} numberOfLines={1} ellipsizeMode="middle">
-            {analysis.video?.originalFileName || "Untitled video"}
+            {getDisplayName(analysis)}
           </Text>
 
           <View style={styles.subtitleRow}>
@@ -585,13 +646,13 @@ const RenameModal: React.FC<RenameModalProps> = ({
     >
       <Pressable style={styles.modalBackdrop} onPress={onCancel}>
         <Pressable style={styles.modalCard} onPress={() => {}}>
-          <Text style={styles.modalTitle}>Rename video</Text>
+          <Text style={styles.modalTitle}>Rename diagnosis</Text>
 
           <TextInput
             value={value}
             onChangeText={setValue}
             autoFocus
-            placeholder="Video name"
+            placeholder="Diagnosis name"
             placeholderTextColor="#9ca3af"
             style={styles.modalInput}
             selectionColor="#16a34a"
@@ -650,7 +711,7 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
       <Pressable style={styles.modalBackdrop} onPress={onClose}>
         <Pressable style={styles.sheetCard} onPress={() => {}}>
           <Text style={styles.sheetTitle} numberOfLines={1}>
-            {analysis.video?.originalFileName || "Untitled video"}
+            {getDisplayName(analysis)}
           </Text>
 
           <TouchableOpacity
@@ -787,8 +848,8 @@ export const DiagnosisListScreen: React.FC = () => {
 
   const handleDelete = (analysis: VideoAnalysis) => {
     Alert.alert(
-      "Delete video?",
-      `"${analysis.video?.originalFileName || "Untitled video"}" will be permanently removed.`,
+      "Delete diagnosis?",
+      `"${getDisplayName(analysis)}" will be permanently removed.`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -903,7 +964,11 @@ export const DiagnosisListScreen: React.FC = () => {
 
       <RenameModal
         visible={!!renameTarget}
-        initialValue={renameTarget?.video?.originalFileName ?? ""}
+        initialValue={
+          renameTarget
+            ? renameTarget.diagnosisName ?? getDisplayName(renameTarget)
+            : ""
+        }
         onCancel={() => setRenameTarget(null)}
         onSubmit={handleSubmitRename}
       />
@@ -1036,13 +1101,15 @@ const styles = StyleSheet.create({
   },
   swipeContent: {
     backgroundColor: "#ffffff",
+    borderRadius: 12,
+    overflow: "hidden",
   },
   actionsContainer: {
     ...StyleSheet.absoluteFill,
     flexDirection: "row",
     justifyContent: "flex-end",
   },
-    action: {
+  action: {
     width: ACTION_WIDTH,
     justifyContent: "center",
     alignItems: "center",
