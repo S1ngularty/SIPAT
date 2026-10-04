@@ -11,13 +11,15 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { VideoView, useVideoPlayer, VideoSource } from "expo-video";
+import { useEvent } from "expo";
 import Svg, { Path, Circle, Rect } from "react-native-svg";
 
 import { useDiagnosisDetail } from "../hooks/useDiagnosisDetail";
 import type { TrackResult } from "../diagnosisTypes";
 
 // ==========================================
-// ICONS
+// ICONS (unchanged)
 // ==========================================
 
 interface IconProps {
@@ -54,6 +56,18 @@ const VideoIcon: React.FC<IconProps> = ({ size = 20, color = "#6b7280" }) => (
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const PlayIcon: React.FC<IconProps> = ({ size = 22, color = "#ffffff" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M8 5.5V18.5L19 12L8 5.5Z"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+      fill="none"
     />
   </Svg>
 );
@@ -112,11 +126,27 @@ type DiagnosisDetailRoute = RouteProp<
 >;
 
 // ==========================================
-// HELPERS
+// HELPERS (unchanged)
 // ==========================================
 
 const prettifyLabel = (raw: string): string =>
   raw.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+const describeSightings = (count: number): string => {
+  if (count <= 0) return "Not clearly seen";
+  if (count < 5) return "Seen briefly";
+  if (count < 15) return "Seen in a few frames";
+  if (count < 40) return "Seen often in the video";
+  return "Seen throughout the video";
+};
+
+const describeConfidence = (value: number): string => {
+  const pct = Math.round(value * 100);
+  if (pct >= 85) return "Very sure";
+  if (pct >= 70) return "Fairly sure";
+  if (pct >= 55) return "Likely";
+  return "Possible";
+};
 
 interface EvidenceGroup {
   key: string;
@@ -174,7 +204,92 @@ const formatDate = (dateString: string): string => {
 };
 
 // ==========================================
-// STACKED THUMBNAILS
+// VIDEO PLAYER (expo-video)
+// ==========================================
+
+interface VideoPlayerProps {
+  uri: string | null;
+}
+
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ uri }) => {
+  const player = useVideoPlayer(uri as VideoSource, (p) => {
+    p.loop = false;
+    p.timeUpdateEventInterval = 0; // we don't need time updates
+  });
+
+  // Track playback state via events instead of onPlaybackStatusUpdate
+  const { isPlaying } = useEvent(player, "playingChange", {
+    isPlaying: player.playing,
+  });
+  const { status } = useEvent(player, "statusChange", {
+    status: player.status,
+  });
+
+  const isLoading = status === "loading";
+  const hasError = status === "error";
+
+  const togglePlay = useCallback(() => {
+    if (player.playing) {
+      player.pause();
+    } else {
+      player.play();
+    }
+  }, [player]);
+
+  if (!uri || hasError) {
+    return (
+      <View style={styles.videoPlaceholder}>
+        <VideoIcon size={26} color="#9ca3af" />
+        <Text style={styles.videoPlaceholderText}>
+          {hasError ? "Couldn't load video" : "Video unavailable"}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.videoBox}>
+      <VideoView
+        player={player}
+        style={styles.video}
+        nativeControls={false}
+        contentFit="contain"
+      />
+
+      {/* Loading overlay */}
+      {isLoading && (
+        <View style={styles.videoOverlay}>
+          <ActivityIndicator color="#ffffff" />
+        </View>
+      )}
+
+      {/* Play button overlay */}
+      {!isLoading && !isPlaying && (
+        <TouchableOpacity
+          style={styles.videoPlayOverlay}
+          onPress={togglePlay}
+          activeOpacity={0.7}
+        >
+          <View style={styles.videoPlayButton}>
+            <PlayIcon size={22} color="#ffffff" />
+          </View>
+        </TouchableOpacity>
+      )}
+
+      {/* Tap to pause while playing */}
+      {!isLoading && isPlaying && (
+        <TouchableOpacity
+          style={styles.videoTouchOverlay}
+          onPress={togglePlay}
+          activeOpacity={1}
+        />
+      )}
+    </View>
+  );
+};
+
+// ==========================================
+// STACKED THUMBNAILS (unchanged)
 // ==========================================
 
 interface StackedThumbnailsProps {
@@ -188,7 +303,6 @@ const StackedThumbnails: React.FC<StackedThumbnailsProps> = ({
   urls,
   size = 60,
 }) => {
-  // Offset scales with size so stacks stay proportional
   const STACK_OFFSET = Math.round(size * 0.28);
 
   const visible = urls.slice(0, MAX_VISIBLE);
@@ -250,7 +364,7 @@ const StackedThumbnails: React.FC<StackedThumbnailsProps> = ({
 };
 
 // ==========================================
-// AI SUMMARY CARD
+// AI SUMMARY CARD (unchanged)
 // ==========================================
 
 interface AISummaryCardProps {
@@ -275,7 +389,7 @@ const AISummaryCard: React.FC<AISummaryCardProps> = ({
         <View style={styles.aiIconWrap}>
           <SparkleIcon size={14} color="#111827" />
         </View>
-        <Text style={styles.aiLabel}>AI Summary</Text>
+        <Text style={styles.aiLabel}>Summary</Text>
       </View>
 
       {!hasResults ? (
@@ -286,14 +400,16 @@ const AISummaryCard: React.FC<AISummaryCardProps> = ({
         </View>
       ) : (
         <Text style={styles.aiText}>
-          {totalDetections} detection
-          {totalDetections !== 1 ? "s" : ""} across {evidenceGroups.length}{" "}
-          condition
+          We found {totalDetections} spot
+          {totalDetections !== 1 ? "s" : ""} in your video across{" "}
+          {evidenceGroups.length} problem
           {evidenceGroups.length !== 1 ? "s" : ""}.
           {topGroup
-            ? ` Most prominent: ${topGroup.condition} on ${prettifyLabel(
+            ? ` The main one is ${topGroup.condition} on your ${prettifyLabel(
                 topGroup.crop,
-              )} at ${Math.round(topGroup.topConfidence * 100)}% confidence.`
+              ).toLowerCase()}. We're ${describeConfidence(
+                topGroup.topConfidence,
+              ).toLowerCase()} about it.`
             : ""}
         </Text>
       )}
@@ -302,7 +418,7 @@ const AISummaryCard: React.FC<AISummaryCardProps> = ({
 };
 
 // ==========================================
-// EVIDENCE CARD
+// EVIDENCE CARD (unchanged)
 // ==========================================
 
 interface EvidenceCardProps {
@@ -312,7 +428,6 @@ interface EvidenceCardProps {
 
 const EvidenceCard: React.FC<EvidenceCardProps> = ({ group, onPress }) => {
   const count = group.detections.length;
-  const confidence = Math.round(group.topConfidence * 100);
 
   return (
     <TouchableOpacity
@@ -328,15 +443,17 @@ const EvidenceCard: React.FC<EvidenceCardProps> = ({ group, onPress }) => {
         </Text>
 
         <Text style={styles.evidenceCrop} numberOfLines={1}>
-          {prettifyLabel(group.crop)}
+          Found on {prettifyLabel(group.crop).toLowerCase()}
         </Text>
 
         <View style={styles.evidenceMetaRow}>
           <Text style={styles.evidenceMeta}>
-            {count} detection{count !== 1 ? "s" : ""}
+            {count} spot{count !== 1 ? "s" : ""}
           </Text>
           <View style={styles.evidenceDot} />
-          <Text style={styles.evidenceConfidence}>{confidence}%</Text>
+          <Text style={styles.evidenceConfidence}>
+            {describeConfidence(group.topConfidence)}
+          </Text>
         </View>
       </View>
 
@@ -346,7 +463,7 @@ const EvidenceCard: React.FC<EvidenceCardProps> = ({ group, onPress }) => {
 };
 
 // ==========================================
-// HEADER
+// HEADER (unchanged)
 // ==========================================
 
 interface HeaderProps {
@@ -364,7 +481,7 @@ const Header: React.FC<HeaderProps> = ({ onBack }) => (
       <BackIcon size={20} color="#111827" />
     </TouchableOpacity>
 
-    <Text style={styles.headerTitle}>Diagnosis</Text>
+    <Text style={styles.headerTitle}>Result</Text>
 
     <View style={styles.headerSpacer} />
   </View>
@@ -386,6 +503,8 @@ export const DiagnosisDetailScreen: React.FC = () => {
     if (!analysis?.results?.length) return [];
     return groupIntoEvidence(analysis.results);
   }, [analysis?.results]);
+
+  const videoUrl = analysis?.video?.evidenceVideoUrl ?? null;
 
   const handleEvidencePress = useCallback(
     (group: EvidenceGroup) => {
@@ -441,23 +560,20 @@ export const DiagnosisDetailScreen: React.FC = () => {
       >
         {/* Video */}
         <View style={styles.videoWrapper}>
-          <View style={styles.videoPlaceholder}>
-            <VideoIcon size={26} color="#9ca3af" />
-            <Text style={styles.videoPlaceholderText}>Video player here</Text>
-          </View>
+          <VideoPlayer uri={videoUrl} />
         </View>
 
         {/* Info */}
         <View style={styles.infoSection}>
           <Text style={styles.infoTitle} numberOfLines={1}>
-            Video #{analysis?.videoId?.slice(-6) || "—"}
+            {analysis?.video?.originalFileName || "Video"}
           </Text>
           <Text style={styles.infoMeta}>
             {analysis?.createdAt ? formatDate(analysis.createdAt) : ""}
           </Text>
         </View>
 
-        {/* AI Summary */}
+        {/* Summary */}
         <View style={styles.section}>
           <AISummaryCard
             evidenceGroups={evidenceGroups}
@@ -468,7 +584,7 @@ export const DiagnosisDetailScreen: React.FC = () => {
         {/* Evidence */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Evidence</Text>
+            <Text style={styles.sectionTitle}>Problems found</Text>
             <View style={styles.sectionCountContainer}>
               <Text style={styles.sectionCount}>{evidenceGroups.length}</Text>
             </View>
@@ -477,7 +593,7 @@ export const DiagnosisDetailScreen: React.FC = () => {
           {evidenceGroups.length === 0 ? (
             <View style={styles.evidenceEmpty}>
               <Text style={styles.evidenceEmptyText}>
-                No evidence detected for this video.
+                No problems found in this video.
               </Text>
             </View>
           ) : (
@@ -496,7 +612,7 @@ export const DiagnosisDetailScreen: React.FC = () => {
 };
 
 // ==========================================
-// STYLES
+// STYLES (unchanged, plus video styles)
 // ==========================================
 
 const styles = StyleSheet.create({
@@ -550,6 +666,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 4,
   },
+  videoBox: {
+    width: "100%",
+    aspectRatio: 16 / 9,
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#000000",
+    position: "relative",
+  },
+  video: {
+    width: "100%",
+    height: "100%",
+  },
+  videoOverlay: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.25)",
+  },
+  videoPlayOverlay: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  videoTouchOverlay: {
+    ...StyleSheet.absoluteFill,
+  },
+  videoPlayButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "rgba(17, 24, 39, 0.75)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingLeft: 3,
+  },
   videoPlaceholder: {
     width: "100%",
     aspectRatio: 16 / 9,
@@ -571,7 +722,7 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   infoTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
     color: "#111827",
   },
@@ -614,7 +765,7 @@ const styles = StyleSheet.create({
     color: "#6b7280",
   },
 
-  // AI Summary
+  // Summary
   aiCard: {
     padding: 14,
     borderRadius: 12,
