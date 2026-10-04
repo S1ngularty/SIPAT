@@ -11,6 +11,7 @@ router
   .route("/:diagnosisId")
   .get(diagnosisController.getById)
   .put(diagnosisController.updateResults)
+  .patch(diagnosisController.renameDiagnosis)
   .delete(diagnosisController.deleteByVideoId);
 
 router.route("/video/:videoId").get(diagnosisController.getByVideoId);

@@ -9,7 +9,6 @@ export interface DiagnosisResult {
   duration: number;
   observations: number;
   evidenceKey: string;
-  evidenceUrl: string;
 }
 
 export interface CreateDiagnosisInput {
@@ -19,6 +18,7 @@ export interface CreateDiagnosisInput {
 
 export interface Diagnosis {
   _id: Types.ObjectId;
+  diagnosisName?: string;
   videoId: Types.ObjectId;
 
   results: DiagnosisResult[];
@@ -50,7 +50,7 @@ export interface DiagnosisWIthDownloadUrls {
     videoUrl: string;
   };
 
-  results: DiagnosisResult[];
+  results: (DiagnosisResult & { evidenceUrl: string })[];
 
   createdAt: Date;
   updatedAt: Date;
@@ -66,3 +66,15 @@ export interface DiagnosisListResult {
   limit: number;
   totalPages: number;
 }
+
+export type DiagnosisResultWithoutEvidenceUrl = Omit<
+  DiagnosisResult & { evidenceUrl: string },
+  "evidenceUrl"
+>;
+
+export type DiagnosisWithoutEvidenceUrls = Omit<
+  DiagnosisWIthDownloadUrls,
+  "results"
+> & {
+  results: DiagnosisResultWithoutEvidenceUrl[];
+};

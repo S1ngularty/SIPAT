@@ -116,6 +116,32 @@ export class DiagnosisController {
     res.status(200).json(response);
   };
 
+  renameDiagnosis = async (
+    req: Request<{ diagnosisId: string }, {}, { diagnosisName: string }>,
+    res: Response<
+      ApiResponse<{ diagnosisName: string; diagnosisId: Types.ObjectId }>
+    >,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+            console.log(req.body)
+
+      const { diagnosisId } = req.params;
+      const { diagnosisName } = req.body;
+
+
+      const result = await this.diagnosisService.renameDiagnosis(
+        diagnosisName,
+        diagnosisId,
+      );
+
+      return wrapResponse("renamed succesfully", 200, res, result);
+    } catch (error) {
+      console.log("diagnosis renaming Error:", error);
+      next(error);
+    }
+  };
+
   deleteByVideoId = async (
     req: Request<{ videoId: string }>,
     res: Response,
