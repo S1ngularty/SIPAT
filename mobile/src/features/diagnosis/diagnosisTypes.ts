@@ -43,6 +43,7 @@ export interface AnalysisVideo {
 export interface VideoAnalysis {
   _id: string;
   videoId: string;
+  diagnosisName?: string;
   video: AnalysisVideo;
   results: TrackResult[];
   createdAt: string;
