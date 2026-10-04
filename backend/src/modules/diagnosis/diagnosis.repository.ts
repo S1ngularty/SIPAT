@@ -5,6 +5,7 @@ import type {
   Diagnosis,
   DiagnosisListResult,
   DiagnosisWIthDownloadUrls,
+  DiagnosisWithoutEvidenceUrls,
 } from "./diagnosis.types.js";
 import type { Video } from "../video/video.types.js";
 
@@ -67,7 +68,7 @@ export class DiagnosisRepository {
 
   async findById(
     diagnosisId: Types.ObjectId,
-  ): Promise<DiagnosisWIthDownloadUrls | null> {
+  ): Promise<DiagnosisWithoutEvidenceUrls | null> {
     const diagnosis = await DiagnosisModel.findById(diagnosisId)
       .populate<{ videoId: Video & { videoUrl: string } }>("videoId")
       .lean()
@@ -95,6 +96,23 @@ export class DiagnosisRepository {
       {
         new: true,
         runValidators: true,
+      },
+    )
+      .lean<Diagnosis>()
+      .exec();
+  }
+
+  async renameDiagnsis(
+    name: string,
+    diagnosisId: string,
+  ): Promise<Diagnosis | null> {
+    return DiagnosisModel.findByIdAndUpdate(
+      diagnosisId,
+      {
+        diagnosisName: name,
+      },
+      {
+        returnDocument: "after",
       },
     )
       .lean<Diagnosis>()

@@ -4,6 +4,11 @@ import type { Diagnosis } from "./diagnosis.types.js";
 
 const diagnosisSchema = new Schema<Diagnosis>(
   {
+    diagnosisName: {
+      type: String,
+      unique: true,
+      required: false,
+    },
     videoId: {
       type: Schema.Types.ObjectId,
       ref: "Video",

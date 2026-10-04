@@ -97,6 +97,21 @@ export class DiagnosisService {
     return diagnosis;
   }
 
+  async renameDiagnosis(
+    name: string,
+    diagnosisId: string,
+  ): Promise<{ diagnosisName: string; diagnosisId: Types.ObjectId }> {
+    const result = await this.diagnosisRepository.renameDiagnsis(
+      name,
+      diagnosisId,
+    );
+
+    if (!result)
+      throw new Error(`Failed to rename the diagnosis ${diagnosisId}`);
+
+    return { diagnosisName: name, diagnosisId: result._id };
+  }
+
   async deleteDiagnosisByVideoId(videoId: Types.ObjectId): Promise<Diagnosis> {
     const diagnosis = await this.diagnosisRepository.deleteByVideoId(videoId);
 
