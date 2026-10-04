@@ -6,7 +6,7 @@ export interface TrackResult {
   confidence: number;
   duration: number;
   observations: number;
-  evidenceKey: string; // storage path, e.g. "videos/.../evidence/track-59.jpg"
+  evidenceKey: string;
   evidenceUrl: string;
 }
 
@@ -29,19 +29,24 @@ export interface AnalysisVideo {
   processedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Pre-signed playback URL (R2/S3). Expires — check the `X-Amz-Expires`
+   * query param on the URL. Currently 5 minutes in the backend response.
+   */
+  evidenceVideoUrl: string;
 }
 
 /**
- * What the API actually returns for a single diagnosis.
- * NOTE: no embedded `video` object in the response you shared.
+ * Response shape for a single diagnosis (`GET /diagnosis/:videoId`).
+ * The video object is now embedded in the response.
  */
 export interface VideoAnalysis {
   _id: string;
   videoId: string;
+  video: AnalysisVideo;
   results: TrackResult[];
   createdAt: string;
   updatedAt: string;
-  video?: AnalysisVideo; // optional — populated only if your API includes it
 }
 
 export interface DiseaseInfo {
