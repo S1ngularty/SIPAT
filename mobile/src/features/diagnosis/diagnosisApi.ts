@@ -83,10 +83,10 @@ class DiagnosisAPI {
     newName: string,
   ): Promise<VideoAnalysis> {
     const response = await client.request<VideoAnalysis>(
-      `/api/v1/diagnosis/${videoId}/rename`,
+      `/api/v1/diagnosis/${videoId}`,
       {
         method: "PATCH",
-        body: JSON.stringify({ originalFileName: newName }),
+        body: JSON.stringify({ diagnosisName: newName }),
       },
     );
     return response.result;
