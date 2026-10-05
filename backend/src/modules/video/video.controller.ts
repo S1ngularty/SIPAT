@@ -1,58 +1,62 @@
 import type { Request, Response, NextFunction } from "express";
 
-import { videoService } from "./video.service.js";
+import { VideoService } from "./video.service.js";
 import type { CreateVideoInput, Video } from "./video.types.js";
 import type { ApiResponse } from "../../core/types/api.type.js";
 import type { IPresignedUploadResponse } from "./video.dto.js";
 import { wrapResponse } from "../../core/utils/response.util.js";
 
-export async function createVideoUpload(
-  req: Request<{}, {}, CreateVideoInput>,
-  res: Response<ApiResponse<IPresignedUploadResponse>>,
-  next: NextFunction,
-) {
-  try {
-    const { userId } = req.auth;
+export class VideoController {
+  constructor(private readonly videoService: VideoService) {}
 
-    if (!userId) throw new Error("missing userId");
+  createVideoUpload = async (
+    req: Request<{}, {}, CreateVideoInput>,
+    res: Response<ApiResponse<IPresignedUploadResponse>>,
+    next: NextFunction,
+  ) => {
+    try {
+      const { userId } = req.auth;
 
-    const { fileName, contentType, fileSize } = req.body;
-    const idempotencyKey = req.get("Idempotency-Key");
+      if (!userId) throw new Error("missing userId");
 
-    if (!idempotencyKey) throw new Error("missing idempotency key");
+      const { fileName, contentType, fileSize } = req.body;
+      const idempotencyKey = req.get("Idempotency-Key");
 
-    const result = await videoService.createUpload(
-      userId,
-      {
-        fileName,
-        contentType,
-        fileSize,
-      },
-      idempotencyKey,
-    );
+      if (!idempotencyKey) throw new Error("missing idempotency key");
 
-    wrapResponse("OK", 200, res, result);
-  } catch (error) {
-    next(error);
-  }
-}
+      const result = await this.videoService.createUpload(
+        userId,
+        {
+          fileName,
+          contentType,
+          fileSize,
+        },
+        idempotencyKey,
+      );
 
-export async function updateVideoUploadStatus(
-  req: Request<{ videoId: string }>,
-  res: Response<ApiResponse<Video>>,
-  next: NextFunction,
-) {
-  try {
-    const { userId } = req.auth;
-    const { videoId } = req.params;
+      wrapResponse("OK", 200, res, result);
+    } catch (error) {
+      next(error);
+    }
+  };
 
-    if (!userId) throw new Error("missing userId");
-    if (!videoId) throw new Error("Video ID is required");
+  updateVideoUploadStatus = async (
+    req: Request<{ videoId: string }>,
+    res: Response<ApiResponse<Video>>,
+    next: NextFunction,
+  ) => {
+    try {
+      const { userId } = req.auth;
+      const { videoId } = req.params;
 
-    const result = await videoService.updateUploadedVideoStatus(videoId);
+      if (!userId) throw new Error("missing userId");
+      if (!videoId) throw new Error("Video ID is required");
 
-    wrapResponse("OK", 200, res, result);
-  } catch (error) {
-    next(error);
-  }
+      const result = await this.videoService.updateUploadedVideoStatus(videoId);
+
+      wrapResponse("OK", 200, res, result);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
