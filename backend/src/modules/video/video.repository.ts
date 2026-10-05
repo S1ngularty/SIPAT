@@ -12,7 +12,7 @@ import type {
 } from "./video.types.js";
 import type { QueryFilter, SortOrder } from "mongoose";
 
-class VideoRepository {
+export class VideoRepository {
   // ==========================================
   // CREATE
   // ==========================================
