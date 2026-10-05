@@ -3,7 +3,7 @@ import { r2Client } from "../../integrations/storage/r2.client.js";
 import { diagnosisService } from "../diagnosis/index.js";
 import { VideoRepository } from "./video.repository.js";
 
-class AIProcessingService {
+export class AIProcessingService {
   constructor(private readonly videoRepository: VideoRepository) {}
 
   async processVideo(videoId: string): Promise<unknown> {
