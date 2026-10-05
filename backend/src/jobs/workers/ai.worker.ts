@@ -1,6 +1,6 @@
 import { Job, Worker } from "bullmq";
 import { redis } from "../../infrastructure/redis/redis.client.js";
-import { AIProcessing } from "../../modules/video/ai-processing.service.js";
+import { aiProcessingService } from "../../modules/video/index.js";
 
 interface JobData {
   videoId: string;
@@ -21,7 +21,9 @@ const worker = new Worker<JobData, JobResponse>(
     console.log("Job data:", job.data);
     console.log("================================");
 
-    const processVideo = await AIProcessing.processVideo(job.data.videoId);
+    const processVideo = await aiProcessingService.processVideo(
+      job.data.videoId,
+    );
 
     return {
       success: true,
