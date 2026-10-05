@@ -124,7 +124,6 @@ export class DiagnosisController {
     next: NextFunction,
   ): Promise<void> => {
     try {
-            console.log(req.body)
 
       const { diagnosisId } = req.params;
       const { diagnosisName } = req.body;

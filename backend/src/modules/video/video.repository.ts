@@ -124,7 +124,7 @@ export class VideoRepository {
     return VideoModel.findByIdAndUpdate(
       videoId,
       { $set: updates },
-      { returnDocument: 'after', runValidators: true },
+      { returnDocument: "after", runValidators: true },
     ).exec();
   }
 
@@ -140,7 +140,7 @@ export class VideoRepository {
           processedAt: processedAt ?? null,
         },
       },
-      { returnDocument: 'after', runValidators: true },
+      { returnDocument: "after", runValidators: true },
     ).exec();
   }
 
@@ -148,7 +148,7 @@ export class VideoRepository {
     return VideoModel.findByIdAndUpdate(
       videoId,
       { $set: { status: "processing" } },
-      { returnDocument: 'after' },
+      { returnDocument: "after" },
     ).exec();
   }
 
@@ -159,7 +159,7 @@ export class VideoRepository {
     return VideoModel.findByIdAndUpdate(
       videoId,
       { $set: { status: "completed", processedAt } },
-      { returnDocument: 'after' },
+      { returnDocument: "after" },
     ).exec();
   }
 
@@ -170,7 +170,7 @@ export class VideoRepository {
     return VideoModel.findByIdAndUpdate(
       videoId,
       { $set: { status: "failed", processedAt } },
-      { returnDocument: 'after' },
+      { returnDocument: "after" },
     ).exec();
   }
 
@@ -178,7 +178,7 @@ export class VideoRepository {
     return VideoModel.findByIdAndUpdate(
       videoId,
       { $set: { status: "uploaded" } },
-      { returnDocument: 'after' },
+      { returnDocument: "after" },
     ).exec();
   }
 
@@ -186,9 +186,9 @@ export class VideoRepository {
   // DELETE
   // ==========================================
 
-  async deleteVideo(videoId: string): Promise<boolean> {
+  async deleteVideo(videoId: string): Promise<Video | null> {
     const result = await VideoModel.findByIdAndDelete(videoId).exec();
-    return result !== null;
+    return result;
   }
 
   async deleteByIdAndUser(videoId: string, userId: string): Promise<boolean> {
