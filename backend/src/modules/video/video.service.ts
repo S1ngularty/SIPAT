@@ -1,14 +1,15 @@
 import { randomUUID } from "node:crypto";
 import { r2Client } from "../../integrations/storage/r2.client.js";
 
-import { videoRepository } from "./video.repository.js";
 import type { CreateVideoInput, Video } from "./video.types.js";
-
 import { validateVideoUpload } from "./video.validation.js";
 import type { IPresignedUploadResponse } from "./video.dto.js";
 import { AIQueue } from "../../jobs/queues/ai.queue.js";
+import type { VideoRepository } from "./video.repository.js";
 
 export class VideoService {
+  constructor(private readonly videoRepository: VideoRepository) {}
+
   private generateVideoMetadata(userId: string, input: CreateVideoInput) {
     const videoId = randomUUID();
 
@@ -36,7 +37,7 @@ export class VideoService {
     validateVideoUpload(input.contentType, input.fileSize);
 
     const idempotentVideoDoc =
-      await videoRepository.findByIdempotencyKey(idempotencyKey);
+      await this.videoRepository.findByIdempotencyKey(idempotencyKey);
 
     if (idempotentVideoDoc) {
       const vid = idempotentVideoDoc.toObject();
@@ -56,7 +57,7 @@ export class VideoService {
 
     const metadata = this.generateVideoMetadata(userId, input);
 
-    const videoDoc = await videoRepository.createVideo({
+    const videoDoc = await this.videoRepository.createVideo({
       userId,
       storageKey: metadata.storageKey,
       fileSize: input.fileSize,
@@ -82,7 +83,7 @@ export class VideoService {
   }
 
   async updateUploadedVideoStatus(videoId: string): Promise<Video> {
-    const result = await videoRepository.videoUpdateStatus(videoId, {
+    const result = await this.videoRepository.videoUpdateStatus(videoId, {
       status: "uploaded",
     });
 
@@ -95,5 +96,3 @@ export class VideoService {
     return result?.toObject();
   }
 }
-
-export const videoService = new VideoService();
