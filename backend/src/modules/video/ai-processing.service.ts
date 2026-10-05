@@ -1,14 +1,16 @@
 import { fastAPIClient } from "../../integrations/fastApi/fastapi.client.js";
 import { r2Client } from "../../integrations/storage/r2.client.js";
 import { diagnosisService } from "../diagnosis/index.js";
-import { videoRepository } from "./video.repository.js";
+import { VideoRepository } from "./video.repository.js";
 
-class AIProcessingService {
+export class AIProcessingService {
+  constructor(private readonly videoRepository: VideoRepository) {}
+
   async processVideo(videoId: string): Promise<unknown> {
     try {
       if (!videoId) throw new Error("Video Id is missing");
 
-      const video = await videoRepository.videoUpdateStatus(videoId, {
+      const video = await this.videoRepository.videoUpdateStatus(videoId, {
         status: "processing",
         processedAt: new Date(Date.now()),
       });
@@ -30,7 +32,7 @@ class AIProcessingService {
       console.log("processed result log:", processResult);
 
       if (processResult != null && !processResult.success) {
-        await videoRepository.videoUpdateStatus(videoId, {
+        await this.videoRepository.videoUpdateStatus(videoId, {
           status: "failed",
         });
 
@@ -60,7 +62,9 @@ class AIProcessingService {
           `Failed to create the Diagnosis with video ID: ${videoId}`,
         );
 
-      await videoRepository.videoUpdateStatus(videoId, { status: "completed" });
+      await this.videoRepository.videoUpdateStatus(videoId, {
+        status: "completed",
+      });
 
       return processResult;
       //then return if successfully requested
@@ -70,5 +74,3 @@ class AIProcessingService {
     }
   }
 }
-
-export const AIProcessing = new AIProcessingService();
