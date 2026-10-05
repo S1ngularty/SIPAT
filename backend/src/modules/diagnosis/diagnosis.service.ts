@@ -7,6 +7,7 @@ import type {
   DiagnosisWIthDownloadUrls,
 } from "./diagnosis.types.js";
 import { r2Client } from "../../integrations/storage/r2.client.js";
+import { videoService } from "../video/index.js";
 
 export class DiagnosisService {
   constructor(private readonly diagnosisRepository: DiagnosisRepository) {}
@@ -113,12 +114,15 @@ export class DiagnosisService {
   }
 
   async deleteDiagnosisByVideoId(videoId: Types.ObjectId): Promise<Diagnosis> {
-    const diagnosis = await this.diagnosisRepository.deleteByVideoId(videoId);
+    const [diagnosisDoc, videoDoc] = await Promise.all([
+      this.diagnosisRepository.deleteByVideoId(videoId),
+      videoService.deleteVideo(String(videoId)),
+    ]);
 
-    if (!diagnosis) {
+    if (!diagnosisDoc) {
       throw new Error("Diagnosis not found");
     }
 
-    return diagnosis;
+    return diagnosisDoc;
   }
 }

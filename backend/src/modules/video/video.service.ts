@@ -95,4 +95,14 @@ export class VideoService {
 
     return result?.toObject();
   }
+
+  async deleteVideo(videoId: string): Promise<Video> {
+    const result = await this.videoRepository.deleteVideo(videoId);
+
+    if (!result) throw new Error(`Failed to delete the video ${videoId}`);
+
+    r2Client.deleteObject(result.storageKey);
+
+    return result;
+  }
 }

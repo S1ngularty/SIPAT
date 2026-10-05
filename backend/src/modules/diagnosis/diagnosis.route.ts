@@ -11,9 +11,11 @@ router
   .route("/:diagnosisId")
   .get(diagnosisController.getById)
   .put(diagnosisController.updateResults)
-  .patch(diagnosisController.renameDiagnosis)
-  .delete(diagnosisController.deleteByVideoId);
+  .patch(diagnosisController.renameDiagnosis);
 
-router.route("/video/:videoId").get(diagnosisController.getByVideoId);
+router
+  .route("/video/:videoId")
+  .get(diagnosisController.getByVideoId)
+  .delete(diagnosisController.deleteByVideoId);
 
 export default router;
