@@ -5,9 +5,12 @@ import {
   StyleSheet,
   ActivityIndicator,
   Dimensions,
+  Alert,
 } from "react-native";
+import { useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CameraView } from "expo-camera";
+import * as ImagePicker from "expo-image-picker";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import {
   ArrowLeft,
@@ -17,6 +20,7 @@ import {
   MicOff,
   Camera as CameraIcon,
   LucideSwitchCamera,
+  Image as ImageIcon,
 } from "lucide-react-native";
 import useScanning from "../hooks/useScanning";
 import { formatTime } from "../../../utils/formatTime";
@@ -25,6 +29,8 @@ const MAX_DURATION = 15; // seconds
 const { width, height } = Dimensions.get("window");
 
 const VideoScanningScreen = () => {
+  const [isPickingVideo, setPickingVideo] = useState(false);
+
   const {
     hasPermission,
     isRecording,
@@ -41,6 +47,50 @@ const VideoScanningScreen = () => {
     toggleCameraType,
     toggleMute,
   } = useScanning();
+
+  // Hand off the picked video to your preview screen.
+  const handleVideoReady = useCallback(
+    (uri: string) => {
+      console.log("Video ready for processing:", uri);
+      navigation.navigate("VideoPreview", { videoUri: uri });
+    },
+    [navigation],
+  );
+
+  // Pick a video from the user's gallery using expo-image-picker.
+  const handlePickVideo = useCallback(async () => {
+    if (isRecording || isProcessing || isPickingVideo) return;
+
+    try {
+      setPickingVideo(true);
+
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission Required",
+          "Please grant media library access to upload a video.",
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["videos"], // ✅ new API, replaces MediaTypeOptions.Videos
+        allowsEditing: false,
+        quality: 1,
+      });
+
+      if (result.canceled || !result.assets?.length) return;
+
+      const asset = result.assets[0];
+      handleVideoReady(asset.uri);
+    } catch (error) {
+      console.error("Failed to pick video:", error);
+      Alert.alert("Error", "Could not open the video picker.");
+    } finally {
+      setPickingVideo(false);
+    }
+  }, [isRecording, isProcessing, isPickingVideo, handleVideoReady]);
 
   if (hasPermission === null) {
     return (
@@ -73,7 +123,7 @@ const VideoScanningScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      {/* Camera View - Self Enclosing */}
+      {/* Camera View */}
       <CameraView
         ref={cameraRef}
         mode="video"
@@ -132,10 +182,9 @@ const VideoScanningScreen = () => {
         </View>
       </Animated.View>
 
-      {/* Scanning Frame - Vertical Rectangle */}
+      {/* Scanning Frame */}
       <View style={styles.scanFrameContainer}>
         <View style={[styles.scanFrame, isRecording && styles.scanFrameActive]}>
-          {/* Corner markers */}
           <View style={[styles.corner, styles.cornerTopLeft]} />
           <View style={[styles.corner, styles.cornerTopRight]} />
           <View style={[styles.corner, styles.cornerBottomLeft]} />
@@ -159,7 +208,6 @@ const VideoScanningScreen = () => {
         entering={FadeInUp.duration(400)}
         style={styles.bottomControls}
       >
-        {/* Timer Display - Above the button */}
         {isRecording && (
           <View style={styles.timerContainer}>
             <Timer size={18} color="#4CAF50" strokeWidth={1.5} />
@@ -175,7 +223,6 @@ const VideoScanningScreen = () => {
         )}
 
         <View style={styles.controlsRow}>
-          {/* Recording Button */}
           <Animated.View
             style={[styles.recordButtonWrapper, animatedRecordButton]}
           >
@@ -199,6 +246,24 @@ const VideoScanningScreen = () => {
               )}
             </TouchableOpacity>
           </Animated.View>
+
+          {/* Upload / Gallery Button (left side, absolute) */}
+          <TouchableOpacity
+            style={[
+              styles.sideButton,
+              styles.galleryButtonPosition,
+              (isRecording || isProcessing) && styles.sideButtonDisabled,
+            ]}
+            onPress={handlePickVideo}
+            disabled={isRecording || isProcessing || isPickingVideo}
+            activeOpacity={0.7}
+          >
+            {isPickingVideo ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <ImageIcon size={24} color="#fff" strokeWidth={2} />
+            )}
+          </TouchableOpacity>
         </View>
 
         <Text style={styles.helpText}>
@@ -396,29 +461,30 @@ const styles = StyleSheet.create({
   timerWarning: {
     color: "#FF5252",
   },
-  progressContainer: {
-    position: "absolute",
-    top: 175,
-    left: 20,
-    right: 20,
-    height: 3,
-    backgroundColor: "rgba(255,255,255,0.3)",
-    borderRadius: 2,
-    zIndex: 10,
-  },
-  progressBar: {
-    height: "100%",
-    backgroundColor: "#4CAF50",
-    borderRadius: 2,
-  },
-  progressBarWarning: {
-    backgroundColor: "#FF5252",
-  },
   controlsRow: {
-    flexDirection: "row",
+    width: "100%",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,
+    height: 72,
+  },
+  galleryButtonPosition: {
+    position: "absolute",
+    left: 40,
+    top: 8,
+  },
+  sideButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.5)",
+  },
+  sideButtonDisabled: {
+    opacity: 0.35,
   },
   recordButtonWrapper: {
     alignItems: "center",
