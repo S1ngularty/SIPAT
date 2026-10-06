@@ -129,8 +129,18 @@ const TrashIcon: React.FC<IconProps> = ({ size = 22, color = "#dc2626" }) => (
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-    <Path d="M10 11V17" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-    <Path d="M14 11V17" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <Path
+      d="M10 11V17"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+    <Path
+      d="M14 11V17"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
   </Svg>
 );
 
@@ -737,7 +747,9 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
             activeOpacity={0.7}
           >
             <TrashIcon size={18} color="#dc2626" />
-            <Text style={[styles.sheetActionText, styles.sheetActionTextDanger]}>
+            <Text
+              style={[styles.sheetActionText, styles.sheetActionTextDanger]}
+            >
               Delete
             </Text>
           </TouchableOpacity>
@@ -856,7 +868,7 @@ export const DiagnosisListScreen: React.FC = () => {
           text: "Delete",
           style: "destructive",
           onPress: () => {
-            deleteAnalysis(analysis._id);
+            deleteAnalysis(analysis.video._id);
           },
         },
       ],
@@ -966,7 +978,7 @@ export const DiagnosisListScreen: React.FC = () => {
         visible={!!renameTarget}
         initialValue={
           renameTarget
-            ? renameTarget.diagnosisName ?? getDisplayName(renameTarget)
+            ? (renameTarget.diagnosisName ?? getDisplayName(renameTarget))
             : ""
         }
         onCancel={() => setRenameTarget(null)}

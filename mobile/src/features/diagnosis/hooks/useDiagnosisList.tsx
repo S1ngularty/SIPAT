@@ -109,13 +109,13 @@ export const useDiagnosisList = () => {
    * Optimistically removes an item. Falls back to a refresh on failure.
    */
   const deleteAnalysis = useCallback(
-    async (analysisId: string): Promise<boolean> => {
+    async (videoId: string): Promise<boolean> => {
       const prev = analyses;
 
-      setAnalyses((current) => current.filter((a) => a._id !== analysisId));
+      setAnalyses((current) => current.filter((a) => a.video._id !== videoId));
 
       try {
-        await diagnosisApi.deleteDiagnosis(analysisId);
+        await diagnosisApi.deleteDiagnosis(videoId);
         return true;
       } catch (err) {
         console.error("Delete failed:", err);

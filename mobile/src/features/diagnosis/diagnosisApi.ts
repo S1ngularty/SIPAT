@@ -93,7 +93,7 @@ class DiagnosisAPI {
   }
 
   async deleteDiagnosis(videoId: string): Promise<void> {
-    await client.request(`/api/v1/diagnosis/${videoId}`, {
+    await client.request(`/api/v1/diagnosis/video/${videoId}`, {
       method: "DELETE",
     });
   }
