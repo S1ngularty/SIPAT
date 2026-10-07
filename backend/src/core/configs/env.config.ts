@@ -26,5 +26,9 @@ export const env = {
 
   fastapi:{
     based_url: requiredEnv("FASTAPI_URL")
+  },
+  
+  groq:{
+    api_key: requiredEnv("GROQ_API_KEY")
   }
 };
