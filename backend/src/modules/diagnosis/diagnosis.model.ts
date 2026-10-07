@@ -65,6 +65,11 @@ const diagnosisSchema = new Schema<Diagnosis>(
       ],
       default: [],
     },
+
+    content: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

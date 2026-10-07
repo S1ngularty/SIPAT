@@ -77,6 +77,7 @@ export class DiagnosisService {
       _id: diagnosis._id,
       video,
       results,
+      content: diagnosis.content,
       createdAt: diagnosis.createdAt,
       updatedAt: diagnosis.updatedAt,
     };
