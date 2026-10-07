@@ -32,11 +32,11 @@ import { DiagnosisListScreen } from "../features/diagnosis/screens/DiagnosisList
 import { UserStackParamList } from "./UserNavigation"; // Import your stack param list
 
 // Define types for navigation
-type TabParamList = {
+export type TabParamList = {
   Home: undefined;
   History: undefined;
   Scan: undefined;
-  Articles: undefined;
+  Diagnoses: undefined;
   Profile: undefined;
 };
 
@@ -84,7 +84,7 @@ const PlaceholderScreen: React.FC<PlaceholderScreenProps> = ({ route }) => {
       title: "Scan",
       subtitle: "Scan your crops for health analysis",
     },
-    Articles: {
+    Diagnoses: {
       icon: BookOpen,
       title: "Diagnosis",
       subtitle: "Crop Diagnosis",
@@ -168,7 +168,7 @@ const CustomTabIcon: React.FC<CustomTabIconProps> = ({
     Home: Home,
     History: History,
     Scan: ScanLine,
-    Articles: Microscope,
+    Diagnoses: Microscope,
     Profile: User,
   };
 
@@ -242,7 +242,7 @@ const HomeTabNavigator: React.FC = () => {
         }}
       />
       <Tab.Screen
-        name="Articles"
+        name="Diagnoses"
         component={DiagnosisListScreen}
         options={{ tabBarLabel: "Diagnosis" }}
       />

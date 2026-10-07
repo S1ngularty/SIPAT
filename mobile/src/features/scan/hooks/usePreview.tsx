@@ -176,6 +176,9 @@ export default function usePreview() {
       buttonScale.value = withTiming(1, { duration: 100 });
 
       await handlePresignUpload();
+      navigation.navigate("HomeTabs", {
+        screen: "Diagnoses",
+      });
     }, 1000);
   };
 
@@ -306,7 +309,9 @@ export default function usePreview() {
         "Draft Saved",
         "Your video has been saved to drafts.",
       );
-      navigation.navigate("HomeTabs");
+      navigation.navigate("HomeTabs", {
+        screen: "Home",
+      });
     }, 1500);
   };
 

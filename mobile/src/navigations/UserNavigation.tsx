@@ -1,12 +1,13 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import HomeTabNavigator from "./HomeTabNavigation";
+import HomeTabNavigator, { TabParamList } from "./HomeTabNavigation";
 import VideoScanningScreen from "../features/scan/screens/VideoScanning";
 import VideoPreviewScreen from "../features/scan/screens/VideoPreview";
 import { DiagnosisDetailScreen } from "../features/diagnosis/screens/DiagnosisDetailScreen";
 import { EvidencePreviewScreen } from "../features/diagnosis/screens/EvidencePreviewScreen";
+import { NavigatorScreenParams } from "@react-navigation/native";
 
 export type UserStackParamList = {
-  HomeTabs: undefined;
+  HomeTabs: NavigatorScreenParams<TabParamList>;
   VideoScanning: undefined;
   VideoPreview: {
     videoUri: string;
