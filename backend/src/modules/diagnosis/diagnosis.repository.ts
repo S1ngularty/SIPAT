@@ -67,7 +67,7 @@ export class DiagnosisRepository {
   }
 
   async findById(
-    diagnosisId: Types.ObjectId,
+    diagnosisId: string,
   ): Promise<DiagnosisWithoutEvidenceUrls | null> {
     const diagnosis = await DiagnosisModel.findById(diagnosisId)
       .populate<{ videoId: Video & { videoUrl: string } }>("videoId")
