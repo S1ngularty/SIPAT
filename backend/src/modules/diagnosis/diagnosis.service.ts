@@ -40,7 +40,7 @@ export class DiagnosisService {
     };
   }
 
-  async getDiagnosisByVideoId(videoId: Types.ObjectId): Promise<Diagnosis> {
+  async getDiagnosisByVideoId(videoId: string): Promise<Diagnosis> {
     const diagnosis = await this.diagnosisRepository.findByVideoId(videoId);
 
     if (!diagnosis) {
@@ -51,7 +51,7 @@ export class DiagnosisService {
   }
 
   async getDiagnosisById(
-    diagnosisId: Types.ObjectId,
+    diagnosisId: string,
   ): Promise<DiagnosisWIthDownloadUrls> {
     const diagnosis = await this.diagnosisRepository.findById(diagnosisId);
 

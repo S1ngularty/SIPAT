@@ -59,9 +59,8 @@ export class DiagnosisController {
 
     if (!videoId) throw new Error("video ID is required");
 
-    const diagnosis = await this.diagnosisService.getDiagnosisByVideoId(
-      new Types.ObjectId(videoId),
-    );
+    const diagnosis =
+      await this.diagnosisService.getDiagnosisByVideoId(videoId);
 
     const response: ApiResponse<typeof diagnosis> = {
       message: "Diagnosis retrieved successfully",
@@ -80,9 +79,7 @@ export class DiagnosisController {
 
     if (!diagnosisId) throw new Error("diagosis ID is required");
 
-    const diagnosis = await this.diagnosisService.getDiagnosisById(
-      new Types.ObjectId(diagnosisId),
-    );
+    const diagnosis = await this.diagnosisService.getDiagnosisById(diagnosisId);
 
     const response: ApiResponse<typeof diagnosis> = {
       message: "Diagnosis retrieved successfully",
@@ -124,10 +121,8 @@ export class DiagnosisController {
     next: NextFunction,
   ): Promise<void> => {
     try {
-
       const { diagnosisId } = req.params;
       const { diagnosisName } = req.body;
-
 
       const result = await this.diagnosisService.renameDiagnosis(
         diagnosisName,
