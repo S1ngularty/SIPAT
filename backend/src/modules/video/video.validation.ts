@@ -4,7 +4,7 @@ const ALLOWED_VIDEO_TYPES = new Set([
   "video/webm",
 ]);
 
-const MAX_VIDEO_SIZE = 25 * 1024 * 1024; 
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024; 
 
 export function validateVideoUpload(
   contentType: string,

@@ -14,6 +14,7 @@ export interface DiagnosisResult {
 export interface CreateDiagnosisInput {
   videoId: Types.ObjectId | string;
   results: DiagnosisResult[];
+  content: string | null;
 }
 
 export interface Diagnosis {
@@ -22,6 +23,7 @@ export interface Diagnosis {
   videoId: Types.ObjectId;
 
   results: DiagnosisResult[];
+  content: string | null;
 
   createdAt: Date;
   updatedAt: Date;
@@ -51,6 +53,7 @@ export interface DiagnosisWIthDownloadUrls {
   };
 
   results: (DiagnosisResult & { evidenceUrl: string })[];
+  content: string | null;
 
   createdAt: Date;
   updatedAt: Date;

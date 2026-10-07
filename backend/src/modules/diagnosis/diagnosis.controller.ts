@@ -6,16 +6,25 @@ import type {
   PaginationQuery,
 } from "../../core/types/api.type.js";
 import { wrapResponse } from "../../core/utils/response.util.js";
+import type { DiagnosisResult } from "./diagnosis.types.js";
 
 export class DiagnosisController {
   constructor(private readonly diagnosisService: DiagnosisService) {}
 
-  create = async (req: Request, res: Response): Promise<void> => {
-    const { videoId, results } = req.body;
+  create = async (
+    req: Request<
+      {},
+      {},
+      { videoId: string; results: DiagnosisResult[]; content: string | null }
+    >,
+    res: Response,
+  ): Promise<void> => {
+    const { videoId, results, content } = req.body;
 
     const diagnosis = await this.diagnosisService.createDiagnosis({
       videoId: new Types.ObjectId(videoId),
       results,
+      content,
     });
 
     const response: ApiResponse<typeof diagnosis> = {

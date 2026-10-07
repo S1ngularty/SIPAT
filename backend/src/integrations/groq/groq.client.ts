@@ -1,6 +1,5 @@
 import Groq from "groq-sdk";
 import { env } from "../../core/configs/env.config.js";
-import type { DiagnosisResult } from "../../modules/diagnosis/diagnosis.types.js";
 
 const systemPrompt = `
 Ikaw ay isang agricultural assistant para sa SIPAT.
@@ -35,8 +34,18 @@ class GroqClient {
     this.groq = new Groq({ apiKey: env.groq.api_key });
   }
 
-  getGroqChatCompletion = async (detectionResult: DiagnosisResult[]) => {
-    return this.groq.chat.completions.create({
+  getGroqChatCompletion = async (
+    detectionResult: {
+      track_id: string;
+      crop: string;
+      condition: string;
+      confidence: string;
+      duration: string;
+      observations: string;
+      evidence_key: string;
+    }[],
+  ): Promise<string | null | undefined> => {
+    const content = await this.groq.chat.completions.create({
       messages: [
         {
           role: "system",
@@ -49,6 +58,8 @@ class GroqClient {
       ],
       model: "openai/gpt-oss-20b",
     });
+
+    return content.choices[0]?.message.content;
   };
 }
 
