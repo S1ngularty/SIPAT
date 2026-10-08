@@ -36,6 +36,11 @@ export interface AnalysisVideo {
   evidenceVideoUrl: string;
 }
 
+export interface GroqAnalysis {
+  summary: string;
+  recommendations: string[];
+}
+
 /**
  * Response shape for a single diagnosis (`GET /diagnosis/:videoId`).
  * The video object is now embedded in the response.
@@ -46,6 +51,8 @@ export interface VideoAnalysis {
   diagnosisName?: string;
   video: AnalysisVideo;
   results: TrackResult[];
+  analysis: GroqAnalysis | null;
+
   createdAt: string;
   updatedAt: string;
 }
