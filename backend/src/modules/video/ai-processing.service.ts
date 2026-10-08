@@ -1,6 +1,7 @@
 import { fastAPIClient } from "../../integrations/fastApi/fastapi.client.js";
 import { groqClient } from "../../integrations/groq/groq.client.js";
 import { r2Client } from "../../integrations/storage/r2.client.js";
+import type { GroqAnalysis } from "../diagnosis/diagnosis.types.js";
 import { diagnosisService } from "../diagnosis/index.js";
 import { VideoRepository } from "./video.repository.js";
 
@@ -39,7 +40,7 @@ export class AIProcessingService {
 
         throw new Error(`Failed to Process the video: ${videoId}`);
       }
-      let groqContent: string | null | undefined;
+      let groqContent: GroqAnalysis | null | undefined;
       if (
         processResult?.results !== null &&
         processResult?.results !== undefined &&
@@ -66,7 +67,7 @@ export class AIProcessingService {
       const createDiagnosis = await diagnosisService.createDiagnosis({
         videoId,
         results: diagnosisData,
-        content: groqContent ?? null,
+        analysis: groqContent ?? null,
       });
 
       if (!createDiagnosis)

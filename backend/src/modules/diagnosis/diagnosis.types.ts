@@ -11,10 +11,15 @@ export interface DiagnosisResult {
   evidenceKey: string;
 }
 
+export interface GroqAnalysis {
+  summary: string;
+  recommendations: string[];
+}
+
 export interface CreateDiagnosisInput {
   videoId: Types.ObjectId | string;
   results: DiagnosisResult[];
-  content: string | null;
+  analysis: GroqAnalysis | null;
 }
 
 export interface Diagnosis {
@@ -23,7 +28,7 @@ export interface Diagnosis {
   videoId: Types.ObjectId;
 
   results: DiagnosisResult[];
-  content: string | null;
+  analysis: GroqAnalysis | null;
 
   createdAt: Date;
   updatedAt: Date;
@@ -53,7 +58,7 @@ export interface DiagnosisWIthDownloadUrls {
   };
 
   results: (DiagnosisResult & { evidenceUrl: string })[];
-  content: string | null;
+  analysis: GroqAnalysis | null;
 
   createdAt: Date;
   updatedAt: Date;

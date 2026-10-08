@@ -6,7 +6,7 @@ import type {
   PaginationQuery,
 } from "../../core/types/api.type.js";
 import { wrapResponse } from "../../core/utils/response.util.js";
-import type { DiagnosisResult } from "./diagnosis.types.js";
+import type { DiagnosisResult, GroqAnalysis } from "./diagnosis.types.js";
 
 export class DiagnosisController {
   constructor(private readonly diagnosisService: DiagnosisService) {}
@@ -15,16 +15,20 @@ export class DiagnosisController {
     req: Request<
       {},
       {},
-      { videoId: string; results: DiagnosisResult[]; content: string | null }
+      {
+        videoId: string;
+        results: DiagnosisResult[];
+        analysis: GroqAnalysis | null;
+      }
     >,
     res: Response,
   ): Promise<void> => {
-    const { videoId, results, content } = req.body;
+    const { videoId, results, analysis } = req.body;
 
     const diagnosis = await this.diagnosisService.createDiagnosis({
       videoId: new Types.ObjectId(videoId),
       results,
-      content,
+      analysis,
     });
 
     const response: ApiResponse<typeof diagnosis> = {
