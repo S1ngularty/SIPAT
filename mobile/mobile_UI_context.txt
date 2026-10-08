@@ -1,0 +1,1013 @@
+# SIPAT Mobile Application — UI/UX Design Context
+
+## 1. Application Overview
+
+**SIPAT** is a mobile agricultural diagnostic application designed to help farmers identify crop problems when agricultural experts or personnel are not immediately available.
+
+The core workflow is:
+
+**Record a short video → Submit → AI analyzes the video → Identify crops → Detect pests/diseases → Show evidence → Provide recommendations**
+
+The application should feel like a **professional diagnostic tool for farmers**, not a social media app, marketplace, or generic AI application.
+
+The visual design should communicate:
+
+* Trust
+* Simplicity
+* Practicality
+* Agriculture
+* Reliability
+* Accessibility
+* Modern technology without looking overly futuristic
+
+The target users may not be highly technical, so the interface must be understandable immediately without requiring users to learn complicated navigation.
+
+---
+
+# 2. Overall Visual Direction
+
+Use a **minimal agricultural UI style** inspired by modern farming/productivity applications.
+
+The visual language should be:
+
+> Clean + Minimal + Agricultural + Professional + Practical
+
+The design should use **solid colors**, clean typography, simple icons, generous whitespace, and clear component hierarchy.
+
+Avoid making the application look overly decorative.
+
+The interface should feel like a tool that a farmer would actually use in the field.
+
+### Important design principle
+
+**The content and diagnosis should be the visual focus, not the UI decoration.**
+
+When a user sees a detected disease, pest, crop, or evidence image, those elements should receive more visual attention than decorative UI elements.
+
+---
+
+# 3. Color System
+
+Use a restrained agricultural color palette.
+
+### Primary Color
+
+Use a **deep agricultural green** as the primary brand color.
+
+Suggested range:
+
+* Deep Green: `#245C3A`
+* Dark Green: `#19452B`
+* Medium Green: `#3F7D50`
+* Light Green: `#E7F0E9`
+
+The exact shades can be adjusted, but the overall appearance should remain muted and professional.
+
+Do NOT use extremely bright neon green.
+
+### Background
+
+Main application background:
+
+* Warm white or very light neutral
+* Example: `#F8F8F5`
+
+Secondary surfaces:
+
+* White: `#FFFFFF`
+* Very light gray: `#F2F3F1`
+
+### Typography Colors
+
+Primary text:
+
+* Almost black / charcoal
+* Example: `#1D1D1B`
+
+Secondary text:
+
+* Medium gray
+* Example: `#6B706B`
+
+Disabled text:
+
+* Light gray
+* Example: `#A5AAA5`
+
+### Status Colors
+
+Use colors only when they communicate meaning.
+
+Success / healthy:
+
+* Muted green
+
+Warning:
+
+* Muted amber
+
+Disease / critical condition:
+
+* Muted red
+
+Information:
+
+* Muted blue
+
+These colors should NOT become dominant colors throughout the interface.
+
+---
+
+# 4. Header Design
+
+Headers should use **solid backgrounds**.
+
+Primary application screens can use a dark agricultural-green header.
+
+Example:
+
+```text
+┌──────────────────────────────┐
+│  SIPAT                 🔔    │
+│  Diagnose your crops         │
+└──────────────────────────────┘
+```
+
+However, do NOT use emoji icons.
+
+Use proper UI icons.
+
+Header characteristics:
+
+* Solid dark green background
+* White text
+* White icons
+* Strong but simple typography
+* No gradients
+* No background illustrations
+* No excessive shadows
+
+Headers can have subtly rounded bottom corners only if it fits the screen composition, but avoid exaggerated rounded shapes.
+
+---
+
+# 5. Typography
+
+Typography should be highly readable.
+
+Use a modern sans-serif font such as:
+
+* Inter
+* Roboto
+* SF Pro
+* Manrope
+
+Prefer **Inter** or a similar neutral sans-serif.
+
+### Typography hierarchy
+
+Screen title:
+
+* Bold
+* Approximately 24–28px
+
+Section heading:
+
+* Semibold
+* Approximately 18–20px
+
+Card title:
+
+* Semibold
+* Approximately 15–17px
+
+Body:
+
+* Regular
+* Approximately 14–16px
+
+Supporting text:
+
+* Regular
+* Approximately 12–14px
+
+Button:
+
+* Medium/Semibold
+* Approximately 14–16px
+
+Do not use excessive font weights.
+
+The hierarchy should come primarily from:
+
+**size + weight + spacing**
+
+rather than many different colors.
+
+---
+
+# 6. Iconography
+
+Use icons instead of emojis.
+
+Icons should be:
+
+* Simple
+* Minimal
+* Consistent
+* Mostly outline/line-based
+* Medium stroke weight
+* Easy to recognize
+
+Suggested icon style:
+
+* Lucide
+* Material Symbols
+* Phosphor
+* Similar clean icon systems
+
+Examples:
+
+Home:
+
+* Home icon
+
+Diagnosis:
+
+* Scan/search/medical-cross style icon
+
+Video recording:
+
+* Video camera icon
+
+History:
+
+* Clock/history icon
+
+Profile:
+
+* Person icon
+
+Notifications:
+
+* Bell icon
+
+Back:
+
+* Chevron-left
+
+Upload:
+
+* Upload icon
+
+Disease:
+
+* Alert/bug/leaf icon depending on context
+
+Recommendations:
+
+* Lightbulb/checklist/leaf icon
+
+Do not use different icon styles on different screens.
+
+---
+
+# 7. Navigation
+
+Use a simple bottom navigation bar.
+
+Recommended structure:
+
+```text
+┌──────────────────────────────────┐
+│                                  │
+│          SCREEN CONTENT          │
+│                                  │
+├──────────────────────────────────┤
+│  Home    Diagnose    History     │
+│   ⌂         ◉          ◷         │
+└──────────────────────────────────┘
+```
+
+Possible navigation:
+
+1. Home
+2. Diagnose
+3. History
+4. Profile
+
+The active navigation item should use the primary green.
+
+Inactive items should use neutral gray.
+
+Avoid having too many navigation items.
+
+---
+
+# 8. Home Screen
+
+The Home screen should immediately communicate what the user can do.
+
+The most important action should be:
+
+**Start a Diagnosis**
+
+Suggested hierarchy:
+
+### Header
+
+```text
+Good morning
+Farmer
+
+[notification icon]
+```
+
+### Primary action
+
+Large but simple card/button:
+
+```text
+┌───────────────────────────────┐
+│                               │
+│  Start a new diagnosis        │
+│                               │
+│  Record a video of your crop  │
+│                               │
+│                     [Video]   │
+└───────────────────────────────┘
+```
+
+This should be the dominant action on the Home screen.
+
+### Recent diagnoses
+
+Below it:
+
+```text
+Recent Diagnoses
+
+Tomato
+Late Blight
+Today
+
+Eggplant
+Healthy
+Yesterday
+
+Chili
+Aphids
+2 days ago
+```
+
+Each item should be compact.
+
+Do not turn every piece of information into a giant card.
+
+---
+
+# 9. Video Recording Screen
+
+The recording screen should be extremely simple.
+
+The user needs to understand:
+
+> "Point the camera at the crop and record a short video."
+
+The screen should prioritize the camera/video preview.
+
+Layout:
+
+```text
+┌──────────────────────────────┐
+│ ← Record Crop                │
+├──────────────────────────────┤
+│                              │
+│                              │
+│       VIDEO PREVIEW          │
+│                              │
+│                              │
+│                              │
+│                              │
+├──────────────────────────────┤
+│                              │
+│  Move around the plant       │
+│  slowly and keep it visible  │
+│                              │
+│            ●                 │
+│                              │
+└──────────────────────────────┘
+```
+
+The record button should be visually obvious.
+
+Use a simple circular recording control.
+
+Do not overload the camera interface with controls.
+
+---
+
+# 10. Video Submission Screen
+
+After recording, allow the user to review the video.
+
+Display:
+
+* Video preview
+* Duration
+* Retake
+* Submit
+
+Example:
+
+```text
+Review Video
+
+┌──────────────────────────────┐
+│                              │
+│        VIDEO PREVIEW         │
+│                              │
+└──────────────────────────────┘
+
+00:18
+
+[ Retake ]       [ Submit ]
+```
+
+The Submit button should use the primary green.
+
+---
+
+# 11. AI Processing Screen
+
+The processing screen should communicate that the application is working.
+
+Avoid flashy AI animations.
+
+Do NOT use:
+
+* Futuristic glowing animations
+* Neural-network graphics
+* Excessive loading effects
+* "AI MAGIC" style interfaces
+
+Instead, use a simple progress/status interface.
+
+Example:
+
+```text
+Analyzing your video
+
+✓ Upload complete
+✓ Video prepared
+● Identifying crops
+○ Checking for pests and diseases
+○ Preparing recommendations
+```
+
+The design should reassure the user that the process is progressing.
+
+---
+
+# 12. Diagnosis Result Screen
+
+This is one of the most important screens in SIPAT.
+
+The diagnosis screen should prioritize the actual result.
+
+Suggested structure:
+
+```text
+Diagnosis Result
+
+Tomato
+
+┌──────────────────────────────┐
+│                              │
+│       EVIDENCE IMAGE         │
+│                              │
+└──────────────────────────────┘
+
+Detected condition
+
+Late Blight
+High confidence
+
+──────────────────────────────
+
+What we found
+
+The leaves show visual characteristics
+associated with Late Blight.
+
+──────────────────────────────
+
+Recommended actions
+
+[Recommendation 1]
+
+[Recommendation 2]
+
+[Recommendation 3]
+```
+
+The evidence image should be prominent.
+
+If the AI produces a cropped evidence frame, show that evidence clearly.
+
+The user should immediately understand:
+
+**What crop is this?**
+
+**What problem was detected?**
+
+**What evidence supports the result?**
+
+**What should I do next?**
+
+---
+
+# 13. Multiple Crop Detection
+
+A single video may contain multiple plants/crops.
+
+The UI must therefore support multiple detections.
+
+Example:
+
+```text
+Detected crops
+
+┌──────────────────────────────┐
+│ Tomato                       │
+│ Late Blight                  │
+│ High confidence              │
+└──────────────────────────────┘
+
+┌──────────────────────────────┐
+│ Eggplant                     │
+│ Healthy                      │
+│ High confidence              │
+└──────────────────────────────┘
+```
+
+Do not assume that one video always contains one crop.
+
+Each detected crop should be associated with its corresponding disease/pest result.
+
+---
+
+# 14. Evidence Images
+
+Evidence should be treated as an important part of the diagnosis.
+
+Instead of simply showing:
+
+> "Late Blight — 92%"
+
+show the visual evidence used by the system.
+
+Example:
+
+```text
+Evidence
+
+┌──────────────────────────────┐
+│                              │
+│       CROPPED FRAME          │
+│                              │
+└──────────────────────────────┘
+
+Late Blight
+Confidence: High
+```
+
+Evidence images should have:
+
+* Clear borders
+* Moderate corner radius
+* Proper aspect ratio
+* Minimal overlays
+* No unnecessary decorative frames
+
+---
+
+# 15. Recommendations
+
+Recommendations should be practical and easy to scan.
+
+Avoid long walls of text.
+
+Example:
+
+```text
+Recommended actions
+
+01
+Remove heavily affected leaves.
+
+02
+Keep infected plant material away
+from healthy plants.
+
+03
+Monitor nearby plants for similar
+symptoms.
+```
+
+Each recommendation can use a small icon.
+
+Use numbered steps where appropriate.
+
+The recommendations should visually feel like **instructions**, not articles.
+
+---
+
+# 16. Diagnosis History
+
+History should be a clean list.
+
+Example:
+
+```text
+Diagnosis History
+
+Today
+
+Tomato
+Late Blight
+10:42 AM
+
+Eggplant
+Healthy
+08:15 AM
+
+
+Yesterday
+
+Chili
+Aphids
+04:31 PM
+```
+
+Each diagnosis can have:
+
+* Crop name
+* Condition
+* Date/time
+* Small status indicator
+* Optional thumbnail
+
+Avoid huge cards.
+
+---
+
+# 17. Component Design
+
+Use a consistent component system.
+
+### Cards
+
+Cards should have:
+
+* White background
+* Very subtle border
+* Small or moderate corner radius
+* Minimal shadow or no shadow
+
+Avoid:
+
+* Extremely rounded cards
+* Floating glass effects
+* Heavy shadows
+* Gradients
+
+### Buttons
+
+Primary button:
+
+* Solid agricultural green
+* White text
+* Medium corner radius
+* Clear icon when useful
+
+Secondary button:
+
+* White/light background
+* Green or dark text
+* Thin border
+
+Destructive action:
+
+* Muted red
+
+### Inputs
+
+Use:
+
+* White background
+* Thin neutral border
+* Clear label
+* Green focus state
+
+---
+
+# 18. Spacing
+
+Use generous whitespace.
+
+Suggested spacing system:
+
+```text
+4px
+8px
+12px
+16px
+24px
+32px
+40px
+```
+
+Most screen padding should be approximately:
+
+**16–24px**
+
+Do not squeeze many components into one screen.
+
+Whitespace is part of the visual design.
+
+---
+
+# 19. Corner Radius
+
+Use moderate corner rounding.
+
+Recommended:
+
+* Buttons: 8–12px
+* Cards: 10–14px
+* Input fields: 8–10px
+* Images: 10–14px
+
+Avoid the extremely rounded "pill-shaped everything" design trend.
+
+Not every component needs rounded corners.
+
+---
+
+# 20. Shadows
+
+Use shadows very sparingly.
+
+Prefer:
+
+**border + spacing**
+
+over:
+
+**large floating shadow**
+
+The application should feel flat and clean.
+
+---
+
+# 21. Visual Hierarchy
+
+Every screen should have one obvious primary action.
+
+For example:
+
+Home:
+
+**Start Diagnosis**
+
+Recording:
+
+**Record**
+
+Review:
+
+**Submit**
+
+Diagnosis:
+
+**View Recommendations**
+
+History:
+
+**Select Diagnosis**
+
+Do not make five buttons equally prominent.
+
+---
+
+# 22. Agricultural Identity
+
+The application should communicate agriculture primarily through:
+
+* Green color palette
+* Crop imagery
+* Leaf/plant-related icons
+* Diagnosis terminology
+* Evidence photos
+* Natural neutral tones
+
+Do NOT rely on:
+
+* Cartoon farmers
+* Farm illustrations
+* Barn graphics
+* Excessive leaves everywhere
+* Decorative vegetables
+* Emoji
+* Generic "AI robot" graphics
+
+The application should look modern enough to feel credible.
+
+---
+
+# 23. Accessibility
+
+Text must have strong contrast.
+
+Avoid using color alone to communicate meaning.
+
+For example, instead of:
+
+**green = healthy**
+
+also display:
+
+**Healthy + check icon**
+
+Instead of:
+
+**red = disease**
+
+display:
+
+**Disease detected + warning icon**
+
+Buttons must have sufficiently large touch targets.
+
+Important actions should be easy to tap with one hand.
+
+---
+
+# 24. Language
+
+The application may eventually support Filipino/Tagalog/Taglish.
+
+Therefore, layouts should accommodate slightly longer or shorter translations.
+
+Avoid designing components that depend on fixed text widths.
+
+Use flexible layouts.
+
+Example:
+
+Instead of:
+
+```text
+[  Late Blight  ]
+```
+
+design components that can accommodate:
+
+```text
+[  Sakit na Late Blight  ]
+```
+
+without breaking.
+
+---
+
+# 25. Motion
+
+Animations should be subtle.
+
+Use:
+
+* Fade
+* Small slide
+* Progress animation
+* Button feedback
+* Screen transitions
+
+Avoid:
+
+* Bouncy animations
+* Excessive parallax
+* Large animated illustrations
+* Flashing elements
+* "AI scanning" gimmicks
+
+Animation should communicate state, not decoration.
+
+---
+
+# 26. What the UI Must NOT Look Like
+
+Avoid these visual directions:
+
+### No generic AI aesthetic
+
+No glowing purple/blue gradients.
+
+No futuristic dashboards.
+
+No neon colors.
+
+No AI robot illustrations.
+
+### No social-media aesthetic
+
+No Instagram-like feeds.
+
+No excessive profile imagery.
+
+No reaction buttons.
+
+### No childish farming aesthetic
+
+No cartoon farmers.
+
+No cartoon vegetables.
+
+No emojis.
+
+No playful oversized illustrations.
+
+### No excessive modern UI trends
+
+No glassmorphism.
+
+No excessive pills.
+
+No giant floating cards.
+
+No gradient backgrounds.
+
+No excessive shadows.
+
+---
+
+# 27. Target Visual Impression
+
+When someone opens SIPAT, the immediate impression should be:
+
+> "This is a simple agricultural diagnostic tool."
+
+Not:
+
+> "This is an AI experiment."
+
+Not:
+
+> "This is a farming social network."
+
+Not:
+
+> "This is a school project."
+
+The interface should look **calm, reliable, modern, and practical.**
+
+---
+
+# 28. Design Reference
+
+The visual reference is the **first image from the selected Minimal Agricultural theme**.
+
+Use its general visual language:
+
+* Light neutral background
+* Dark solid green header
+* Green primary actions
+* White cards
+* Minimal line icons
+* Clean typography
+* Generous spacing
+* Simple component hierarchy
+* Agricultural but restrained aesthetic
+
+Do not copy the reference application's exact layouts or branding.
+
+Use it only as a **visual style reference**.
+
+---
+
+# 29. Core Design Rule
+
+The most important rule for SIPAT's UI is:
+
+> **Show the user what matters, remove what doesn't.**
+
+The farmer should be able to:
+
+**Record → Submit → Understand the diagnosis → Follow the recommendation**
+
+without needing to understand how the AI works.
+
+The complexity should stay behind the interface.
+
+The UI should expose the **result**, **evidence**, and **recommended action**, not the underlying technical implementation.
