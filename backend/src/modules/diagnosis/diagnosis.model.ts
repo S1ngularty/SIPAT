@@ -6,7 +6,6 @@ const diagnosisSchema = new Schema<Diagnosis>(
   {
     diagnosisName: {
       type: String,
-      unique: true,
       required: false,
     },
     videoId: {

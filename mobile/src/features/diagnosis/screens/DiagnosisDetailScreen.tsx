@@ -456,7 +456,6 @@ const formatDate = (dateString: string): string => {
 // ============================================================
 // VIDEO PLAYER
 // ============================================================
-
 interface VideoPlayerProps {
   uri: string | null;
 }
@@ -475,6 +474,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ uri }) => {
     status: player.status,
   });
 
+  // ✅ Always called unconditionally, in the same order every render
+  const loadingPulse = useSharedValue(1);
+
   const isLoading = status === "loading";
   const hasError = status === "error";
 
@@ -490,7 +492,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ uri }) => {
     return (
       <View style={styles.videoPlaceholder}>
         <VideoIcon size={26} color={COLORS.textMuted} />
-
         <Text style={styles.videoPlaceholderText}>
           {hasError ? "Couldn't load video" : "Video unavailable"}
         </Text>
@@ -509,7 +510,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ uri }) => {
 
       {isLoading && (
         <View style={styles.videoOverlay}>
-          <SkeletonBlock height={200} radius={12} pulse={useSharedValue(1)} />
+          {/* ✅ Use the hoisted shared value */}
+          <SkeletonBlock height={200} radius={12} pulse={loadingPulse} />
         </View>
       )}
 
@@ -535,7 +537,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ uri }) => {
     </View>
   );
 };
-
 // ============================================================
 // STACKED THUMBNAILS
 // ============================================================

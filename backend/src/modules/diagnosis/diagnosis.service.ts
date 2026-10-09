@@ -84,7 +84,7 @@ export class DiagnosisService {
   }
 
   async updateDiagnosisResults(
-    videoId: Types.ObjectId,
+    videoId: string,
     results: DiagnosisResult[],
   ): Promise<Diagnosis> {
     const diagnosis = await this.diagnosisRepository.updateByVideoId(
@@ -114,7 +114,7 @@ export class DiagnosisService {
     return { diagnosisName: name, diagnosisId: result._id };
   }
 
-  async deleteDiagnosisByVideoId(videoId: Types.ObjectId): Promise<Diagnosis> {
+  async deleteDiagnosisByVideoId(videoId: string): Promise<Diagnosis> {
     const [diagnosisDoc, videoDoc] = await Promise.all([
       this.diagnosisRepository.deleteByVideoId(videoId),
       videoService.deleteVideo(String(videoId)),

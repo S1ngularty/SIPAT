@@ -17,7 +17,7 @@ export interface GroqAnalysis {
 }
 
 export interface CreateDiagnosisInput {
-  videoId: Types.ObjectId | string;
+  videoId:  string;
   results: DiagnosisResult[];
   analysis: GroqAnalysis | null;
 }
