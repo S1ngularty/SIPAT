@@ -26,7 +26,7 @@ export class DiagnosisController {
     const { videoId, results, analysis } = req.body;
 
     const diagnosis = await this.diagnosisService.createDiagnosis({
-      videoId: new Types.ObjectId(videoId),
+      videoId: videoId,
       results,
       analysis,
     });
@@ -113,7 +113,7 @@ export class DiagnosisController {
     if (!videoId) throw new Error("video is required");
 
     const diagnosis = await this.diagnosisService.updateDiagnosisResults(
-      new Types.ObjectId(videoId),
+      videoId,
       results,
     );
 
@@ -158,7 +158,7 @@ export class DiagnosisController {
     if (!videoId) throw new Error("video is required");
 
     await this.diagnosisService.deleteDiagnosisByVideoId(
-      new Types.ObjectId(videoId),
+      videoId,
     );
 
     const response: ApiResponse<null> = {

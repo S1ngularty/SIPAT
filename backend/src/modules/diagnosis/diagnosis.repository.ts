@@ -61,7 +61,7 @@ export class DiagnosisRepository {
   }
 
   async findByVideoId(
-    videoId: Types.ObjectId | string,
+    videoId: string,
   ): Promise<Diagnosis | null> {
     return DiagnosisModel.findOne({ videoId }).lean<Diagnosis>().exec();
   }
@@ -87,7 +87,7 @@ export class DiagnosisRepository {
   }
 
   async updateByVideoId(
-    videoId: Types.ObjectId,
+    videoId: string,
     results: Diagnosis["results"],
   ): Promise<Diagnosis | null> {
     return DiagnosisModel.findOneAndUpdate(
@@ -119,7 +119,7 @@ export class DiagnosisRepository {
       .exec();
   }
 
-  async deleteByVideoId(videoId: Types.ObjectId): Promise<Diagnosis | null> {
+  async deleteByVideoId(videoId: string): Promise<Diagnosis | null> {
     return DiagnosisModel.findOneAndDelete({ videoId })
       .lean<Diagnosis>()
       .exec();
