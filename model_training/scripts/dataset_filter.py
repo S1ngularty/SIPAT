@@ -6,8 +6,8 @@ import shutil
 # CONFIGURATION
 # ============================================================
 
-INPUT_DATASET = Path("/home/singularity/Downloads/crop_identification_datasets/main_dataset")
-OUTPUT_DATASET = Path("/home/singularity/Downloads/filtered_dataset")
+INPUT_DATASET = Path("/home/singularity/Downloads/pest_disease_datasets/set2/main_dataset")
+OUTPUT_DATASET = Path("/home/singularity/Downloads/pest_disease_datasets/set2/filtered_dataset")
 
 # Classes you WANT to keep.
 # Format:
@@ -29,9 +29,19 @@ OUTPUT_DATASET = Path("/home/singularity/Downloads/filtered_dataset")
 # The names here must match your original data.yaml classes.
 
 KEEP_CLASSES = {
- "eggplant_leaf":0,
-   "potato_leaf":1,
-   "chili_leaf":2
+ "Early Blight":0,
+   "Healthy":1,
+   "Yellow Leaf Curl Virus":2,
+   "Downy Mildew":3,
+   "Powdery Mildew":4,
+   "Fruit Rot":5,
+   "Melon Thrips":6,
+   "Fruit Borer":7,
+   "Aphids":8,
+"Flea Beetles":9,
+"Bacterial Wilt":10,
+"Cercospora Leaf Spot":11,
+"Leaf Curl":12
 }
 
 # Original class names.
@@ -45,11 +55,31 @@ KEEP_CLASSES = {
 #   3: early_blight
 
 ORIGINAL_CLASSES = [
- "eggplant_leaf",
-   "potato_leaf",
-   "tomato_leaf",
-   "chili_leaf",
-]
+"Early Blight",
+"Healthy",
+"Late Blight",
+"Leaf Miner",
+"Leaf Mold",
+"Mosaic Virus",
+"Septoria Leaf Spot",
+"Spider Mites",
+"Yellow Leaf Curl Virus",
+"Anthracnose",
+"Black Spot",
+"Botrytis Gray Mold",
+"Cercospora Leaf Spot",
+"Downy Mildew",
+"Leaf Curl",
+"Mycosphaerella Leaf Blotch",
+"Powdery Mildew",
+"Rust",
+"Bacterial Spot",
+"Fruit Rot",
+"Melon Thrips",
+"Fruit Borer",
+"Aphids",
+"Flea Beetles",
+"Bacterial Wilt"]
 
 
 # ============================================================

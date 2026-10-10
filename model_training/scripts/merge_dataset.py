@@ -28,7 +28,7 @@ import shutil
 #
 
 SOURCE_DATASET = Path(
-    "/home/singularity/Downloads/crop_identification_datasets/tomato5k"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/converted_detection"
 )
 
 
@@ -45,7 +45,7 @@ SOURCE_DATASET = Path(
 #
 
 MAIN_DATASET = Path(
-    "/home/singularity/Downloads/crop_identification_datasets/main_dataset"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/main"
 )
 
 
@@ -103,9 +103,19 @@ AUTO_RENAME_DUPLICATES = False
 #
 
 SOURCE_CLASSES = {
-    0:"Diseased",
-1:"Healthy_leaf", 
-
+   0: "Early Blight",
+  1: "Healthy",
+  2: "Yellow Leaf Curl Virus",
+  3: "Downy Mildew",
+  4: "Powdery Mildew",
+  5: "Fruit Rot",
+  6: "Melon Thrips",
+  7: "Fruit Borer",
+  8: "Aphids",
+  9: "Flea Beetles",
+  10: "Bacterial Wilt",
+  11: "Cercospora Leaf Spot",
+  12: "Leaf Curl",
   
 }
 
@@ -118,38 +128,26 @@ SOURCE_CLASSES = {
 #
 
 MAIN_CLASSES = {
-  0: "eggplant_leaf",
-  1:"potato_leaf", 
-  2:"chili_leaves",
-  3:"tomato_leaf",
- 
-
-    #crop pest and disease identification classes
-#  0:   " Early Blight",
-# 1: "Healthy",
-# 2:"Late Blight",
-# 3:"Leaf Miner",
-# 4:"Leaf Mold",
-# 5:"Mosaic Virus",
-# 6:"Septoria Leaf Spot",
-# 7:"Spider Mites",
-# 8:"Yellow Leaf Curl Virus",
-# 9: "Anthracnose",
-# 10: "Black Spot",
-# 11: "Botrytis Gray Mold",
-# 12: "Cercospora Leaf Spot",
-# 13:"Downy Mildew",
-# 14:"Leaf Curl",
-# 15: "Mycosphaerella Leaf Blotch",
-# 16: "Powdery Mildew",
-# 17: "Rust",
-# 18: "Bacterial Spot",
-# 19: "Fruit Rot",
-# 20: "Melon Thrips",
-# 21: "Fruit Borer",
-# 22: "Aphids",
-# 23: "Flea Beetles",
-# 24:"Wilt"
+ 0: "Early Blight",
+  1: "Healthy",
+  2: "Late Blight",
+  3: "Leaf Miner",
+  4: "Leaf Mold",
+  5: "Mosaic Virus",
+  6: "Septoria",
+  7: "Spider Mites",
+  8: "Yellow Leaf Curl Virus",
+  9: "Alternaria",
+  10: "Cercospora",
+  11: "Downy Mildew",
+  12: "Powdery Mildew",
+  13: "Fruit Rot",
+  14:"Melon Thrips",
+  15: "Fruit Borer",
+  16: "Aphids",
+  17: "Flea Beetles",
+  18: "Bacterial Wilt",
+  19: "Leaf Curl",
 }
 
 
@@ -185,10 +183,19 @@ MAIN_CLASSES = {
 #
 
 CLASS_MAPPING = {
-    0:3,
-    1:3,
-
-   
+    0: 0,   # Early Blight
+    1: 1,   # Healthy
+    2: 8,   # Yellow Leaf Curl Virus
+    3: 11,  # Downy Mildew
+    4: 12,  # Powdery Mildew
+    5: 13,  # Fruit Rot
+    6: 14,  # Melon Thrips
+    7: 15,  # Fruit Borer
+    8: 16,  # Aphids
+    9: 17,  # Flea Beetles
+    10: 18, # Bacterial Wilt
+    11: 10, # Cercospora Leaf Spot -> Cercospora
+    12: 19, # Leaf Curl
 }
 
 

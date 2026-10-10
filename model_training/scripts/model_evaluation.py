@@ -8,7 +8,7 @@ import os
 # LOAD MODEL
 # ==============================
 
-model = YOLO("../models/pest_diseasenh /best.pt")
+model = YOLO("../models/pest_disease/v2.pt")
 
 
 # ==============================
@@ -38,6 +38,7 @@ if choice == "1":
     results = model.predict(
         source=image,
         imgsz=640,
+        tracker="bytetrack.yaml",
         conf=0.25,
         device="cpu",
         save=True
