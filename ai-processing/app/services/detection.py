@@ -16,7 +16,7 @@ from models.ai import AIModels
 # CONFIGURATION
 # ============================================================
 
-SAMPLE_FPS = 15
+SAMPLE_FPS = 20
 
 # Rough amount of evidence required before reporting.
 PERSISTENCE_SECONDS = 1.0
@@ -26,11 +26,11 @@ MIN_OBSERVATIONS = 8
 
 # How many sampled frames a track can disappear before
 # we consider the object gone.
-MAX_MISSED_FRAMES = 4
+MAX_MISSED_FRAMES = 8
 
 CROP_CONFIDENCE = 0.40
 
-DISEASE_CONFIDENCE = 0.60
+DISEASE_CONFIDENCE = 0.25
 
 # Minimum percentage of the disease bounding box that
 # should overlap the crop bounding box.
