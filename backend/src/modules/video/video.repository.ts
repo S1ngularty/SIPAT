@@ -12,7 +12,7 @@ import type {
 } from "./video.types.js";
 import type { QueryFilter, SortOrder } from "mongoose";
 
-class VideoRepository {
+export class VideoRepository {
   // ==========================================
   // CREATE
   // ==========================================
@@ -124,7 +124,7 @@ class VideoRepository {
     return VideoModel.findByIdAndUpdate(
       videoId,
       { $set: updates },
-      { returnDocument: 'after', runValidators: true },
+      { returnDocument: "after", runValidators: true },
     ).exec();
   }
 
@@ -140,7 +140,7 @@ class VideoRepository {
           processedAt: processedAt ?? null,
         },
       },
-      { returnDocument: 'after', runValidators: true },
+      { returnDocument: "after", runValidators: true },
     ).exec();
   }
 
@@ -148,7 +148,7 @@ class VideoRepository {
     return VideoModel.findByIdAndUpdate(
       videoId,
       { $set: { status: "processing" } },
-      { returnDocument: 'after' },
+      { returnDocument: "after" },
     ).exec();
   }
 
@@ -159,7 +159,7 @@ class VideoRepository {
     return VideoModel.findByIdAndUpdate(
       videoId,
       { $set: { status: "completed", processedAt } },
-      { returnDocument: 'after' },
+      { returnDocument: "after" },
     ).exec();
   }
 
@@ -170,7 +170,7 @@ class VideoRepository {
     return VideoModel.findByIdAndUpdate(
       videoId,
       { $set: { status: "failed", processedAt } },
-      { returnDocument: 'after' },
+      { returnDocument: "after" },
     ).exec();
   }
 
@@ -178,7 +178,7 @@ class VideoRepository {
     return VideoModel.findByIdAndUpdate(
       videoId,
       { $set: { status: "uploaded" } },
-      { returnDocument: 'after' },
+      { returnDocument: "after" },
     ).exec();
   }
 
@@ -186,9 +186,9 @@ class VideoRepository {
   // DELETE
   // ==========================================
 
-  async deleteVideo(videoId: string): Promise<boolean> {
+  async deleteVideo(videoId: string): Promise<Video | null> {
     const result = await VideoModel.findByIdAndDelete(videoId).exec();
-    return result !== null;
+    return result;
   }
 
   async deleteByIdAndUser(videoId: string, userId: string): Promise<boolean> {

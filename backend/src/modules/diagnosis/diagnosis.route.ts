@@ -3,14 +3,19 @@ import { diagnosisController } from "./index.js";
 
 const router = Router();
 
-router.route("/diagnosis").post(diagnosisController.create);
+router.route("/").post(diagnosisController.create);
+
+router.route("/list").get(diagnosisController.getDiagnosisList);
 
 router
-  .route("/diagnosis/:videoId")
-  .get(diagnosisController.getByVideoId)
+  .route("/:diagnosisId")
+  .get(diagnosisController.getById)
   .put(diagnosisController.updateResults)
-  .delete(diagnosisController.deleteByVideoId);
+  .patch(diagnosisController.renameDiagnosis);
 
-router.route("/diagnosis/:videoId").get(diagnosisController.getByVideoId);
+router
+  .route("/video/:videoId")
+  .get(diagnosisController.getByVideoId)
+  .delete(diagnosisController.deleteByVideoId);
 
 export default router;

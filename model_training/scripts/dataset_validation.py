@@ -1,5 +1,6 @@
 from pathlib import Path
 from collections import Counter
+import yaml
 
 
 # ============================================================
@@ -7,11 +8,10 @@ from collections import Counter
 # ============================================================
 
 DATASET_DIR = Path(
-    "/home/singularity/Downloads/crop_identification_datasets/main_dataset"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/main_dataset"
 )
 
-CLASSES_FILE = DATASET_DIR / "classes.txt"
-
+DATA_YAML = DATASET_DIR / "data.yaml"
 
 # ============================================================
 # DATASET SPLITS
@@ -41,29 +41,76 @@ IMAGE_EXTENSIONS = {
 # READ CLASSES
 # ============================================================
 
+
+# ============================================================
+# READ CLASSES FROM data.yaml
+# ============================================================
+
+
+
 def read_classes():
-
-    if not CLASSES_FILE.exists():
-
+    if not DATA_YAML.exists():
         raise FileNotFoundError(
-            f"classes.txt not found:\n"
-            f"{CLASSES_FILE}"
+            f"data.yaml not found:\n{DATA_YAML}"
         )
 
-    with open(
-        CLASSES_FILE,
-        "r",
-        encoding="utf-8"
-    ) as file:
+    with DATA_YAML.open("r", encoding="utf-8-sig") as file:
+        data = yaml.safe_load(file)
 
-        classes = [
-            line.strip()
-            for line in file
-            if line.strip()
-        ]
+    if not isinstance(data, dict) or "names" not in data:
+        raise ValueError(
+            "data.yaml must contain a 'names' field."
+        )
 
-    return classes
+    names = data["names"]
 
+    # Supports either:
+    # names:
+    #   0: eggplant_leaf
+    #   1: potato_leaf
+    #
+    # Or:
+    # names:
+    #   - eggplant_leaf
+    #   - potato_leaf
+
+    if isinstance(names, dict):
+        try:
+            names = {
+                int(class_id): name
+                for class_id, name in names.items()
+            }
+        except (ValueError, TypeError) as error:
+            raise ValueError(
+                "Class IDs in data.yaml must be integers."
+            ) from error
+
+        expected_ids = list(range(len(names)))
+
+        if sorted(names) != expected_ids:
+            raise ValueError(
+                "Class IDs must be consecutive, starting at 0."
+            )
+
+        classes = [names[class_id] for class_id in expected_ids]
+
+    elif isinstance(names, list):
+        classes = names
+
+    else:
+        raise ValueError(
+            "'names' must be a list or integer-keyed mapping."
+        )
+
+    if not classes or any(
+        not isinstance(name, str) or not name.strip()
+        for name in classes
+    ):
+        raise ValueError(
+            "Class names must be non-empty strings."
+        )
+
+    return [name.strip() for name in classes]
 
 # ============================================================
 # FIND IMAGES

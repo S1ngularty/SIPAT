@@ -1,14 +1,18 @@
 import { fastAPIClient } from "../../integrations/fastApi/fastapi.client.js";
+import { groqClient } from "../../integrations/groq/groq.client.js";
 import { r2Client } from "../../integrations/storage/r2.client.js";
+import type { GroqAnalysis } from "../diagnosis/diagnosis.types.js";
 import { diagnosisService } from "../diagnosis/index.js";
-import { videoRepository } from "./video.repository.js";
+import { VideoRepository } from "./video.repository.js";
 
-class AIProcessingService {
+export class AIProcessingService {
+  constructor(private readonly videoRepository: VideoRepository) {}
+
   async processVideo(videoId: string): Promise<unknown> {
     try {
       if (!videoId) throw new Error("Video Id is missing");
 
-      const video = await videoRepository.videoUpdateStatus(videoId, {
+      const video = await this.videoRepository.videoUpdateStatus(videoId, {
         status: "processing",
         processedAt: new Date(Date.now()),
       });
@@ -30,11 +34,21 @@ class AIProcessingService {
       console.log("processed result log:", processResult);
 
       if (processResult != null && !processResult.success) {
-        await videoRepository.videoUpdateStatus(videoId, {
+        await this.videoRepository.videoUpdateStatus(videoId, {
           status: "failed",
         });
 
         throw new Error(`Failed to Process the video: ${videoId}`);
+      }
+      let groqContent: GroqAnalysis | null | undefined;
+      if (
+        processResult?.results !== null &&
+        processResult?.results !== undefined &&
+        processResult?.results?.length > 0
+      ) {
+        groqContent = await groqClient.getGroqChatCompletion(
+          processResult.results,
+        );
       }
 
       const diagnosisData =
@@ -53,6 +67,7 @@ class AIProcessingService {
       const createDiagnosis = await diagnosisService.createDiagnosis({
         videoId,
         results: diagnosisData,
+        analysis: groqContent ?? null,
       });
 
       if (!createDiagnosis)
@@ -60,7 +75,9 @@ class AIProcessingService {
           `Failed to create the Diagnosis with video ID: ${videoId}`,
         );
 
-      await videoRepository.videoUpdateStatus(videoId, { status: "completed" });
+      await this.videoRepository.videoUpdateStatus(videoId, {
+        status: "completed",
+      });
 
       return processResult;
       //then return if successfully requested
@@ -70,5 +87,3 @@ class AIProcessingService {
     }
   }
 }
-
-export const AIProcessing = new AIProcessingService();

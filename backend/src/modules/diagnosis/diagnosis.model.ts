@@ -4,6 +4,10 @@ import type { Diagnosis } from "./diagnosis.types.js";
 
 const diagnosisSchema = new Schema<Diagnosis>(
   {
+    diagnosisName: {
+      type: String,
+      required: false,
+    },
     videoId: {
       type: Schema.Types.ObjectId,
       ref: "Video",
@@ -59,6 +63,11 @@ const diagnosisSchema = new Schema<Diagnosis>(
         },
       ],
       default: [],
+    },
+
+    analysis: {
+      summary: String,
+      recommendations: [String],
     },
   },
   {
