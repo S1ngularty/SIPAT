@@ -30,6 +30,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import HomeScreen from "../features/home/screens/Home";
 import { DiagnosisListScreen } from "../features/diagnosis/screens/DiagnosisListScreen";
 import { UserStackParamList } from "./UserNavigation"; // Import your stack param list
+import AccountSettingsScreen from "../features/profile/screen/AccountSettingsScreen";
 
 // Define types for navigation
 export type TabParamList = {
@@ -248,7 +249,7 @@ const HomeTabNavigator: React.FC = () => {
       />
       <Tab.Screen
         name="Profile"
-        component={PlaceholderScreen}
+        component={AccountSettingsScreen}
         options={{ tabBarLabel: "Profile" }}
       />
     </Tab.Navigator>
