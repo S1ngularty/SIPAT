@@ -29,6 +29,8 @@ import Svg, { Path, Circle, Rect } from "react-native-svg";
 
 import { useDiagnosisList } from "../hooks/useDiagnosisList";
 import type { VideoAnalysis, TrackResult } from "../diagnosisTypes";
+import { Skeleton } from "../../../components/ui/SkeletonComponent";
+import { scheduleOnRN } from "react-native-worklets";
 
 // ==========================================
 // ICONS
@@ -224,6 +226,40 @@ const getDateBucket = (dateString: string): DateBucket => {
   return "older";
 };
 
+const DiagnosisItemSkeleton: React.FC = () => (
+    <View style={styles.skeletonItem}>
+      {/* Video thumbnail placeholder */}
+      <Skeleton width={42} height={42} borderRadius={10} />
+
+      {/* Diagnosis title and metadata placeholders */}
+      <View style={styles.skeletonContent}>
+        <Skeleton width="75%" height={14} borderRadius={4} />
+
+        <Skeleton width="90%" height={12} borderRadius={4} />
+
+        <Skeleton width="45%" height={10} borderRadius={4} />
+      </View>
+
+      {/* Confidence placeholder */}
+      <View style={styles.skeletonTrailing}>
+        <Skeleton width={34} height={14} borderRadius={4} />
+        <Skeleton width={48} height={8} borderRadius={4} />
+      </View>
+    </View>
+  );
+
+  const DiagnosisListSkeleton: React.FC = () => (
+    <View style={styles.skeletonList}>
+      <View style={styles.sectionHeader}>
+        <Skeleton width={65} height={12} borderRadius={4} />
+      </View>
+
+      {Array.from({ length: 5 }, (_, index) => (
+        <DiagnosisItemSkeleton key={index} />
+      ))}
+    </View>
+  );
+
 // ==========================================
 // FILTER CHIPS
 // ==========================================
@@ -356,6 +392,7 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
     mass: 0.6,
     overshootClamping: true,
   };
+  
 
   const showActions = (show: boolean) => {
     setIsRevealed(show);
@@ -375,7 +412,7 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
     .failOffsetY([-12, 12])
     .onStart(() => {
       startX.value = translateX.value;
-      runOnJS(showActions)(true);
+      scheduleOnRN(() => showActions(true));
     })
     .onUpdate((e) => {
       const next = startX.value + e.translationX;
@@ -906,14 +943,12 @@ export const DiagnosisListScreen: React.FC = () => {
 
   const hasFilter = activeFilter !== "all";
 
-  if (isLoading && analyses.length === 0) {
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.safe} edges={["top"]}>
         <Header />
         <FilterChips active={activeFilter} onChange={setActiveFilter} />
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#6b7280" />
-        </View>
+       <DiagnosisListSkeleton/>
       </SafeAreaView>
     );
   }
@@ -1370,5 +1405,36 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#f3f4f6",
     marginHorizontal: 16,
+  },
+
+  skeletonList: {
+    paddingBottom: 20,
+  },
+
+  skeletonItem: {
+    minHeight: 68,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    marginHorizontal: 14,
+    marginVertical: 4,
+    gap: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#f3f4f6",
+    backgroundColor: "#ffffff",
+  },
+
+  skeletonContent: {
+    flex: 1,
+    minWidth: 0,
+    gap: 7,
+  },
+
+  skeletonTrailing: {
+    width: 58,
+    alignItems: "flex-end",
+    gap: 5,
   },
 });

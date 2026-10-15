@@ -62,9 +62,11 @@ export const useDiagnosisList = () => {
 
   const refresh = useCallback(async () => {
     setIsRefreshing(true);
+    setIsLoading(true)
     setPage(1);
     await fetchAnalyses(1, true);
     setIsRefreshing(false);
+    setIsLoading(false)
   }, [fetchAnalyses]);
 
   const loadMore = useCallback(async () => {
