@@ -179,6 +179,7 @@ export default function usePreview() {
       navigation.navigate("HomeTabs", {
         screen: "Diagnoses",
       });
+      showToast("info", "Uploaded Successfully", "Video is being processed");
     }, 1000);
   };
 

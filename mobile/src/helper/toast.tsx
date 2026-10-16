@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import Toast, { ToastConfig } from "react-native-toast-message";
 
-type ToastVariant = "success" | "error" | "warning";
+type ToastVariant = "info" | "success" | "error" | "warning";
 
 type CustomToastProps = {
   variant: ToastVariant;
