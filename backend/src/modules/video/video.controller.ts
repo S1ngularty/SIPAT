@@ -13,6 +13,7 @@ import type {
   IAttachThumbnailResponse,
   IPresignedThumbnailUploadResponse,
   IPresignedUploadResponse,
+  IVideoListRow,
 } from "./video.dto.js";
 import { wrapResponse } from "../../core/utils/response.util.js";
 
@@ -21,6 +22,34 @@ export class VideoController {
     private readonly videoService: VideoService,
     private readonly thumbnailService: ThumbnailService,
   ) {}
+
+  /**
+   * The signed-in user's videos (any status), each with its diagnosis joined
+   * and a presigned preview URL. Drives the Diagnoses list.
+   */
+  getVideoList = async (
+    req: Request<{}, {}, {}, { page?: string; limit?: string }>,
+    res: Response<ApiResponse<IVideoListRow[]>>,
+    next: NextFunction,
+  ) => {
+    try {
+      const { userId } = req.auth;
+
+      if (!userId) throw new Error("missing userId");
+
+      const { page, limit } = req.query;
+
+      const { data, meta } = await this.videoService.getVideoList(
+        userId,
+        Number(page) || 1,
+        Number(limit) || 10,
+      );
+
+      wrapResponse("OK", 200, res, data, meta);
+    } catch (error) {
+      next(error);
+    }
+  };
 
   createVideoUpload = async (
     req: Request<{}, {}, CreateVideoInput>,

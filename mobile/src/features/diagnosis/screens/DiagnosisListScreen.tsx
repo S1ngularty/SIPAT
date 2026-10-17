@@ -35,8 +35,8 @@ import {
   Video,
 } from "lucide-react-native";
 
-import { useDiagnosisList } from "../hooks/useDiagnosisList";
-import type { VideoAnalysis, TrackResult } from "../diagnosisTypes";
+import { useVideoList } from "../hooks/useVideoList";
+import type { VideoListItem, TrackResult } from "../diagnosisTypes";
 import { Skeleton } from "../../../components/ui/SkeletonComponent";
 import { CategoryFilterList } from "../../../components/ui/CategoryFilterList";
 import { colors, radii, spacing } from "../../../theme";
@@ -53,18 +53,20 @@ const ICON_STROKE = 1.5;
 // HELPERS
 // ==========================================
 
-const getDisplayName = (analysis: VideoAnalysis): string => {
-  const named = analysis.diagnosisName?.trim();
+const getDisplayName = (item: VideoListItem): string => {
+  const named = item.diagnosis?.diagnosisName?.trim();
   if (named) return named;
-  return analysis.video?.originalFileName || "Untitled video";
+  return item.originalFileName || "Untitled video";
 };
 
-const getTopFinding = (analysis: VideoAnalysis): TrackResult | null => {
-  if (!analysis.results || analysis.results.length === 0) {
+const getTopFinding = (item: VideoListItem): TrackResult | null => {
+  const results = item.diagnosis?.results;
+
+  if (!results || results.length === 0) {
     return null;
   }
 
-  return analysis.results.reduce((best, curr) =>
+  return results.reduce((best, curr) =>
     curr.confidence > best.confidence ? curr : best,
   );
 };
@@ -391,15 +393,15 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
 // ==========================================
 
 interface DiagnosisItemProps {
-  analysis: VideoAnalysis;
-  onPress: (analysis: VideoAnalysis) => void;
-  onRename: (analysis: VideoAnalysis) => void;
-  onDelete: (analysis: VideoAnalysis) => void;
-  onOpenMenu: (analysis: VideoAnalysis) => void;
+  item: VideoListItem;
+  onPress: (item: VideoListItem) => void;
+  onRename: (item: VideoListItem) => void;
+  onDelete: (item: VideoListItem) => void;
+  onOpenMenu: (item: VideoListItem) => void;
 }
 
 const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
-  analysis,
+  item,
   onPress,
   onRename,
   onDelete,
@@ -407,10 +409,18 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
 }) => {
   const rotation = useSharedValue(0);
 
-  const status = analysis.video?.status ?? "processing";
-  const topFinding = getTopFinding(analysis);
+  const diagnosis = item.diagnosis;
+  const hasDiagnosis = !!diagnosis;
+  const topFinding = getTopFinding(item);
+  const status = item.status;
 
-  const isProcessing = status === "processing" || status === "uploaded";
+  // A video without a diagnosis is still moving through the pipeline and gets
+  // a spinner; once it has a diagnosis the card shows its confidence instead.
+  const isProcessing =
+    !hasDiagnosis &&
+    (status === "pending_upload" ||
+      status === "uploaded" ||
+      status === "processing");
 
   React.useEffect(() => {
     if (!isProcessing) {
@@ -439,6 +449,10 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
   }));
 
   const getStatusLabel = (): string => {
+    if (diagnosis && topFinding) {
+      return `${topFinding.crop} · ${topFinding.condition}`;
+    }
+
     switch (status) {
       case "pending_upload":
         return "Waiting to upload";
@@ -447,9 +461,7 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
       case "processing":
         return "Analyzing video";
       case "completed":
-        return topFinding
-          ? `${topFinding.crop} · ${topFinding.condition}`
-          : "Analysis complete";
+        return "Analysis complete";
       case "failed":
         return "Analysis failed";
       default:
@@ -458,9 +470,9 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
   };
 
   const getStatusColor = (): string => {
+    if (hasDiagnosis) return colors.success;
+
     switch (status) {
-      case "completed":
-        return colors.success;
       case "failed":
         return colors.danger;
       default:
@@ -468,77 +480,83 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
     }
   };
 
+  const content = (
+    <View style={styles.item}>
+      <View style={styles.thumbnail}>
+        {item.thumbnailUrl ? (
+          <Image
+            source={{ uri: item.thumbnailUrl }}
+            style={styles.thumbnailImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <Video size={19} color={colors.textMuted} strokeWidth={ICON_STROKE} />
+        )}
+      </View>
+
+      <View style={styles.content}>
+        <Text style={styles.title} numberOfLines={1} ellipsizeMode="middle">
+          {getDisplayName(item)}
+        </Text>
+
+        <View style={styles.subtitleRow}>
+          <View
+            style={[styles.statusDot, { backgroundColor: getStatusColor() }]}
+          />
+          <Text style={styles.subtitle} numberOfLines={1}>
+            {getStatusLabel()}
+          </Text>
+        </View>
+
+        <Text style={styles.meta}>
+          {formatRelativeTime(item.createdAt)}
+          {diagnosis?.results?.length
+            ? ` · ${diagnosis.results.length} finding${
+                diagnosis.results.length !== 1 ? "s" : ""
+              }`
+            : ""}
+        </Text>
+      </View>
+
+      <View style={styles.trailing}>
+        {hasDiagnosis && topFinding && (
+          <View style={styles.confidenceContainer}>
+            <Text style={styles.percent}>
+              {Math.round(topFinding.confidence * 100)}%
+            </Text>
+            <Text style={styles.confidenceLabel}>confidence</Text>
+          </View>
+        )}
+
+        {!hasDiagnosis && status === "failed" && (
+          <View style={styles.failedCircle}>
+            <Text style={styles.failed}>!</Text>
+          </View>
+        )}
+
+        {isProcessing && (
+          <Animated.Text style={[styles.spinner, spinnerStyle]}>
+            ⟳
+          </Animated.Text>
+        )}
+      </View>
+    </View>
+  );
+
+  // Videos without a diagnosis are informational only: nothing to rename or
+  // delete yet, and tapping does nothing.
+  if (!hasDiagnosis) {
+    return <View style={styles.staticWrapper}>{content}</View>;
+  }
+
   return (
     <SwipeableRow
-      onPress={() => onPress(analysis)}
-      onRename={() => onRename(analysis)}
-      onDelete={() => onDelete(analysis)}
-      onLongPress={() => onOpenMenu(analysis)}
+      onPress={() => onPress(item)}
+      onRename={() => onRename(item)}
+      onDelete={() => onDelete(item)}
+      onLongPress={() => onOpenMenu(item)}
     >
-      <View style={styles.item}>
-        <View style={styles.thumbnail}>
-          {analysis.video?.thumbnailUrl ? (
-            <Image
-              source={{ uri: analysis.video.thumbnailUrl }}
-              style={styles.thumbnailImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <Video
-              size={19}
-              color={colors.textMuted}
-              strokeWidth={ICON_STROKE}
-            />
-          )}
-        </View>
-
-        <View style={styles.content}>
-          <Text style={styles.title} numberOfLines={1} ellipsizeMode="middle">
-            {getDisplayName(analysis)}
-          </Text>
-
-          <View style={styles.subtitleRow}>
-            <View
-              style={[styles.statusDot, { backgroundColor: getStatusColor() }]}
-            />
-            <Text style={styles.subtitle} numberOfLines={1}>
-              {getStatusLabel()}
-            </Text>
-          </View>
-
-          <Text style={styles.meta}>
-            {formatRelativeTime(analysis.createdAt)}
-            {analysis.results?.length
-              ? ` · ${analysis.results.length} finding${
-                  analysis.results.length !== 1 ? "s" : ""
-                }`
-              : ""}
-          </Text>
-        </View>
-
-        <View style={styles.trailing}>
-          {isProcessing && (
-            <Animated.Text style={[styles.spinner, spinnerStyle]}>
-              ⟳
-            </Animated.Text>
-          )}
-
-          {status === "completed" && topFinding && (
-            <View style={styles.confidenceContainer}>
-              <Text style={styles.percent}>
-                {Math.round(topFinding.confidence * 100)}%
-              </Text>
-              <Text style={styles.confidenceLabel}>confidence</Text>
-            </View>
-          )}
-
-          {status === "failed" && (
-            <View style={styles.failedCircle}>
-              <Text style={styles.failed}>!</Text>
-            </View>
-          )}
-        </View>
-      </View>
+      {content}
     </SwipeableRow>
   );
 };
@@ -634,23 +652,23 @@ const RenameModal: React.FC<RenameModalProps> = ({
 // ==========================================
 
 interface ActionSheetProps {
-  analysis: VideoAnalysis | null;
+  item: VideoListItem | null;
   onClose: () => void;
-  onRename: (analysis: VideoAnalysis) => void;
-  onDelete: (analysis: VideoAnalysis) => void;
+  onRename: (item: VideoListItem) => void;
+  onDelete: (item: VideoListItem) => void;
 }
 
 const ActionSheet: React.FC<ActionSheetProps> = ({
-  analysis,
+  item,
   onClose,
   onRename,
   onDelete,
 }) => {
-  if (!analysis) return null;
+  if (!item) return null;
 
   return (
     <Modal
-      visible={!!analysis}
+      visible={!!item}
       transparent
       animationType="fade"
       onRequestClose={onClose}
@@ -658,14 +676,14 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
       <Pressable style={styles.modalBackdrop} onPress={onClose}>
         <Pressable style={styles.sheetCard} onPress={() => {}}>
           <Text style={styles.sheetTitle} numberOfLines={1}>
-            {getDisplayName(analysis)}
+            {getDisplayName(item)}
           </Text>
 
           <TouchableOpacity
             style={styles.sheetAction}
             onPress={() => {
               onClose();
-              onRename(analysis);
+              onRename(item);
             }}
             activeOpacity={0.7}
           >
@@ -679,7 +697,7 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
             style={styles.sheetAction}
             onPress={() => {
               onClose();
-              onDelete(analysis);
+              onDelete(item);
             }}
             activeOpacity={0.7}
           >
@@ -720,7 +738,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onRecord, hasFilter }) => (
     </View>
 
     <Text style={styles.emptyTitle}>
-      {hasFilter ? "No results" : "No diagnoses yet"}
+      {hasFilter ? "No results" : "No videos yet"}
     </Text>
 
     <Text style={styles.emptyText}>
@@ -762,29 +780,34 @@ export const DiagnosisListScreen: React.FC = () => {
   const tabBarHeight = useBottomTabBarHeight();
 
   const {
-    analyses,
+    videos,
     isLoading,
     isRefreshing,
     refresh,
+    reload,
     loadMore,
     hasMore,
-    renameAnalysis,
-    deleteAnalysis,
-  } = useDiagnosisList();
+    renameVideo,
+    deleteVideo,
+  } = useVideoList();
 
   const [activeFilter, setActiveFilter] = useState<FilterValue>("all");
-  const [menuTarget, setMenuTarget] = useState<VideoAnalysis | null>(null);
-  const [renameTarget, setRenameTarget] = useState<VideoAnalysis | null>(null);
+  const [menuTarget, setMenuTarget] = useState<VideoListItem | null>(null);
+  const [renameTarget, setRenameTarget] = useState<VideoListItem | null>(null);
 
+  // Silent on focus: update rows in place instead of flashing the skeleton.
   useFocusEffect(
     useCallback(() => {
-      refresh();
-    }, [refresh]),
+      reload();
+    }, [reload]),
   );
 
-  const handleItemPress = (analysis: VideoAnalysis) => {
+  const handleItemPress = (item: VideoListItem) => {
+    // Only videos that already have a diagnosis open the detail screen.
+    if (!item.diagnosis) return;
+
     navigation.getParent().navigate("DiagnosisDetail", {
-      videoId: analysis._id,
+      videoId: item.diagnosis._id,
     });
   };
 
@@ -792,32 +815,36 @@ export const DiagnosisListScreen: React.FC = () => {
     navigation.getParent()?.navigate("VideoScanning");
   };
 
-  const handleOpenMenu = (analysis: VideoAnalysis) => {
-    setMenuTarget(analysis);
+  const handleOpenMenu = (item: VideoListItem) => {
+    setMenuTarget(item);
   };
 
-  const handleOpenRename = (analysis: VideoAnalysis) => {
-    setRenameTarget(analysis);
+  const handleOpenRename = (item: VideoListItem) => {
+    setRenameTarget(item);
   };
 
   const handleSubmitRename = async (value: string) => {
-    if (!renameTarget) return;
-    const target = renameTarget;
+    if (!renameTarget?.diagnosis) {
+      setRenameTarget(null);
+      return;
+    }
+
+    const diagnosisId = renameTarget.diagnosis._id;
     setRenameTarget(null);
-    await renameAnalysis(target._id, value);
+    await renameVideo(diagnosisId, value);
   };
 
-  const handleDelete = (analysis: VideoAnalysis) => {
+  const handleDelete = (item: VideoListItem) => {
     Alert.alert(
-      "Delete diagnosis?",
-      `"${getDisplayName(analysis)}" will be permanently removed.`,
+      "Delete video?",
+      `"${getDisplayName(item)}" will be permanently removed.`,
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Delete",
           style: "destructive",
           onPress: () => {
-            deleteAnalysis(analysis.video._id);
+            deleteVideo(item._id);
           },
         },
       ],
@@ -827,12 +854,12 @@ export const DiagnosisListScreen: React.FC = () => {
   const sections = useMemo(() => {
     const filtered =
       activeFilter === "all"
-        ? analyses
-        : analyses.filter(
-            (analysis) => getDateBucket(analysis.createdAt) === activeFilter,
+        ? videos
+        : videos.filter(
+            (item) => getDateBucket(item.createdAt) === activeFilter,
           );
 
-    const grouped: Record<DateBucket, VideoAnalysis[]> = {
+    const grouped: Record<DateBucket, VideoListItem[]> = {
       today: [],
       yesterday: [],
       last3Days: [],
@@ -840,8 +867,8 @@ export const DiagnosisListScreen: React.FC = () => {
       older: [],
     };
 
-    filtered.forEach((analysis) => {
-      grouped[getDateBucket(analysis.createdAt)].push(analysis);
+    filtered.forEach((item) => {
+      grouped[getDateBucket(item.createdAt)].push(item);
     });
 
     return BUCKET_ORDER.filter((bucket) => grouped[bucket].length > 0).map(
@@ -851,7 +878,7 @@ export const DiagnosisListScreen: React.FC = () => {
         data: grouped[bucket],
       }),
     );
-  }, [analyses, activeFilter]);
+  }, [videos, activeFilter]);
 
   const hasFilter = activeFilter !== "all";
 
@@ -891,7 +918,7 @@ export const DiagnosisListScreen: React.FC = () => {
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <DiagnosisItem
-            analysis={item}
+            item={item}
             onPress={handleItemPress}
             onRename={handleOpenRename}
             onDelete={handleDelete}
@@ -933,7 +960,7 @@ export const DiagnosisListScreen: React.FC = () => {
       />
 
       <ActionSheet
-        analysis={menuTarget}
+        item={menuTarget}
         onClose={() => setMenuTarget(null)}
         onRename={handleOpenRename}
         onDelete={handleDelete}
@@ -943,7 +970,8 @@ export const DiagnosisListScreen: React.FC = () => {
         visible={!!renameTarget}
         initialValue={
           renameTarget
-            ? (renameTarget.diagnosisName ?? getDisplayName(renameTarget))
+            ? (renameTarget.diagnosis?.diagnosisName ??
+              getDisplayName(renameTarget))
             : ""
         }
         onCancel={() => setRenameTarget(null)}
@@ -1034,6 +1062,14 @@ const styles = StyleSheet.create({
 
   // Swipeable wrapper
   swipeWrapper: {
+    marginHorizontal: spacing.xl,
+    marginVertical: spacing.xs,
+    borderRadius: radii.md,
+    overflow: "hidden",
+    backgroundColor: colors.white,
+  },
+  // Non-actionable rows (videos without a diagnosis yet).
+  staticWrapper: {
     marginHorizontal: spacing.xl,
     marginVertical: spacing.xs,
     borderRadius: radii.md,

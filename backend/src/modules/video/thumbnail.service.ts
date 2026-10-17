@@ -5,7 +5,10 @@ import type {
   IAttachThumbnailResponse,
   IPresignedThumbnailUploadResponse,
 } from "./video.dto.js";
-import { thumbnailExtension, validateThumbnailUpload } from "./video.validation.js";
+import {
+  thumbnailExtension,
+  validateThumbnailUpload,
+} from "./video.validation.js";
 
 const UPLOAD_URL_TTL_SECONDS = 300;
 
@@ -26,17 +29,25 @@ export class ThumbnailService {
   constructor(private readonly videoRepository: VideoRepository) {}
 
   /**
-   * Mirrors the video's own layout so a recording and its preview image live
-   * together: `videos/{userId}/{videoId}/thumbnail.{ext}`.
+   * The preview image lives beside the video and its evidence, inside the
+   * video's own folder: `videos/{userId}/{<storageKey segment>}/thumbnail.{ext}`.
+   *
+   * It must key off the recording's `storageKey` — not the document `_id` —
+   * because the folder segment is a client-generated id that differs from
+   * `_id`. Using `_id` would drop the thumbnail in a sibling folder, so it
+   * would survive the video's prefix delete.
    */
-  private buildStorageKey(
-    userId: string,
-    videoId: string,
-    contentType: string,
-  ): string {
+  private buildStorageKey(videoStorageKey: string, contentType: string): string {
     const extension = thumbnailExtension(contentType);
 
-    return `videos/${userId}/${videoId}/thumbnail.${extension}`;
+    return `${this.storageDirectory(videoStorageKey)}thumbnail.${extension}`;
+  }
+
+  /** `videos/u/id/clip.mp4` -> `videos/u/id/`. */
+  private storageDirectory(storageKey: string): string {
+    const lastSlash = storageKey.lastIndexOf("/");
+
+    return lastSlash === -1 ? storageKey : storageKey.slice(0, lastSlash + 1);
   }
 
   /**
@@ -55,8 +66,7 @@ export class ThumbnailService {
     if (!video) throw new Error(`Video not found: ${videoId}`);
 
     const thumbnailStorageKey = this.buildStorageKey(
-      userId,
-      videoId,
+      video.storageKey,
       contentType,
     );
 
@@ -76,7 +86,7 @@ export class ThumbnailService {
   /**
    * Records an uploaded thumbnail on the video.
    *
-   * The key is rejected unless it sits under this video's own prefix, so a
+   * The key is rejected unless it sits inside this video's own folder, so a
    * client cannot attach an object it does not own.
    */
   async attach(
@@ -84,7 +94,11 @@ export class ThumbnailService {
     videoId: string,
     thumbnailStorageKey: string,
   ): Promise<IAttachThumbnailResponse> {
-    const expectedPrefix = `videos/${userId}/${videoId}/thumbnail.`;
+    const video = await this.videoRepository.findByIdAndUser(videoId, userId);
+
+    if (!video) throw new Error(`Video not found: ${videoId}`);
+
+    const expectedPrefix = `${this.storageDirectory(video.storageKey)}thumbnail.`;
 
     if (!thumbnailStorageKey.startsWith(expectedPrefix)) {
       throw new Error("Thumbnail key does not belong to this video");
@@ -100,8 +114,7 @@ export class ThumbnailService {
 
     return {
       videoId: updated._id.toString(),
-      thumbnailStorageKey:
-        updated.thumbnailStorageKey ?? thumbnailStorageKey,
+      thumbnailStorageKey: updated.thumbnailStorageKey ?? thumbnailStorageKey,
     };
   }
 

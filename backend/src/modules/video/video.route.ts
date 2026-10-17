@@ -8,6 +8,9 @@ const router = Router();
 router.use(AuthMiddleware.requireSession);
 // router.use(AuthMiddleware.requireRole("user"));
 
+// List the signed-in user's videos with their diagnosis joined.
+router.route("/").get(videoController.getVideoList);
+
 router.route("/upload").post(videoController.createVideoUpload);
 router
   .route("/:videoId/uploaded")

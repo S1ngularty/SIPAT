@@ -2,6 +2,12 @@
 // ENUMS / UNION TYPES
 // ==========================================
 
+import type { Types } from "mongoose";
+import type {
+  DiagnosisResult,
+  GroqAnalysis,
+} from "../diagnosis/diagnosis.types.js";
+
 export type VideoStatus =
   | "pending_upload"
   | "uploaded"
@@ -123,6 +129,57 @@ export interface IVideoListOptions {
   sortOrder?: "asc" | "desc";
   filter?: IVideoFilter;
   projection?: IVideoProjection;
+}
+
+// ==========================================
+// VIDEO + DIAGNOSIS (LIST VIEW)
+// ==========================================
+
+/**
+ * The diagnosis fields joined onto a video for the video list. Only the pieces
+ * the list needs: the confidence comes from `results`, the display name from
+ * `diagnosisName`.
+ */
+export interface VideoDiagnosisSummary {
+  _id: Types.ObjectId;
+  diagnosisName?: string;
+  results: DiagnosisResult[];
+  analysis: GroqAnalysis | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * A video with its diagnosis embedded (or `null` while it is still being
+ * processed). Rows come out of the repository without presigned URLs.
+ */
+export interface VideoWithDiagnosis {
+  _id: Types.ObjectId;
+  userId: string;
+  storageKey: string;
+  originalFileName: string;
+  contentType: string;
+  fileSize: number;
+  status: VideoStatus;
+  processedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  thumbnailStorageKey: string | null;
+  diagnosis: VideoDiagnosisSummary | null;
+}
+
+/** Paginated result for the user's video list. */
+export interface VideoWithDiagnosisListResult {
+  data: VideoWithDiagnosis[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+/** A list row with the derived preview-image URL, ready to send to the client. */
+export interface VideoListRow extends VideoWithDiagnosis {
+  thumbnailUrl: string | null;
 }
 
 // ==========================================

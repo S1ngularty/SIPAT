@@ -18,6 +18,7 @@ export interface PaginationQuery {
   page?: number;
   limit?: number;
   total?: number;
+  totalPages?: number;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }

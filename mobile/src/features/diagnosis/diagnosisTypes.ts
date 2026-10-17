@@ -77,3 +77,40 @@ export interface DiseaseInfo {
   prevention?: string[];
   treatment?: string[];
 }
+
+/**
+ * The diagnosis fields joined onto a video in the video list
+ * (`GET /api/v1/videos`). `null` on a list row while the video is still being
+ * processed.
+ */
+export interface VideoDiagnosisSummary {
+  _id: string;
+  diagnosisName?: string;
+  results: TrackResult[];
+  analysis: GroqAnalysis | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * One row of the video-driven list: a video (any status) plus its diagnosis
+ * (or `null`). The screen renders the confidence when `diagnosis` is present,
+ * otherwise a spinner + status.
+ */
+export interface VideoListItem {
+  _id: string;
+  userId: string;
+  storageKey: string;
+  originalFileName: string;
+  contentType: string;
+  fileSize: number;
+  status: VideoStatus;
+  processedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** Object-storage key of the preview image, or `null`. */
+  thumbnailStorageKey: string | null;
+  /** Pre-signed GET for the preview image; `null` when the video has none. */
+  thumbnailUrl: string | null;
+  diagnosis: VideoDiagnosisSummary | null;
+}

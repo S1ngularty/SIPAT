@@ -1,4 +1,6 @@
 
+import type { VideoWithDiagnosis } from "./video.types.js";
+
 export interface IPresignedUploadResponse {
   videoId: string | null;
   storageKey: string;
@@ -16,4 +18,9 @@ export interface IPresignedThumbnailUploadResponse {
 export interface IAttachThumbnailResponse {
   videoId: string;
   thumbnailStorageKey: string;
+}
+
+/** A video list row: the video + its diagnosis + a presigned preview URL. */
+export interface IVideoListRow extends VideoWithDiagnosis {
+  thumbnailUrl: string | null;
 }

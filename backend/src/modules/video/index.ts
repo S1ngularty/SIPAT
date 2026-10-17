@@ -6,7 +6,7 @@ import { VideoController } from "./video.controller.js";
 
 export const videoRepository = new VideoRepository();
 export const thumbnailService = new ThumbnailService(videoRepository);
-export const videoService = new VideoService(videoRepository);
+export const videoService = new VideoService(videoRepository, thumbnailService);
 export const aiProcessingService = new AIProcessingService(videoRepository);
 export const videoController = new VideoController(
   videoService,

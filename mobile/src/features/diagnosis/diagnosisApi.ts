@@ -1,5 +1,5 @@
 import { client } from "../../api/apiClient";
-import type { VideoAnalysis, DiseaseInfo } from "./diagnosisTypes";
+import type { VideoAnalysis, VideoListItem, DiseaseInfo } from "./diagnosisTypes";
 
 export interface AnalysisListResult {
   data: {
@@ -13,6 +13,45 @@ export interface AnalysisListResult {
 }
 
 class DiagnosisAPI {
+  /**
+   * Video-driven list that backs the Diagnoses screen: the signed-in user's
+   * videos (any status), each left-joined with its diagnosis. Requires a Clerk
+   * token because it hits `GET /videos` (session-guarded).
+   */
+  async videoList({
+    page = 1,
+    limit = 10,
+    token,
+  }: {
+    page?: number;
+    limit?: number;
+    token?: string | null;
+  } = {}): Promise<{
+    data: VideoListItem[];
+    meta: { page: number; limit: number; total: number; totalPages: number };
+  }> {
+    const params = new URLSearchParams();
+
+    params.append("page", String(page));
+    params.append("limit", String(limit));
+
+    const response = await client.request<VideoListItem[]>(
+      `/api/v1/videos?${params.toString()}`,
+      { method: "GET" },
+      { token },
+    );
+
+    return {
+      data: response.result ?? [],
+      meta: {
+        page: Number(response.meta?.page),
+        limit: Number(response.meta?.limit),
+        total: Number(response.meta?.total),
+        totalPages: Number(response.meta?.totalPages),
+      },
+    };
+  }
+
   async diagnosisList({ page = 1, limit = 5 }): Promise<{
     data: VideoAnalysis[];
     meta: { page: number; limit: number; totalPages: number };

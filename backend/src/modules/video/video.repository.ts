@@ -9,6 +9,7 @@ import type {
   UpdateVideoStatusInput,
   Video,
   VideoStatus,
+  VideoWithDiagnosisListResult,
 } from "./video.types.js";
 import type { QueryFilter, SortOrder } from "mongoose";
 
@@ -106,6 +107,62 @@ export class VideoRepository {
 
     return {
       videos,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * Paginated videos for one user, each left-joined with its diagnosis (when
+   * one exists). Videos are returned regardless of status so the client can
+   * also show queued / processing recordings.
+   */
+  async findPaginatedWithDiagnosis(options: {
+    userId: string;
+    page?: number;
+    limit?: number;
+  }): Promise<VideoWithDiagnosisListResult> {
+    const { userId, page = 1, limit = 10 } = options;
+
+    const skip = (page - 1) * limit;
+
+    const [result] = await VideoModel.aggregate([
+      { $match: { userId } },
+
+      { $sort: { createdAt: -1 } },
+
+      {
+        $lookup: {
+          from: "diagnoses",
+          localField: "_id",
+          foreignField: "videoId",
+          as: "diagnosis",
+        },
+      },
+
+      // Keep videos that do not have a diagnosis yet.
+      {
+        $unwind: {
+          path: "$diagnosis",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      {
+        $facet: {
+          data: [{ $skip: skip }, { $limit: limit }],
+          total: [{ $count: "count" }],
+        },
+      },
+    ]);
+
+    const data = result?.data ?? [];
+    const total = result?.total?.[0]?.count ?? 0;
+
+    return {
+      data,
       total,
       page,
       limit,
