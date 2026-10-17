@@ -7,6 +7,7 @@ import {
   BookOpen,
   User,
   LucideIcon,
+  Microscope,
 } from "lucide-react-native";
 import {
   useBottomTabBarHeight,
@@ -21,6 +22,7 @@ import { DiagnosisListScreen } from "../features/diagnosis/screens/DiagnosisList
 import { BottomTabBar } from "./components/BottomTabBar";
 import { UserStackParamList } from "./UserNavigation"; // Import your stack param list
 import { colors, spacing } from "../theme";
+import AccountSettingsScreen from "../features/profile/screen/AccountSettingsScreen";
 
 // Define types for navigation
 export type TabParamList = {
@@ -155,7 +157,7 @@ const HomeTabNavigator: React.FC = () => {
       />
       <Tab.Screen
         name="Profile"
-        component={PlaceholderScreen}
+        component={AccountSettingsScreen}
         options={{ tabBarLabel: "Profile" }}
       />
     </Tab.Navigator>
