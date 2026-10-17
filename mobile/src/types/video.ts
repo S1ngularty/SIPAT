@@ -43,6 +43,8 @@ export interface IVideo {
   storageKey: string;
   /** Object-storage key of the preview image, or null when none was stored. */
   thumbnailStorageKey: string | null;
+  /** Pre-signed GET URL for the preview image, when the backend supplies one. */
+  thumbnailUrl?: string | null;
   originalFileName: string;
   contentType: string;
   fileSize: number;

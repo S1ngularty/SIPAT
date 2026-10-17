@@ -11,6 +11,7 @@ import {
   TextInput,
   Pressable,
   Alert,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -476,7 +477,19 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
     >
       <View style={styles.item}>
         <View style={styles.thumbnail}>
-          <Video size={19} color={colors.textMuted} strokeWidth={ICON_STROKE} />
+          {analysis.video?.thumbnailUrl ? (
+            <Image
+              source={{ uri: analysis.video.thumbnailUrl }}
+              style={styles.thumbnailImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <Video
+              size={19}
+              color={colors.textMuted}
+              strokeWidth={ICON_STROKE}
+            />
+          )}
         </View>
 
         <View style={styles.content}>
@@ -1070,6 +1083,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     flexShrink: 0,
+    overflow: "hidden",
+  },
+  thumbnailImage: {
+    width: "100%",
+    height: "100%",
   },
   content: {
     flex: 1,

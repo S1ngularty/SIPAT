@@ -34,6 +34,17 @@ export interface AnalysisVideo {
    * query param on the URL. Currently 5 minutes in the backend response.
    */
   evidenceVideoUrl: string;
+  /**
+   * Object-storage key of the preview image, or `null` when none was stored.
+   * The actual frame is fetched from `thumbnailUrl`.
+   */
+  thumbnailStorageKey: string | null;
+  /**
+   * Pre-signed GET URL for the video's preview image (R2/S3). Also expires,
+   * so it must be refreshed alongside `evidenceVideoUrl`. `null` when the
+   * video has no thumbnail.
+   */
+  thumbnailUrl: string | null;
 }
 
 export interface GroqAnalysis {
