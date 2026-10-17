@@ -24,8 +24,10 @@ type Props<T extends string> = {
 /**
  * Horizontally scrolling filter chips.
  *
- * The selected chip is not indicated by color alone: it also gains a check
- * icon and bold text, and exposes `accessibilityState.selected`.
+ * Every chip stays white with a thin outline; the selected chip only takes the
+ * green accent on its outline and label. Selection is never signalled by colour
+ * alone — the active chip also gains a check icon and exposes
+ * `accessibilityState.selected`.
  */
 export function CategoryFilterList<T extends string>({
   categories,
@@ -59,7 +61,7 @@ export function CategoryFilterList<T extends string>({
           >
             {isActive ? (
               <View style={styles.check}>
-                <Check size={12} color={colors.forest} strokeWidth={3} />
+                <Check size={12} color={colors.green} strokeWidth={2.5} />
               </View>
             ) : null}
             <Text
@@ -88,13 +90,14 @@ const styles = StyleSheet.create({
     height: 38,
     paddingHorizontal: spacing.lg,
     borderRadius: radii.pill,
-  },
-  chipActive: {
-    backgroundColor: colors.lime,
-  },
-  chipInactive: {
     backgroundColor: colors.white,
     borderWidth: 1,
+  },
+  /** Selected: only the thin outline takes the accent. */
+  chipActive: {
+    borderColor: colors.green,
+  },
+  chipInactive: {
     borderColor: colors.borderStrong,
   },
   chipPressed: {
@@ -106,13 +109,13 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 13,
+    fontWeight: "500",
   },
+  /** Selected: only the label takes the accent. */
   labelActive: {
-    color: colors.forest,
-    fontWeight: "700",
+    color: colors.green,
   },
   labelInactive: {
     color: colors.textMuted,
-    fontWeight: "500",
   },
 });

@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
-  ScrollView,
   StyleSheet,
   Modal,
   TextInput,
@@ -26,126 +25,28 @@ import Animated, {
   cancelAnimation,
 } from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Svg, { Path, Circle, Rect } from "react-native-svg";
+import {
+  Leaf,
+  Pencil,
+  ScanLine,
+  Search,
+  Trash2,
+  Video,
+} from "lucide-react-native";
 
 import { useDiagnosisList } from "../hooks/useDiagnosisList";
 import type { VideoAnalysis, TrackResult } from "../diagnosisTypes";
 import { Skeleton } from "../../../components/ui/SkeletonComponent";
+import { CategoryFilterList } from "../../../components/ui/CategoryFilterList";
+import { colors, radii, spacing } from "../../../theme";
 import { scheduleOnRN } from "react-native-worklets";
 
 // ==========================================
 // ICONS
 // ==========================================
 
-interface IconProps {
-  size?: number;
-  color?: string;
-}
-
-const SearchIcon: React.FC<IconProps> = ({ size = 22, color = "#9ca3af" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Circle
-      cx="11"
-      cy="11"
-      r="7"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M20 20L16.5 16.5"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const LeafIcon: React.FC<IconProps> = ({ size = 22, color = "#9ca3af" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M20 4C20 4 14 3 9.5 7.5C5 12 5 20 5 20C5 20 13 20 17.5 15.5C22 11 20 4 20 4Z"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M5 20C5 20 8 15 12 12"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const VideoIcon: React.FC<IconProps> = ({ size = 20, color = "#6b7280" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Rect
-      x="3"
-      y="6"
-      width="13"
-      height="12"
-      rx="2"
-      stroke={color}
-      strokeWidth="1.5"
-    />
-    <Path
-      d="M16 10L21 7.5V16.5L16 14"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const PencilIcon: React.FC<IconProps> = ({ size = 22, color = "#374151" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M4 20L8.5 19L19 8.5C19.5 8 19.5 7 19 6.5L17.5 5C17 4.5 16 4.5 15.5 5L5 15.5L4 20Z"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinejoin="round"
-    />
-    <Path d="M14.5 6L18 9.5" stroke={color} strokeWidth="1.5" />
-  </Svg>
-);
-
-const TrashIcon: React.FC<IconProps> = ({ size = 22, color = "#dc2626" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path d="M5 7H19" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-    <Path
-      d="M9 7V5C9 4.5 9.5 4 10 4H14C14.5 4 15 4.5 15 5V7"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M7 7L8 19C8 19.5 8.5 20 9 20H15C15.5 20 16 19.5 16 19L17 7"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M10 11V17"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-    <Path
-      d="M14 11V17"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-  </Svg>
-);
+/** Slim outline weight shared by every icon on this screen (§11). */
+const ICON_STROKE = 1.5;
 
 // ==========================================
 // HELPERS
@@ -267,6 +168,11 @@ const DiagnosisListSkeleton: React.FC = () => (
 
 type FilterValue = "all" | DateBucket;
 
+/**
+ * Date buckets offered as filters. They are rendered by the shared
+ * `CategoryFilterList`, so the Diagnoses chips match Home exactly
+ * (lime fill + check glyph for the active chip).
+ */
 const FILTERS: { value: FilterValue; label: string }[] = [
   { value: "all", label: "All" },
   { value: "today", label: "Today" },
@@ -275,38 +181,6 @@ const FILTERS: { value: FilterValue; label: string }[] = [
   { value: "last7Days", label: "Last 7 days" },
   { value: "older", label: "Older" },
 ];
-
-interface FilterChipsProps {
-  active: FilterValue;
-  onChange: (value: FilterValue) => void;
-}
-
-const FilterChips: React.FC<FilterChipsProps> = ({ active, onChange }) => (
-  <View style={styles.filterContainer}>
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.chipsContent}
-    >
-      {FILTERS.map((filter) => {
-        const isActive = filter.value === active;
-
-        return (
-          <TouchableOpacity
-            key={filter.value}
-            onPress={() => onChange(filter.value)}
-            activeOpacity={0.7}
-            style={[styles.chip, isActive && styles.chipActive]}
-          >
-            <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-              {filter.label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
-  </View>
-);
 
 // ==========================================
 // RIPPLE
@@ -348,7 +222,7 @@ const Ripple: React.FC<RippleProps> = ({ x, y, onDone }) => {
       width: size,
       height: size,
       borderRadius: size / 2,
-      backgroundColor: "#111827",
+      backgroundColor: colors.charcoal,
       opacity: opacity.value,
     };
   });
@@ -473,7 +347,7 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
             }}
             activeOpacity={0.8}
           >
-            <PencilIcon size={22} color="#374151" />
+            <Pencil size={22} color={colors.text} strokeWidth={ICON_STROKE} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -484,7 +358,11 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
             }}
             activeOpacity={0.8}
           >
-            <TrashIcon size={22} color="#dc2626" />
+            <Trash2
+              size={22}
+              color={colors.danger}
+              strokeWidth={ICON_STROKE}
+            />
           </TouchableOpacity>
         </View>
       )}
@@ -581,11 +459,11 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
   const getStatusColor = (): string => {
     switch (status) {
       case "completed":
-        return "#16a34a";
+        return colors.success;
       case "failed":
-        return "#dc2626";
+        return colors.danger;
       default:
-        return "#6b7280";
+        return colors.textMuted;
     }
   };
 
@@ -598,7 +476,7 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
     >
       <View style={styles.item}>
         <View style={styles.thumbnail}>
-          <VideoIcon size={19} color="#6b7280" />
+          <Video size={19} color={colors.textMuted} strokeWidth={ICON_STROKE} />
         </View>
 
         <View style={styles.content}>
@@ -709,9 +587,9 @@ const RenameModal: React.FC<RenameModalProps> = ({
             onChangeText={setValue}
             autoFocus
             placeholder="Diagnosis name"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={colors.textMuted}
             style={styles.modalInput}
-            selectionColor="#16a34a"
+            selectionColor={colors.green}
           />
 
           <View style={styles.modalActions}>
@@ -778,7 +656,7 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
             }}
             activeOpacity={0.7}
           >
-            <PencilIcon size={18} color="#111827" />
+            <Pencil size={18} color={colors.text} strokeWidth={ICON_STROKE} />
             <Text style={styles.sheetActionText}>Rename</Text>
           </TouchableOpacity>
 
@@ -792,7 +670,11 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
             }}
             activeOpacity={0.7}
           >
-            <TrashIcon size={18} color="#dc2626" />
+            <Trash2
+              size={18}
+              color={colors.danger}
+              strokeWidth={ICON_STROKE}
+            />
             <Text
               style={[styles.sheetActionText, styles.sheetActionTextDanger]}
             >
@@ -817,7 +699,11 @@ interface EmptyStateProps {
 const EmptyState: React.FC<EmptyStateProps> = ({ onRecord, hasFilter }) => (
   <View style={styles.empty}>
     <View style={styles.emptyIconContainer}>
-      {hasFilter ? <SearchIcon size={22} /> : <LeafIcon size={22} />}
+      {hasFilter ? (
+        <Search size={26} color={colors.green} strokeWidth={1.8} />
+      ) : (
+        <Leaf size={26} color={colors.green} strokeWidth={1.8} />
+      )}
     </View>
 
     <Text style={styles.emptyTitle}>
@@ -834,7 +720,10 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onRecord, hasFilter }) => (
       style={styles.emptyButton}
       onPress={onRecord}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel="Record a video"
     >
+      <ScanLine size={18} color={colors.forest} strokeWidth={2.2} />
       <Text style={styles.emptyButtonText}>Record Video</Text>
     </TouchableOpacity>
   </View>
@@ -957,7 +846,14 @@ export const DiagnosisListScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.safe} edges={["top"]}>
         <Header />
-        <FilterChips active={activeFilter} onChange={setActiveFilter} />
+        <View style={styles.filters}>
+          <CategoryFilterList
+            categories={FILTERS}
+            active={activeFilter}
+            onChange={setActiveFilter}
+            accessibilityLabel="Filter diagnoses by date"
+          />
+        </View>
         <View style={{ paddingBottom: tabBarHeight }}>
           <DiagnosisListSkeleton />
         </View>
@@ -968,7 +864,14 @@ export const DiagnosisListScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <Header />
-      <FilterChips active={activeFilter} onChange={setActiveFilter} />
+      <View style={styles.filters}>
+        <CategoryFilterList
+          categories={FILTERS}
+          active={activeFilter}
+          onChange={setActiveFilter}
+          accessibilityLabel="Filter diagnoses by date"
+        />
+      </View>
 
       <SectionList
         sections={sections}
@@ -988,13 +891,14 @@ export const DiagnosisListScreen: React.FC = () => {
         stickySectionHeadersEnabled={false}
         contentContainerStyle={[
           sections.length === 0 ? styles.listEmpty : styles.list,
-          { paddingBottom: tabBarHeight + 20 },
+          { paddingBottom: tabBarHeight + spacing.xl },
         ]}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={refresh}
-            tintColor="#6b7280"
+            tintColor={colors.green}
+            colors={[colors.green]}
           />
         }
         onEndReached={hasMore && activeFilter === "all" ? loadMore : undefined}
@@ -1005,7 +909,7 @@ export const DiagnosisListScreen: React.FC = () => {
         ListFooterComponent={
           hasMore && activeFilter === "all" ? (
             <View style={styles.footer}>
-              <ActivityIndicator color="#6b7280" />
+              <ActivityIndicator color={colors.textMuted} />
             </View>
           ) : null
         }
@@ -1043,125 +947,89 @@ export const DiagnosisListScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: "#ffffff",
-  },
-
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: colors.white,
   },
 
   // Header
   header: {
-    paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 10,
-    backgroundColor: "#ffffff",
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.white,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#111827",
+    color: colors.text,
     letterSpacing: -0.6,
   },
   headerSubtitle: {
     fontSize: 13,
-    color: "#9ca3af",
-    marginTop: 3,
+    color: colors.textMuted,
+    marginTop: spacing.xs,
   },
 
-  // Filters
-  filterContainer: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
-  },
-  chipsContent: {
-    paddingHorizontal: 18,
-    paddingTop: 4,
-    paddingBottom: 12,
-    gap: 10,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#ffffff",
-  },
-  chipActive: {
-    backgroundColor: "#111827",
-    borderColor: "#111827",
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#6b7280",
-  },
-  chipTextActive: {
-    color: "#ffffff",
-    fontWeight: "600",
+  // Filters (chips themselves come from the shared CategoryFilterList)
+  filters: {
+    paddingBottom: spacing.md,
   },
 
   // Section header
   sectionHeader: {
-    paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 6,
-    backgroundColor: "#ffffff",
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xs,
+    backgroundColor: colors.white,
   },
   sectionHeaderLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   sectionTitle: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#6b7280",
+    color: colors.textMuted,
     letterSpacing: 0.7,
     textTransform: "uppercase",
   },
   sectionCountContainer: {
     minWidth: 20,
     height: 20,
-    paddingHorizontal: 6,
-    borderRadius: 10,
-    backgroundColor: "#f3f4f6",
+    paddingHorizontal: spacing.xs,
+    borderRadius: radii.sm,
+    backgroundColor: colors.surfaceMuted,
     justifyContent: "center",
     alignItems: "center",
   },
   sectionCount: {
     fontSize: 10,
     fontWeight: "600",
-    color: "#6b7280",
+    color: colors.textMuted,
   },
 
   // List
   list: {
-    paddingBottom: 20,
+    paddingBottom: spacing.xl,
   },
   listEmpty: {
     flexGrow: 1,
   },
   sectionSeparator: {
-    height: 6,
+    height: spacing.sm,
   },
 
   // Swipeable wrapper
   swipeWrapper: {
-    marginHorizontal: 14,
-    marginVertical: 4,
-    borderRadius: 12,
+    marginHorizontal: spacing.xl,
+    marginVertical: spacing.xs,
+    borderRadius: radii.md,
     overflow: "hidden",
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.white,
   },
   swipeContent: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
+    backgroundColor: colors.white,
+    borderRadius: radii.md,
     overflow: "hidden",
   },
   actionsContainer: {
@@ -1175,10 +1043,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   actionRename: {
-    backgroundColor: "#f3f4f6",
+    backgroundColor: colors.surfaceMuted,
   },
   actionDelete: {
-    backgroundColor: "#e5e7eb",
+    backgroundColor: colors.borderStrong,
   },
 
   // Item
@@ -1186,19 +1054,19 @@ const styles = StyleSheet.create({
     minHeight: 68,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: "#ffffff",
-    gap: 14,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radii.md,
+    backgroundColor: colors.white,
+    gap: spacing.md,
     borderWidth: 1,
-    borderColor: "#f3f4f6",
+    borderColor: colors.borderStrong,
   },
   thumbnail: {
     width: 42,
     height: 42,
-    borderRadius: 10,
-    backgroundColor: "#f3f4f6",
+    borderRadius: radii.sm,
+    backgroundColor: colors.surfaceMuted,
     justifyContent: "center",
     alignItems: "center",
     flexShrink: 0,
@@ -1211,7 +1079,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#111827",
+    color: colors.text,
   },
   subtitleRow: {
     flexDirection: "row",
@@ -1227,11 +1095,11 @@ const styles = StyleSheet.create({
   subtitle: {
     flex: 1,
     fontSize: 12,
-    color: "#6b7280",
+    color: colors.textMuted,
   },
   meta: {
     fontSize: 11,
-    color: "#9ca3af",
+    color: colors.textMuted,
   },
 
   // Trailing
@@ -1243,7 +1111,7 @@ const styles = StyleSheet.create({
   },
   spinner: {
     fontSize: 18,
-    color: "#6b7280",
+    color: colors.textMuted,
   },
   confidenceContainer: {
     alignItems: "flex-end",
@@ -1251,25 +1119,25 @@ const styles = StyleSheet.create({
   percent: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#16a34a",
+    color: colors.green,
   },
   confidenceLabel: {
     fontSize: 8,
-    color: "#9ca3af",
+    color: colors.textMuted,
     marginTop: 1,
   },
   failedCircle: {
     width: 22,
     height: 22,
-    borderRadius: 11,
-    backgroundColor: "#fef2f2",
+    borderRadius: radii.pill,
+    backgroundColor: colors.surfaceMuted,
     justifyContent: "center",
     alignItems: "center",
   },
   failed: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#dc2626",
+    color: colors.danger,
   },
 
   // Empty
@@ -1277,166 +1145,167 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 32,
-    paddingBottom: 40,
+    paddingHorizontal: spacing.xxxl,
+    paddingBottom: spacing.xxxl,
   },
   emptyIconContainer: {
     width: 60,
     height: 60,
-    borderRadius: 16,
-    backgroundColor: "#f3f4f6",
+    borderRadius: radii.pill,
+    backgroundColor: colors.surfaceMuted,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   emptyTitle: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#111827",
-    marginBottom: 5,
+    fontWeight: "700",
+    color: colors.text,
+    marginBottom: spacing.xs,
   },
   emptyText: {
     maxWidth: 280,
     fontSize: 13,
-    color: "#6b7280",
+    color: colors.textMuted,
     textAlign: "center",
-    marginBottom: 18,
+    marginBottom: spacing.lg,
     lineHeight: 19,
   },
   emptyButton: {
-    borderWidth: 1.5,
-    borderColor: "#16a34a",
-    backgroundColor: "#ffffff",
-    paddingHorizontal: 22,
-    paddingVertical: 10,
-    borderRadius: 999,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.lime,
+    paddingHorizontal: spacing.xxl,
+    height: 46,
+    borderRadius: radii.pill,
   },
   emptyButtonText: {
-    color: "#16a34a",
-    fontSize: 13,
-    fontWeight: "600",
+    color: colors.forest,
+    fontSize: 15,
+    fontWeight: "700",
   },
 
   // Footer
   footer: {
-    paddingVertical: 14,
+    paddingVertical: spacing.md,
   },
 
   // Modal backdrop
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(17, 24, 39, 0.4)",
+    backgroundColor: colors.backdrop,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 32,
+    paddingHorizontal: spacing.xxxl,
   },
 
   // Rename modal
   modalCard: {
     width: "100%",
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 20,
-    gap: 14,
+    backgroundColor: colors.white,
+    borderRadius: radii.lg,
+    padding: spacing.xl,
+    gap: spacing.md,
   },
   modalTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#111827",
+    color: colors.text,
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: colors.borderStrong,
+    borderRadius: radii.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     fontSize: 14,
-    color: "#111827",
-    backgroundColor: "#ffffff",
+    color: colors.text,
+    backgroundColor: colors.white,
   },
   modalActions: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    gap: 8,
+    gap: spacing.sm,
   },
   modalButton: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 999,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.pill,
   },
   modalButtonGhost: {
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: colors.borderStrong,
   },
   modalButtonGhostText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#6b7280",
+    color: colors.textMuted,
   },
   modalButtonPrimary: {
-    backgroundColor: "#16a34a",
+    backgroundColor: colors.lime,
   },
   modalButtonPrimaryText: {
     fontSize: 13,
-    fontWeight: "600",
-    color: "#ffffff",
+    fontWeight: "700",
+    color: colors.forest,
   },
 
   // Action sheet
   sheetCard: {
     width: "100%",
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
+    backgroundColor: colors.white,
+    borderRadius: radii.lg,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
   },
   sheetTitle: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#9ca3af",
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 8,
+    color: colors.textMuted,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
   },
   sheetAction: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
   sheetActionText: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#111827",
+    color: colors.text,
   },
   sheetActionTextDanger: {
-    color: "#dc2626",
+    color: colors.danger,
   },
   sheetDivider: {
     height: 1,
-    backgroundColor: "#f3f4f6",
-    marginHorizontal: 16,
+    backgroundColor: colors.borderStrong,
+    marginHorizontal: spacing.lg,
   },
 
   skeletonList: {
-    paddingBottom: 20,
+    paddingBottom: spacing.xl,
   },
 
   skeletonItem: {
     minHeight: 68,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    marginHorizontal: 14,
-    marginVertical: 4,
-    gap: 14,
-    borderRadius: 12,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    marginHorizontal: spacing.xl,
+    marginVertical: spacing.xs,
+    gap: spacing.md,
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: "#f3f4f6",
-    backgroundColor: "#ffffff",
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.white,
   },
 
   skeletonContent: {

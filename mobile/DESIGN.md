@@ -41,11 +41,12 @@ These are the tokens implemented in `src/theme/colors.ts` (§11).
 | Token | Hex | Intended use |
 |---|---|---|
 | `forest` | `#18351D` | Text/icons on lime actions |
-| `green` | `#52782B` | Secondary agricultural green, subtle accents |
+| `green` | `#52782B` | Accents: chip outlines/labels, quiet highlights |
 | `lime` | `#86C653` | Primary actions, selected states |
 | `charcoal` | `#22282A` | Bottom navigation, dark panels, active chips |
 | `capsuleOnDark` | `rgba(255,255,255,.12)` | White-opacity capsule/button on the dark bar |
 | `outlineOnDark` | `rgba(255,255,255,.26)` | Slim hairline over photography |
+| `backdrop` | `rgba(34,40,42,.45)` | Scrim behind modals/sheets |
 | `white` | `#FFFFFF` | Screen and card surfaces |
 | `surfaceMuted` | `#F3F4F6` | Thumbnails, empty-state circles, image placeholders |
 | `skeleton` | `#D9D9D9` | Loading skeleton shimmer base |
@@ -196,7 +197,9 @@ A single static panel at the top of Home groups the three summary elements inste
 
 ### D. Horizontal category filters
 
-The reference uses a horizontal row of rounded chips. The active chip is lime green; inactive chips are white with a slim outline.
+The reference uses a horizontal row of rounded chips. SIPAT keeps every chip
+**white with a thin outline**; the selected chip takes the green accent on its
+outline and label only (§11).
 
 Requirements:
 - Keep chip heights consistent.
@@ -205,7 +208,7 @@ Requirements:
 - Make the selected state visually obvious.
 - Keep the list on one horizontal line; allow scrolling rather than wrapping.
 - Ensure selecting a chip actually filters or updates the displayed content.
-- Provide accessible labels and a selected-state indication that is not based on color alone (see §11: lime fill + bold label + check glyph).
+- Provide accessible labels and a selected-state indication that is not based on color alone (see §11: green outline + green label + check glyph).
 
 The categories visible in the reference are illustrative. Use categories relevant to the real application — SIPAT uses date buckets (All / Today / Yesterday / This week / Older).
 
@@ -551,7 +554,7 @@ of truth where it differs from the reference recreations above.
 | Screen background | **White.** No tinted/dark page backgrounds. |
 | Surfaces | White cards separated by a 1 px `borderStrong` hairline. |
 | Dark surfaces | `charcoal` — bottom navigation, hero sheet fallback, active chips. |
-| Green | Accent only: `lime` for primary actions/selected states, `green` for quiet accents, `forest` for text on lime. |
+| Green | Accent only: `lime` for primary actions and the selected tab (on charcoal), `green` for chip outlines/labels and quiet accents, `forest` for text on lime. |
 | Muted fill | `surfaceMuted` for thumbnails, empty-state circles, image placeholders. |
 | Text | `text` primary, `textMuted` secondary, `textOnDark` over photography/dark. |
 | Radii | `sm 10 · md 14 · lg 20 · xl 24 · pill 999` (`src/theme/radii.ts`). Container bars use `pill`. |
@@ -597,13 +600,35 @@ returns a **documented temporary mock** because no provider is configured.
 `WeatherBlock` already renders loading, unavailable and ready states, so wiring a
 real source requires changing only that file.
 
-### 11.6 Known gaps / follow-ups
+### 11.6 Diagnoses list (`DiagnosisListScreen`)
+
+The Diagnoses tab follows the same foundations as Home.
+
+- White screen. Header = 24 px/700 `text` title over a 13 px `textMuted` subtitle.
+- **Filters reuse the shared `CategoryFilterList`**, so the chips are identical to
+  Home: white with a thin outline, where the selected chip takes the green accent
+  on its outline and label plus a check glyph.
+- Rows are white cards at `spacing.xl` horizontal margin — aligned with the
+  header and the chips — with `radii.md` and a 1 px `borderStrong` outline.
+- Thumbnail: 42 px tile, `radii.sm`, `surfaceMuted`, slim `Video` icon.
+- Status is not colour-only: a dot (`success` / `danger` / `textMuted`) plus a
+  text label, and the confidence percentage uses the `green` accent.
+- Swipe actions (rename / delete) and the long-press sheet are white surfaces
+  with slim lucide icons (`Pencil` in `text`, `Trash2` in `danger`).
+- Modals use the `backdrop` scrim; the primary modal button is the lime pill with
+  `forest` text — the same primary action as Home.
+- The empty state mirrors Home: a 60 px `surfaceMuted` circle with a `green`
+  icon, `text` title, `textMuted` body, and a lime `Record Video` pill with a
+  `ScanLine` icon.
+- Icons are `lucide-react-native` at stroke 1.5, per §11.1.
+
+### 11.7 Known gaps / follow-ups
 
 - **Weather is mocked** (`MOCK_WEATHER`) — replace before release.
-- `DiagnosisListScreen`, `DiagnosisDetailScreen`, the scanning/preview flow and
-  the auth screens still carry their own local grey palettes (e.g.
-  `#6b7280`, `#e5e7eb`, `#16a34a`) rather than the shared tokens. They are
-  visually close (white base, neutral greys, green actions) but not tokenised.
+- `DiagnosisDetailScreen`, the scanning/preview flow and the auth screens still
+  carry their own local grey palettes (e.g. `#6b7280`, `#e5e7eb`, `#16a34a`)
+  rather than the shared tokens. They are visually close (white base, neutral
+  greys, green actions) but not tokenised.
 - The reference's blue and white theme variants are **not** implemented; the app
   has a single theme.
 - `assets/images/crop-placeholder.png` and the hero photo are placeholders the

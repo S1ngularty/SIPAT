@@ -26,6 +26,8 @@ export const colors = {
   capsuleOnDark: "rgba(255, 255, 255, 0.12)",
   /** Slim hairline for panels/controls placed over photography. */
   outlineOnDark: "rgba(255, 255, 255, 0.26)",
+  /** Scrim behind modals/sheets. */
+  backdrop: "rgba(34, 40, 42, 0.45)",
 
   white: "#FFFFFF",
   /** Neutral muted fill: thumbnails, empty-state circles, image placeholders. */
