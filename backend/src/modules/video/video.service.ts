@@ -6,13 +6,9 @@ import { validateVideoUpload } from "./video.validation.js";
 import type { IPresignedUploadResponse } from "./video.dto.js";
 import { AIQueue } from "../../jobs/queues/ai.queue.js";
 import type { VideoRepository } from "./video.repository.js";
-import type { ThumbnailService } from "./thumbnail.service.js";
 
 export class VideoService {
-  constructor(
-    private readonly videoRepository: VideoRepository,
-    private readonly thumbnailService: ThumbnailService,
-  ) {}
+  constructor(private readonly videoRepository: VideoRepository) {}
 
   private generateVideoMetadata(userId: string, input: CreateVideoInput) {
     const videoId = randomUUID();
@@ -100,15 +96,26 @@ export class VideoService {
     return result?.toObject();
   }
 
+  /**
+   * `videos/{userId}/{videoId}/clip.mp4` -> `videos/{userId}/{videoId}/`.
+   * Everything belonging to a video (recording + preview image) lives in that
+   * directory, so trimming the storage key to it addresses them as a group.
+   */
+  private storageDirectory(storageKey: string): string {
+    const lastSlash = storageKey.lastIndexOf("/");
+
+    return lastSlash === -1 ? storageKey : storageKey.slice(0, lastSlash + 1);
+  }
+
   async deleteVideo(videoId: string): Promise<Video> {
     const result = await this.videoRepository.deleteVideo(videoId);
 
     if (!result) throw new Error(`Failed to delete the video ${videoId}`);
 
-    r2Client.deleteObject(result.storageKey);
-
-    // The preview image lives beside the video; drop it too.
-    await this.thumbnailService.remove(result.thumbnailStorageKey);
+    // The recording and its preview image share the video's directory, so a
+    // single prefix delete removes everything inside it — no need to delete
+    // each object (video, thumbnail, …) one by one.
+    await r2Client.deletePrefix(this.storageDirectory(result.storageKey));
 
     return result;
   }

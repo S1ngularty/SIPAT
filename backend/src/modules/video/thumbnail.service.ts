@@ -114,21 +114,4 @@ export class ThumbnailService {
 
     return r2Client.createDownloadUrl(thumbnailStorageKey, expiresIn);
   }
-
-  /**
-   * Best-effort removal of a stored thumbnail (used when a video is deleted).
-   * A missing or already-deleted object must not fail the caller.
-   */
-  async remove(thumbnailStorageKey: string | null | undefined): Promise<void> {
-    if (!thumbnailStorageKey) return;
-
-    try {
-      await r2Client.deleteObject(thumbnailStorageKey);
-    } catch (error) {
-      console.error(
-        `Failed to delete thumbnail "${thumbnailStorageKey}":`,
-        error,
-      );
-    }
-  }
 }
