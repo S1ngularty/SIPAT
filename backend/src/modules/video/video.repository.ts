@@ -182,6 +182,22 @@ export class VideoRepository {
     ).exec();
   }
 
+  /**
+   * Records the preview-image key on a video the user owns.
+   * Scoped by `userId` so a video can never be pointed at another user's object.
+   */
+  async attachThumbnail(
+    videoId: string,
+    userId: string,
+    thumbnailStorageKey: string,
+  ): Promise<VideoDocument | null> {
+    return VideoModel.findOneAndUpdate(
+      { _id: videoId, userId },
+      { $set: { thumbnailStorageKey } },
+      { returnDocument: "after", runValidators: true },
+    ).exec();
+  }
+
   // ==========================================
   // DELETE
   // ==========================================

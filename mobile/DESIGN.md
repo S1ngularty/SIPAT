@@ -656,14 +656,98 @@ slim, outline-only language as the rest of the app.
   to React Native's generic `ViewProps`, so it has been removed. A tap-to-focus
   reticle would need a native module or a different camera library.
 
-### 11.8 Known gaps / follow-ups
+### 11.8 Preview (`VideoPreview`)
+
+The screen between recording and analysis, styled on the same foundations.
+
+- **White screen** with a white header separated by a 1 px `borderStrong`
+  hairline; 18 px/600 `text` title and a `neutral`-variant
+  `CircularIconButton` (slim `borderStrong` outline, `text` icon).
+- **The video sits in a rounded dark card**, not a full-bleed band: `charcoal`
+  at `radii.lg`, inset by `spacing.xl`, `flex: 1` between the header and the
+  actions. It carries `surfaceType="textureView"` because Android's `SurfaceView`
+  ignores a parent's rounded corners.
+- **The generated thumbnail is the poster**: while the player warms up, the
+  rendered frame shows behind a `backdrop` scrim with a `lime` spinner, so the
+  card is never a black hole.
+- Play control is a 72 px circle with a 1 px `outlineOnDark` ring, `white` icon
+  at stroke 1.5 and a light `rgba(0,0,0,0.15)` card scrim; replay is the same
+  treatment as a slim `backdrop` pill. The progress track uses `outlineOnDark`
+  with a `lime` fill and tabular-numeral timing.
+- **Actions**: the primary "Analyze Plant" is the app's lime pill with `forest`
+  text/icon; Recapture and Save to Draft are white pills with a `borderStrong`
+  outline, a `green` icon and `text` labels. Disabled state is `opacity: 0.5`.
+- Missing-video state mirrors §11.6: a 60 px `surfaceMuted` circle with a `green`
+  `Leaf`, `text` title, `textMuted` body and the lime pill action.
+
+### 11.9 Video thumbnails
+
+A recording's preview image is generated on-device and stored in object storage;
+the API never receives image bytes.
+
+**Mobile** (`src/features/scan/hooks/usePreview.tsx`)
+1. Once the player reports a duration, `expo-video-thumbnails.getThumbnailAsync`
+   renders one JPEG at ~25 % of the clip (past the still-focusing first frames,
+   always inside the clip) at quality 0.7. It is requested exactly once per
+   recording.
+2. On upload it is PUT to R2 with a presigned URL, then its key is confirmed —
+   **before** the video is marked uploaded, so the processing job always sees it.
+   A thumbnail failure is logged and swallowed: it must never fail the video
+   upload.
+
+**Upload transport** (`videoApi.uploadLocalFileToObjectStorage`)
+Both the video and its thumbnail are PUT with `XMLHttpRequest` and RN's `{ uri }`
+file-body form (`xhr.send({ uri })`), which the native layer opens itself. Both
+choices matter:
+
+- **`fetch` cannot carry a `{ uri }` body.** Expo SDK 54+ replaces the global
+  `fetch` with its winter runtime, whose `normalizeBodyInitAsync` accepts only
+  string / Blob / ArrayBuffer / FormData / ReadableStream and throws
+  `Unsupported BodyInit type` otherwise. `XMLHttpRequest` is not patched by that
+  runtime, and it passes its body to `RCTNetworking.sendRequest` verbatim.
+- **It avoids the `expo-file-system` permission gate.** `expo-video-thumbnails`
+  writes into the raw Android cache directory (`context.cacheDir`), while Expo Go
+  only permits the experience-scoped directories. The thumbnail therefore exists
+  but is unreadable through `expo-file-system` — `File.exists` returns `false`
+  and `bytes()` throws. RN's networking opens it natively and is unaffected.
+  (In a dev/production build the raw cache dir *is* the app's own, so both paths
+  happen to work there — which is exactly why this must not be relied on.)
+- **It streams instead of buffering.** A `Uint8Array` body is base64-encoded by
+  `convertRequestBody` before it reaches the native layer; a 7 MB recording
+  became a ~10 MB JS string. The `uri` form streams the file and lets OkHttp set
+  `Content-Length` from the file itself.
+
+The `Content-Type` header is mandatory for a `uri` body, and must equal the type
+the URL was signed with. The video's type is derived from the recording's own
+extension (`mp4`/`mov`/`webm`) rather than from the generated file name, because
+iOS captures `.mov` — a mismatch would fail the signature check.
+
+**Backend** (`src/modules/video`)
+- `thumbnailStorageKey: string | null` on the domain type, the Mongoose schema
+  (`default: null`) and the create/update payloads.
+- `thumbnail.service.ts` (`ThumbnailService`) owns the flow and the object
+  storage calls:
+  - `createUpload` — validates the image type, checks the video belongs to the
+    caller, and mints a 300 s presigned PUT for
+    `videos/{userId}/{videoId}/thumbnail.{ext}`.
+  - `attach` — rejects any key outside that video's own prefix, then records it.
+  - `createDownloadUrl` / `remove` — presigned GET, and best-effort cleanup.
+- Routes: `POST /api/v1/videos/:videoId/thumbnail` (presign) and
+  `PATCH /api/v1/videos/:videoId/thumbnail` (attach). Both sit behind the
+  existing Clerk session middleware.
+- Deleting a video also deletes its thumbnail object.
+
+### 11.10 Known gaps / follow-ups
 
 - **Weather is mocked** (`MOCK_WEATHER`) — replace before release.
 - **No tap-to-focus** anywhere in the app — see §11.7.
-- `DiagnosisDetailScreen`, `VideoPreview` and the auth screens still carry their
-  own local grey palettes (e.g. `#6b7280`, `#e5e7eb`, `#16a34a`, `#4CAF50`)
-  rather than the shared tokens. They are visually close (white base, neutral
-  greys, green actions) but not tokenised.
+- `DiagnosisDetailScreen` and the auth screens still carry their own local grey
+  palettes (e.g. `#6b7280`, `#e5e7eb`, `#16a34a`, `#4CAF50`) rather than the
+  shared tokens. They are visually close (white base, neutral greys, green
+  actions) but not tokenised.
+- **`thumbnailStorageKey` is stored but not yet rendered anywhere.** The
+  Diagnoses list still shows its placeholder tile (§11.6); wiring it up needs a
+  presigned GET (or a public URL) exposed through the diagnosis/video read APIs.
 - The reference's blue and white theme variants are **not** implemented; the app
   has a single theme.
 - `assets/images/crop-placeholder.png` and the hero photo are placeholders the

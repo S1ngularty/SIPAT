@@ -15,8 +15,30 @@ import { videoApi } from "../videoApi";
 import { File } from "expo-file-system";
 import { useAuth } from "@clerk/expo";
 import * as Crypto from "expo-crypto";
+import * as VideoThumbnails from "expo-video-thumbnails";
 
 type VideoScanningRouteProp = RouteProp<UserStackParamList, "VideoPreview">;
+
+/** `expo-video-thumbnails` always renders a JPEG. */
+const THUMBNAIL_CONTENT_TYPE = "image/jpeg";
+const THUMBNAIL_QUALITY = 0.7;
+
+/**
+ * Content types accepted by the backend, keyed by file extension. Derived from
+ * the recording itself because iOS captures `.mov` while Android captures
+ * `.mp4`, and the value must match the one the upload URL is signed with.
+ */
+const VIDEO_CONTENT_TYPES: Record<string, string> = {
+  mp4: "video/mp4",
+  mov: "video/quicktime",
+  webm: "video/webm",
+};
+
+function videoContentType(uri: string): string {
+  const extension = uri.split(".").pop()?.toLowerCase() ?? "";
+
+  return VIDEO_CONTENT_TYPES[extension] ?? "video/mp4";
+}
 
 export default function usePreview() {
   const navigation = useNavigation<NavigationProp>();
@@ -32,9 +54,12 @@ export default function usePreview() {
   const [hasEnded, setHasEnded] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [thumbnailUri, setThumbnailUri] = useState<string | null>(null);
 
   const uploadIdRef = useRef<string | null>(null);
   const idempotencyKeyRef = useRef<string | null>(null);
+  // Rendering a frame is only worth doing once per recording.
+  const thumbnailRequestedRef = useRef(false);
 
   const buttonScale = useSharedValue(1);
   const playButtonScale = useSharedValue(1);
@@ -101,6 +126,33 @@ export default function usePreview() {
       timeUpdateSubscription.remove();
     };
   }, [player]);
+
+  // Render a single frame from the recording to serve as its preview image.
+  // It doubles as the poster while the player loads and as the thumbnail that
+  // gets stored alongside the upload.
+  useEffect(() => {
+    if (!videoUri || videoDuration <= 0 || thumbnailRequestedRef.current) {
+      return;
+    }
+
+    thumbnailRequestedRef.current = true;
+
+    // A quarter of the way in clears the first frames (often still focusing)
+    // while staying safely inside the clip.
+    const timeMs = Math.round(Math.min(videoDuration * 0.25, 1) * 1000);
+
+    VideoThumbnails.getThumbnailAsync(videoUri, {
+      time: timeMs,
+      quality: THUMBNAIL_QUALITY,
+    })
+      .then(({ uri }) => {
+        if (isMounted.current) setThumbnailUri(uri);
+      })
+      .catch((error) => {
+        // A missing preview image must never block previewing or uploading.
+        console.error("Failed to generate video thumbnail:", error);
+      });
+  }, [videoUri, videoDuration]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -200,9 +252,7 @@ export default function usePreview() {
       const fileSize = capturedVideo.exists ? capturedVideo.size : 0;
 
       const fileName = `video_${uploadIdRef.current}`;
-      const fileExtension = fileName.split(".").pop()?.toLowerCase();
-      const contentType =
-        fileExtension === "mov" ? "video/quicktime" : "video/mp4";
+      const contentType = videoContentType(videoUri);
 
       const idempotencyKey = idempotencyKeyRef.current;
 
@@ -221,7 +271,11 @@ export default function usePreview() {
         idempotencyKey,
       );
 
-      await handleObjectStorageUpload(upload.uploadUrl);
+      await handleObjectStorageUpload(upload.uploadUrl, contentType);
+
+      // Stored before the video is marked uploaded so the processing job always
+      // sees the preview image key.
+      await handleThumbnailUpload(upload.videoId, token);
 
       const updateStatus = await videoApi.completeVideoUpload(
         upload.videoId,
@@ -236,28 +290,57 @@ export default function usePreview() {
 
   const handleObjectStorageUpload = async (
     presignedUrl: string,
+    contentType: string,
   ): Promise<void> => {
     if (!videoUri) {
       throw new Error("Missing video URI");
     }
 
-    const videoFile = new File(videoUri);
-
-    if (!videoFile.exists) {
-      throw new Error(`Video file does not exist: ${videoUri}`);
-    }
-
     if (!presignedUrl) throw new Error("missing presigned url");
 
-    // console.log("Uploading local file:", {
-    //   uri: videoFile.uri,
-    //   size: videoFile.size,
-    // });
-
-    const uploadResponse = await videoApi.videoUploadObjectStorage(
+    await videoApi.uploadLocalFileToObjectStorage(
       presignedUrl,
-      videoFile,
+      videoUri,
+      contentType,
     );
+  };
+
+  /**
+   * Uploads the already-rendered preview image and records its key on the video.
+   *
+   * The image goes straight to object storage through a presigned PUT, so it
+   * never passes through the API. A failure here is logged and swallowed — the
+   * video upload itself must still succeed.
+   *
+   * Note there is deliberately no `expo-file-system` existence check here:
+   * `expo-video-thumbnails` writes into the raw Android cache directory, which
+   * Expo Go's file-system permission gate refuses to read. The file is fine; the
+   * read is what fails. RN's networking opens it natively instead.
+   */
+  const handleThumbnailUpload = async (videoId: string, token: string) => {
+    if (!thumbnailUri) return;
+
+    try {
+      const presigned = await videoApi.requestThumbnailUpload(
+        videoId,
+        THUMBNAIL_CONTENT_TYPE,
+        token,
+      );
+
+      await videoApi.uploadLocalFileToObjectStorage(
+        presigned.uploadUrl,
+        thumbnailUri,
+        THUMBNAIL_CONTENT_TYPE,
+      );
+
+      await videoApi.attachThumbnail(
+        videoId,
+        presigned.thumbnailStorageKey,
+        token,
+      );
+    } catch (error) {
+      console.error("Thumbnail upload failed:", error);
+    }
   };
 
   const handleRecapture = () => {
@@ -330,6 +413,7 @@ export default function usePreview() {
     animatedButtonStyle,
     player,
     videoUri,
+    thumbnailUri,
     navigation,
 
     handlePlayPause,

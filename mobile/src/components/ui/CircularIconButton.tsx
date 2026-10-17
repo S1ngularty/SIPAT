@@ -15,9 +15,10 @@ type Props = {
   accessibilityLabel: string;
   /**
    * "solid" for dark-green controls on light surfaces, "translucent" for filled
-   * controls over photography, "outline" for a slim hairline over photography.
+   * controls over photography, "outline" for a slim hairline over photography,
+   * "neutral" for a slim hairline control on a light surface.
    */
-  variant?: "solid" | "translucent" | "outline";
+  variant?: "solid" | "translucent" | "outline" | "neutral";
   size?: number;
   badge?: string | number | null;
   style?: StyleProp<ViewStyle>;
@@ -41,7 +42,9 @@ export const CircularIconButton: React.FC<Props> = ({
       ? styles.solid
       : variant === "outline"
         ? styles.outline
-        : styles.translucent;
+        : variant === "neutral"
+          ? styles.neutral
+          : styles.translucent;
 
   return (
     <Pressable
@@ -84,6 +87,10 @@ const styles = StyleSheet.create({
   outline: {
     borderWidth: 1,
     borderColor: colors.outlineOnDark,
+  },
+  neutral: {
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
   },
   pressed: {
     opacity: 0.75,

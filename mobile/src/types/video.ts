@@ -18,6 +18,19 @@ export interface CreateVideoUploadResponse {
   expiresIn: number;
 }
 
+/** Presigned PUT for a video's preview image (see the backend thumbnail service). */
+export interface PresignedThumbnailUploadResponse {
+  videoId: string;
+  thumbnailStorageKey: string;
+  uploadUrl: string;
+  expiresIn: number;
+}
+
+export interface AttachThumbnailResponse {
+  videoId: string;
+  thumbnailStorageKey: string;
+}
+
 export interface TopFinding {
   crop: string;
   condition: string;
@@ -28,6 +41,8 @@ export interface IVideo {
   _id: string;
   userId: string;
   storageKey: string;
+  /** Object-storage key of the preview image, or null when none was stored. */
+  thumbnailStorageKey: string | null;
   originalFileName: string;
   contentType: string;
   fileSize: number;

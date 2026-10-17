@@ -20,6 +20,11 @@ const videoSchema = new Schema<Video>(
       unique: true,
       trim: true,
     },
+    thumbnailStorageKey: {
+      type: String,
+      default: null,
+      trim: true,
+    },
     idempotencyKey: {
       type: String,
       required: true,

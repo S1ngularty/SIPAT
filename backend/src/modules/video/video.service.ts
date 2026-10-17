@@ -6,9 +6,13 @@ import { validateVideoUpload } from "./video.validation.js";
 import type { IPresignedUploadResponse } from "./video.dto.js";
 import { AIQueue } from "../../jobs/queues/ai.queue.js";
 import type { VideoRepository } from "./video.repository.js";
+import type { ThumbnailService } from "./thumbnail.service.js";
 
 export class VideoService {
-  constructor(private readonly videoRepository: VideoRepository) {}
+  constructor(
+    private readonly videoRepository: VideoRepository,
+    private readonly thumbnailService: ThumbnailService,
+  ) {}
 
   private generateVideoMetadata(userId: string, input: CreateVideoInput) {
     const videoId = randomUUID();
@@ -102,6 +106,9 @@ export class VideoService {
     if (!result) throw new Error(`Failed to delete the video ${videoId}`);
 
     r2Client.deleteObject(result.storageKey);
+
+    // The preview image lives beside the video; drop it too.
+    await this.thumbnailService.remove(result.thumbnailStorageKey);
 
     return result;
   }
