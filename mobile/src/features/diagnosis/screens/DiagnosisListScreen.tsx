@@ -14,6 +14,7 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Animated, {
   useSharedValue,
@@ -856,6 +857,7 @@ const Header: React.FC = () => (
 
 export const DiagnosisListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const tabBarHeight = useBottomTabBarHeight();
 
   const {
     analyses,
@@ -956,7 +958,9 @@ export const DiagnosisListScreen: React.FC = () => {
       <SafeAreaView style={styles.safe} edges={["top"]}>
         <Header />
         <FilterChips active={activeFilter} onChange={setActiveFilter} />
-        <DiagnosisListSkeleton />
+        <View style={{ paddingBottom: tabBarHeight }}>
+          <DiagnosisListSkeleton />
+        </View>
       </SafeAreaView>
     );
   }
@@ -982,9 +986,10 @@ export const DiagnosisListScreen: React.FC = () => {
           <SectionHeader title={section.title} count={section.data.length} />
         )}
         stickySectionHeadersEnabled={false}
-        contentContainerStyle={
-          sections.length === 0 ? styles.listEmpty : styles.list
-        }
+        contentContainerStyle={[
+          sections.length === 0 ? styles.listEmpty : styles.list,
+          { paddingBottom: tabBarHeight + 20 },
+        ]}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
