@@ -45,8 +45,8 @@ const ICON_STROKE = 1.3;
 const ICON_STROKE_ACTIVE = 1.9;
 
 const ITEM_HEIGHT = 44;
-const INDICATOR_INSET = 6;
-const INDICATOR_V_INSET = 2;
+const INDICATOR_INSET = -6;
+const INDICATOR_V_INSET = -5;
 const SLIDE_DURATION = 240;
 
 /**
