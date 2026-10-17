@@ -1,40 +1,62 @@
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { BottomTabBarHeightCallbackContext } from "@react-navigation/bottom-tabs";
 import {
   History,
   Home,
   Microscope,
-  Plus,
+  ScanLine,
   User,
   type LucideIcon,
 } from "lucide-react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { colors, radii, spacing } from "../../theme";
 
 type TabItemConfig = {
   name: string;
+  /** Used for the accessibility label — the bar is icon-only. */
   label: string;
   Icon: LucideIcon;
 };
 
 /**
- * Destinations rendered by the custom tab bar. The `Scan` entry is treated as
- * the emphasized center action and opens the stack-level recording flow rather
- * than switching to its own tab screen.
+ * Destinations rendered by the custom tab bar. The `Scan` entry is the center
+ * action: it opens the stack-level recording flow rather than switching to its
+ * own tab screen.
  */
 const TAB_ITEMS: TabItemConfig[] = [
   { name: "Home", label: "Home", Icon: Home },
   { name: "Diagnoses", label: "Diagnoses", Icon: Microscope },
-  { name: "Scan", label: "Scan", Icon: Plus },
+  { name: "Scan", label: "Scan", Icon: ScanLine },
   { name: "History", label: "History", Icon: History },
   { name: "Profile", label: "Profile", Icon: User },
 ];
 
 const CENTER_TAB = "Scan";
 
+const ICON_SIZE = 22;
+/** Slim outline weight, marginally heavier when the destination is selected. */
+const ICON_STROKE = 1.3;
+const ICON_STROKE_ACTIVE = 1.9;
+
+const ITEM_HEIGHT = 44;
+const INDICATOR_INSET = 6;
+const INDICATOR_V_INSET = 2;
+const SLIDE_DURATION = 240;
+
 /**
- * Dark-green floating bottom navigation with a lime center action.
+ * Dark oblong, icon-only bottom navigation.
+ *
+ * A single dark stadium is split into five destinations. One white-opacity
+ * capsule slides between them to mark the selected destination, staying inside
+ * the bar. Unselected icons are slim white outlines; the selected one turns
+ * green. There are no visible labels, so every destination keeps a descriptive
+ * accessibility label.
  *
  * Heights are reported through `BottomTabBarHeightCallbackContext` so screens
  * can pad their scroll content and never sit underneath the bar.
@@ -45,6 +67,22 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
   insets,
 }) => {
   const onHeightChange = React.useContext(BottomTabBarHeightCallbackContext);
+
+  const [rowWidth, setRowWidth] = React.useState(0);
+  const segmentWidth = rowWidth > 0 ? rowWidth / state.routes.length : 0;
+
+  const indicatorX = useSharedValue(0);
+
+  React.useEffect(() => {
+    if (segmentWidth === 0) return;
+    indicatorX.value = withTiming(state.index * segmentWidth, {
+      duration: SLIDE_DURATION,
+    });
+  }, [state.index, segmentWidth, indicatorX]);
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: indicatorX.value }],
+  }));
 
   const handleLayout = (event: {
     nativeEvent: { layout: { height: number } };
@@ -81,14 +119,28 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
       pointerEvents="box-none"
     >
       <View style={styles.bar}>
-        {state.routes.map((route, index) => {
-          const config = TAB_ITEMS.find((item) => item.name === route.name);
-          if (!config) return null;
+        <View
+          style={styles.row}
+          onLayout={(event) => setRowWidth(event.nativeEvent.layout.width)}
+        >
+          {segmentWidth > 0 ? (
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.indicator,
+                { width: segmentWidth - INDICATOR_INSET * 2 },
+                indicatorStyle,
+              ]}
+            />
+          ) : null}
 
-          const focused = state.index === index;
-          const isCenter = route.name === CENTER_TAB;
+          {state.routes.map((route, index) => {
+            const config = TAB_ITEMS.find((item) => item.name === route.name);
+            if (!config) return null;
 
-          if (isCenter) {
+            const focused = state.index === index;
+            const isCenter = route.name === CENTER_TAB;
+
             return (
               <Pressable
                 key={route.key}
@@ -96,48 +148,20 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
                 onLongPress={() => handleLongPress(route.key)}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: focused }}
-                accessibilityLabel="Start a new diagnosis"
-                style={({ pressed }) => [styles.centerItem, pressed && styles.pressed]}
+                accessibilityLabel={
+                  isCenter ? "Start a new diagnosis" : config.label
+                }
+                style={({ pressed }) => [styles.item, pressed && styles.pressed]}
               >
-                <View style={styles.centerCircle}>
-                  <config.Icon
-                    size={26}
-                    color={colors.forest}
-                    strokeWidth={2.4}
-                  />
-                </View>
-                <Text style={[styles.label, styles.centerLabel]} numberOfLines={1}>
-                  {config.label}
-                </Text>
+                <config.Icon
+                  size={ICON_SIZE}
+                  color={focused ? colors.lime : colors.textOnDark}
+                  strokeWidth={focused ? ICON_STROKE_ACTIVE : ICON_STROKE}
+                />
               </Pressable>
             );
-          }
-
-          return (
-            <Pressable
-              key={route.key}
-              onPress={() => handlePress(route.name, route.key, focused)}
-              onLongPress={() => handleLongPress(route.key)}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: focused }}
-              accessibilityLabel={config.label}
-              style={({ pressed }) => [styles.item, pressed && styles.pressed]}
-            >
-              <config.Icon
-                size={22}
-                color={focused ? colors.lime : colors.textOnDark}
-                strokeWidth={focused ? 2.4 : 1.6}
-                style={focused ? undefined : styles.inactiveIcon}
-              />
-              <Text
-                style={[styles.label, focused ? styles.labelActive : styles.labelInactive]}
-                numberOfLines={1}
-              >
-                {config.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+          })}
+        </View>
       </View>
     </View>
   );
@@ -152,12 +176,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   bar: {
-    minHeight: 66,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: colors.forest,
-    borderRadius: radii.xl,
+    minHeight: ITEM_HEIGHT + spacing.sm * 2,
+    justifyContent: "center",
+    borderRadius: radii.pill,
+    backgroundColor: colors.charcoal,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
     shadowColor: "#000000",
@@ -166,48 +188,23 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 10,
   },
+  row: {
+    flexDirection: "row",
+    alignItems: "stretch",
+  },
+  indicator: {
+    position: "absolute",
+    left: INDICATOR_INSET,
+    top: INDICATOR_V_INSET,
+    bottom: INDICATOR_V_INSET,
+    borderRadius: radii.pill,
+    backgroundColor: colors.capsuleOnDark,
+  },
   item: {
     flex: 1,
+    height: ITEM_HEIGHT,
     alignItems: "center",
     justifyContent: "center",
-    gap: spacing.xs,
-    paddingVertical: spacing.sm,
-  },
-  centerItem: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 2,
-  },
-  centerCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.lime,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: -26,
-    borderWidth: 4,
-    borderColor: colors.forest,
-  },
-  centerLabel: {
-    color: colors.lime,
-    fontWeight: "700",
-  },
-  inactiveIcon: {
-    opacity: 0.6,
-  },
-  label: {
-    fontSize: 10,
-  },
-  labelActive: {
-    color: colors.lime,
-    fontWeight: "700",
-  },
-  labelInactive: {
-    color: colors.textOnDark,
-    opacity: 0.6,
-    fontWeight: "500",
   },
   pressed: {
     opacity: 0.7,

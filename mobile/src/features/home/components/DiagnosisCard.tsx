@@ -126,14 +126,14 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
   },
   pressed: {
     opacity: 0.9,
   },
   imageWrap: {
     width: "100%",
-    backgroundColor: colors.sageDeep,
+    backgroundColor: colors.surfaceMuted,
   },
   image: {
     width: "100%",

@@ -114,7 +114,7 @@ const ScanPlaceholderScreen: React.FC = () => {
         accessibilityRole="button"
         accessibilityLabel="Start scanning"
       >
-        <ScanLine size={20} color={colors.textOnDark} strokeWidth={2} />
+        <ScanLine size={20} color={colors.forest} strokeWidth={2} />
         <Text style={styles.scanActionButtonText}>Start Scanning</Text>
       </TouchableOpacity>
     </View>
@@ -165,7 +165,7 @@ const HomeTabNavigator: React.FC = () => {
 const styles = StyleSheet.create({
   placeholderContainer: {
     flex: 1,
-    backgroundColor: colors.sage,
+    backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",
     padding: spacing.xl,
@@ -174,7 +174,9 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: colors.sageDeep,
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.xl,
@@ -182,7 +184,7 @@ const styles = StyleSheet.create({
   placeholderTitle: {
     fontSize: 28,
     fontWeight: "600",
-    color: colors.forest,
+    color: colors.text,
     marginBottom: spacing.sm,
   },
   placeholderSubtitle: {
@@ -193,26 +195,28 @@ const styles = StyleSheet.create({
   },
   placeholderBadge: {
     backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: 20,
   },
   placeholderBadgeText: {
-    color: colors.warning,
+    color: colors.textMuted,
     fontSize: 14,
     fontWeight: "500",
   },
   scanActionButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.green,
+    backgroundColor: colors.lime,
     paddingHorizontal: spacing.xxl,
     paddingVertical: 14,
     borderRadius: 25,
     gap: spacing.sm,
   },
   scanActionButtonText: {
-    color: colors.textOnDark,
+    color: colors.forest,
     fontSize: 16,
     fontWeight: "600",
   },

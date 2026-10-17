@@ -7,6 +7,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
+import { colors } from "../../theme";
 
 type SkeletonProps = {
   width?: ViewStyle["width"];
@@ -53,6 +54,6 @@ export function Skeleton({
 
 const styles = StyleSheet.create({
   skeleton: {
-    backgroundColor: "#D9D9D9",
+    backgroundColor: colors.skeleton,
   },
 });

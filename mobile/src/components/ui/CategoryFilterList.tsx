@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   chipInactive: {
     backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
   },
   chipPressed: {
     opacity: 0.8,

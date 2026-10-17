@@ -65,7 +65,7 @@ export const ProfileAvatar: React.FC<Props> = ({ uri, name, size = 44 }) => {
 
 const styles = StyleSheet.create({
   image: {
-    backgroundColor: colors.sageDeep,
+    backgroundColor: colors.surfaceMuted,
   },
   fallback: {
     backgroundColor: colors.green,

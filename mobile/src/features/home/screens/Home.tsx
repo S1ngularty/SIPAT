@@ -25,8 +25,7 @@ import {
   CategoryFilterList,
   type CategoryFilter,
 } from "../../../components/ui/CategoryFilterList";
-import { GreetingHeader } from "../components/GreetingHeader";
-import { WeatherSummaryCard } from "../components/WeatherSummaryCard";
+import { HomeHeroSheet } from "../components/HomeHeroSheet";
 import { DiagnosisCard } from "../components/DiagnosisCard";
 import { getWeatherState } from "../weather";
 import { useDiagnosisList } from "../../diagnosis/hooks/useDiagnosisList";
@@ -78,7 +77,6 @@ const DiagnosisCardSkeleton: React.FC<{ width: number }> = ({ width }) => (
       width={width}
       height={Math.round(width * 0.62)}
       borderRadius={0}
-      style={styles.skeletonSurface}
     />
     <View style={styles.skeletonBody}>
       <Skeleton width="70%" height={14} borderRadius={4} />
@@ -165,10 +163,7 @@ const HomeScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: tabBarHeight + spacing.xxl },
-        ]}
+        contentContainerStyle={{ paddingBottom: tabBarHeight + spacing.xxl }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -178,16 +173,13 @@ const HomeScreen: React.FC = () => {
           />
         }
       >
-        <GreetingHeader
+        <HomeHeroSheet
           name={displayName}
           avatarUrl={user?.imageUrl}
           onPressAvatar={() => navigation.navigate("Profile")}
           onPressNotifications={openDiagnoses}
+          weather={getWeatherState()}
         />
-
-        <View style={styles.weatherWrapper}>
-          <WeatherSummaryCard state={getWeatherState()} />
-        </View>
 
         <SectionHeader
           title="Recent Diagnoses"
@@ -237,20 +229,14 @@ const HomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.sage,
-  },
-  content: {
-    paddingTop: spacing.sm,
-  },
-  weatherWrapper: {
-    marginTop: spacing.xl,
-    marginBottom: spacing.xxl,
+    backgroundColor: colors.white,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: spacing.xl,
+    marginTop: spacing.xxl,
     marginBottom: spacing.md,
   },
   sectionTitle: {
@@ -290,10 +276,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: colors.border,
-  },
-  skeletonSurface: {
-    backgroundColor: colors.sageDeep,
+    borderColor: colors.borderStrong,
   },
   skeletonBody: {
     padding: spacing.md,
@@ -304,7 +287,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     padding: spacing.xl,
     alignItems: "center",
   },
@@ -312,7 +295,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: radii.pill,
-    backgroundColor: colors.sage,
+    backgroundColor: colors.surfaceMuted,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.md,

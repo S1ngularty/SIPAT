@@ -15,33 +15,45 @@ The image is a visual reference, not a specification of the application's actual
 
 ## 2. Overall visual direction
 
-The design is modern, nature-inspired, minimal, and photography-led. It uses dark forest greens, olive greens, lime-green accents, pale sage surfaces, white text, rounded cards, and restrained transparency.
+The design is modern, nature-inspired, minimal, and photography-led.
+
+> **Note:** §11 documents the UI style actually implemented in the SIPAT app.
+> Where the reference recreated below differs, §11 is the source of truth.
 
 ### Core design principles
 
 - Agricultural photography is a major visual element, not merely decoration.
-- Use dark green surfaces to establish hierarchy and support white text.
-- Use lime green sparingly for primary actions and selected states.
-- Use pale green-tinted backgrounds for dashboard content.
+- **White base.** Screens sit on white; there are no tinted page backgrounds.
+- **Dark neutral surfaces** (charcoal) establish hierarchy and carry white text.
+- **Green is an accent**, not a fill. Reserve it for primary actions, active
+  states and status; never paint large areas green.
+- **Slim, visible outlines.** Separate surfaces with a 1 px hairline rather
+  than fills or heavy shadows.
 - Use rounded corners consistently without making every element look like a pill.
-- Prefer subtle layering and transparency over heavy shadows and borders.
 - Maintain readable text contrast over images.
 - Keep spacing, typography, corner radii, and icon sizes consistent.
 - Do not reproduce the white phone frames, mockup shadows, or beige canvas around the three devices; those belong to the presentation image, not the app UI.
 
 ### Approximate color palette
 
-These are visual estimates from the reference, not extracted design tokens.
+These are the tokens implemented in `src/theme/colors.ts` (§11).
 
-| Token | Approximate hex | Intended use |
+| Token | Hex | Intended use |
 |---|---|---|
-| Forest green | `#18351D` | Dark backgrounds, navigation, bottom image overlays |
-| Deep olive green | `#30491B` | Weather cards, translucent panels, field overlays |
-| Secondary agricultural green | `#52782B` | Secondary surfaces, subtle accents |
-| Lime green | `#86C653` | Primary buttons, selected filters, active navigation |
-| Pale sage | `#EFF3E9` | Dashboard background and light surfaces |
-| White | `#FFFFFF` | Text on dark backgrounds and card surfaces |
-| Muted gray-green | `#687067` | Secondary text on light surfaces |
+| `forest` | `#18351D` | Text/icons on lime actions |
+| `green` | `#52782B` | Secondary agricultural green, subtle accents |
+| `lime` | `#86C653` | Primary actions, selected states |
+| `charcoal` | `#22282A` | Bottom navigation, dark panels, active chips |
+| `capsuleOnDark` | `rgba(255,255,255,.12)` | White-opacity capsule/button on the dark bar |
+| `outlineOnDark` | `rgba(255,255,255,.26)` | Slim hairline over photography |
+| `white` | `#FFFFFF` | Screen and card surfaces |
+| `surfaceMuted` | `#F3F4F6` | Thumbnails, empty-state circles, image placeholders |
+| `skeleton` | `#D9D9D9` | Loading skeleton shimmer base |
+| `borderStrong` | `#D1D6D0` | Slim outline for cards and controls |
+| `text` | `#1D1D1B` | Primary text on light surfaces |
+| `textMuted` | `#6B7280` | Secondary text on light surfaces |
+| `textOnDark` | `#FFFFFF` | Text and icons on dark surfaces |
+| `success` / `warning` / `danger` | `#3F7D50` / `#C08A2E` / `#B4433A` | Status only |
 
 If the project already has a theme, adapt these values to it rather than introducing a competing design system.
 
@@ -50,15 +62,14 @@ If the project already has a theme, adapt these values to it rather than introdu
 Use the project's existing sans-serif font if it is suitable. A consistent font such as Inter can be considered if the project already supports custom fonts; do not add a font dependency unnecessarily.
 
 | Element | Suggested starting size | Weight |
-|---|---:|---|
+|---|---|---|
 | Onboarding headline | 28–32 px | Bold |
 | Screen title | 19–22 px | Semibold/bold |
-| Weather temperature, if present | 42–50 px | Regular |
 | Section heading | 19–21 px | Bold |
 | Card title | 14–16 px | Semibold |
 | Main body text | 13–15 px | Regular |
 | Secondary labels | 11–13 px | Regular |
-| Bottom navigation label | 10–12 px | Regular |
+| Bottom navigation | Icon only — no visible labels (§11) |
 
 Use a clear type hierarchy. Avoid making every label bold, overly thin fonts on photographs, and long uppercase paragraphs. Adjust sizes for device width, localization, and accessibility font scaling.
 
@@ -139,66 +150,53 @@ Provide a quick overview and entry points to the application's main features. Th
 
 ### Page order
 
-1. Greeting and notification row.
-2. Weather summary card.
-3. “My Fields” section header and “See All” action.
-4. Horizontal category filters.
-5. Horizontally scrolling content cards.
-6. Persistent bottom navigation.
+1. **Upper sheet** — profile, notifications and weather on one photographic panel.
+2. “Recent Diagnoses” section header and “See All” action.
+3. Horizontal category filters.
+4. Horizontally scrolling diagnosis cards.
+5. Persistent bottom navigation.
 
-### A. Greeting and notification row
+### A. Upper sheet (profile + notifications + weather)
 
-- Place a circular avatar at the left, approximately 40–44 px in diameter.
-- Put a compact two-line greeting beside the avatar.
-- Use a smaller, lower-emphasis first line and a more prominent second line.
-- Place a notification icon inside a circular dark-green control at the right.
-- Vertically center all elements and leave sufficient space before the weather card.
-- Use the authenticated user's name and avatar where available.
-- Provide a reasonable fallback when profile data is missing.
+A single static panel at the top of Home groups the three summary elements instead of stacking separate cards.
 
-### B. Weather summary card
+**Structure**
+- One shared background photograph from `assets/images` (`resizeMode="cover"`), square top corners and rounded bottom corners.
+- A vertical overlay gradient from green (`rgba(24,53,29,.72)`) to charcoal (`rgba(20,24,26,.90)`) so white text and hairlines stay readable on any part of the photo.
+- Generous bottom padding (~32 px) so the panel reads as a sheet rather than a card.
 
-The weather card is the largest summary component on the dashboard.
+**Profile row**
+- Circular avatar (~44 px) inside a 1 px white-opacity ring, beside a two-line greeting: a smaller muted-white first line and a bolder white second line.
+- Tapping the row opens the Profile destination.
+- Use the authenticated user's name and avatar; fall back to initials.
 
-**Visual structure**
-- Dark forest/olive green background; a restrained gradient is optional.
-- Approximately 24 px corner radius.
-- Approximately 14–18 px internal padding.
-- Location row near the top.
-- Weather icon toward the right.
-- Large temperature as the dominant value.
-- Condition and update timestamp near the temperature.
-- Thin divider between the primary weather display and the secondary metrics.
-- Three compact metric columns at the bottom.
+**Notification control**
+- A hairline-outlined circular control on the right — white icon, no fill.
+- It must open a real destination (the activity/diagnosis list).
 
-**Possible data fields shown in the reference**
-- Location
-- Temperature
-- Weather condition
-- Humidity
-- Precipitation
-- Wind speed
+**Weather block**
+- Below the profile row: a slim hairline block with **no fill**, pure white text and icons.
+- Location row on top, large temperature and condition below, then a hairline-separated row of compact metrics.
+- SIPAT has no weather provider yet, so `getWeatherState()` returns a documented temporary mock. Loading and unavailable states are already implemented — see §11.
 
-The temperature should be significantly larger than all other text in the card. Secondary metrics should use small labels and clearly readable values.
+### B. Weather data integrity
 
-**Data integrity**
-- Do not hardcode sample weather readings as if they were current.
-- Use actual data from the project's configured source.
-- Show a skeleton/loading state while loading.
-- Provide an explicit unavailable or error state when data cannot be retrieved.
-- Do not invent a location or claim that the displayed weather is live unless the data source supports it.
+- Do not present sample readings as live measurements.
+- Keep one wiring point for the provider: `src/features/home/weather.ts`.
+- Show the skeleton/loading state while loading, and an explicit unavailable state when data cannot be retrieved.
+- While the mock is in place, its values are placeholder content, not product data.
 
-### C. “My Fields” section header
+### C. “Recent Diagnoses” section header
 
 - Place the section title on the left.
 - Place a compact “See All” action on the right.
 - Keep both on one row.
 - Use a bold title and a smaller, lower-emphasis action.
-- Maintain approximately 18–24 px separation from the preceding card, while keeping the header close to its filters.
+- Maintain approximately 18–24 px separation from the preceding sheet, while keeping the header close to its filters.
 
 ### D. Horizontal category filters
 
-The reference uses a horizontal row of rounded chips. The active chip is lime green; inactive chips are white or light neutral.
+The reference uses a horizontal row of rounded chips. The active chip is lime green; inactive chips are white with a slim outline.
 
 Requirements:
 - Keep chip heights consistent.
@@ -207,13 +205,13 @@ Requirements:
 - Make the selected state visually obvious.
 - Keep the list on one horizontal line; allow scrolling rather than wrapping.
 - Ensure selecting a chip actually filters or updates the displayed content.
-- Provide accessible labels and a selected-state indication that is not based on color alone.
+- Provide accessible labels and a selected-state indication that is not based on color alone (see §11: lime fill + bold label + check glyph).
 
-The categories visible in the reference are illustrative. Use categories relevant to the real application.
+The categories visible in the reference are illustrative. Use categories relevant to the real application — SIPAT uses date buckets (All / Today / Yesterday / This week / Older).
 
 ### E. Horizontal content cards
 
-The cards use a white surface with rounded corners and a large image. The next card is partly visible, suggesting horizontal scrolling.
+The cards use a white surface with a slim hairline outline, rounded corners and a large image. The next card is partly visible, suggesting horizontal scrolling.
 
 Each card may contain:
 1. A crop or agricultural photograph.
@@ -235,7 +233,7 @@ Do not copy sample content such as pumpkin harvest unless it is relevant to the 
 
 ### F. Bottom navigation
 
-The reference shows a dark-green, floating-looking pill near the bottom, with four smaller destinations and a larger central add action.
+The implemented bar (§11) is a dark, floating, **icon-only** stadium at the bottom of the screen.
 
 Example destinations in the reference:
 - Home
@@ -244,21 +242,24 @@ Example destinations in the reference:
 - Document
 - Profile
 
+SIPAT destinations, in order: Home, Diagnoses, Scan, History, Profile.
+
 Visual requirements:
-- Dark-green rounded outer container.
-- Evenly distributed navigation items.
-- Compact outline icons and small labels.
-- Lime-green active state.
-- A larger lime-green circular center action.
-- Adequate contrast between active and inactive destinations.
+- Dark **charcoal** outer container, fully rounded (`radii.pill`) so it is an actual oblong.
+- Evenly distributed destinations; no visible labels — icon only.
+- Compact **slim** outline icons (stroke ≈ 1.3, ≈ 1.9 when selected).
+- White icons when unselected, **green** (`lime`) when selected.
+- A white-opacity capsule (`capsuleOnDark`) that **slides** between destinations to mark the selected one, staying inside the bar.
+- The center `Scan` destination is a plain white icon — it does not overflow the bar.
 
 Behavior requirements:
 - Each destination must navigate to the appropriate existing route.
-- The central add control must execute a real creation action or open the appropriate flow.
+- The center `Scan` control must execute a real action (it opens the recording flow) rather than switching to its own tab.
 - Do not create duplicate or disconnected navigation logic if React Navigation is already configured.
 - Position the bar with safe-area awareness.
-- Prevent it from covering scrollable content.
+- Prevent it from covering scrollable content (report the height via `BottomTabBarHeightCallbackContext`).
 - Account for the system gesture indicator and smaller devices.
+- Because there are no labels, every destination **must** keep a descriptive accessibility label.
 
 ---
 
@@ -305,7 +306,7 @@ These are example fields, not mandatory data.
 
 Visual requirements:
 - Position the panel in the upper portion of the screen, below the header.
-- Use a translucent olive-green background.
+- Use a translucent dark (`charcoal`) background.
 - Use rounded corners and consistent internal padding.
 - Align labels to the left and values to the right.
 - Separate rows with subtle horizontal dividers.
@@ -369,7 +370,7 @@ src/
 │   │   ├── PrimaryPillButton.tsx
 │   │   └── CircularIconButton.tsx
 │   ├── cards/
-│   │   ├── WeatherSummaryCard.tsx
+│   │   ├── WeatherBlock.tsx
 │   │   ├── FieldCard.tsx
 │   │   ├── FieldSummaryCard.tsx
 │   │   └── MonitoringMetricsCard.tsx
@@ -391,6 +392,24 @@ src/
 
 This is an example, not an instruction to restructure a working codebase unnecessarily.
 
+SIPAT implements the subset it needs, under `src/features/home`:
+
+```text
+src/
+├── features/home/
+│   ├── screens/Home.tsx
+│   ├── components/HomeHeroSheet.tsx     # upper sheet (profile + notifications + weather)
+│   ├── components/GreetingHeader.tsx    # profile row (light/dark tone)
+│   ├── components/WeatherBlock.tsx      # slim weather block
+│   ├── components/DiagnosisCard.tsx     # horizontal diagnosis card
+│   └── weather.ts                       # single weather wiring point
+├── components/
+│   ├── common/ProfileAvatar.tsx
+│   └── ui/{CircularIconButton,CategoryFilterList,SkeletonComponent}.tsx
+├── navigations/components/BottomTabBar.tsx
+└── theme/{colors,spacing,radii,typography}.ts
+```
+
 ### Component responsibilities
 
 | Component | Responsibility |
@@ -398,7 +417,7 @@ This is an example, not an instruction to restructure a working codebase unneces
 | `ScreenContainer` | Shared background, safe-area handling, layout conventions |
 | `PrimaryPillButton` | Reusable pill action with icon and label |
 | `CircularIconButton` | Back, notification, bookmark, and other compact actions |
-| `WeatherSummaryCard` | Weather presentation and loading/error states |
+| `WeatherBlock` | Weather presentation and loading/error states, placed inside the home hero sheet |
 | `CategoryFilterList` | Horizontally scrollable category filters |
 | `FieldCard` | Image, title, summary, and optional action |
 | `FieldSummaryCard` | Label/value rows and separators |
@@ -518,6 +537,82 @@ Follow this workflow:
 - Do not claim tests passed unless they were actually run.
 - Prioritize maintainability, consistency, accessibility, and accurate application behavior.
 
+---
+
+## 11. Implemented SIPAT UI style (current app)
+
+This section documents the style the app actually ships. Treat it as the source
+of truth where it differs from the reference recreations above.
+
+### 11.1 Foundations
+
+| Aspect | Rule |
+|---|---|
+| Screen background | **White.** No tinted/dark page backgrounds. |
+| Surfaces | White cards separated by a 1 px `borderStrong` hairline. |
+| Dark surfaces | `charcoal` — bottom navigation, hero sheet fallback, active chips. |
+| Green | Accent only: `lime` for primary actions/selected states, `green` for quiet accents, `forest` for text on lime. |
+| Muted fill | `surfaceMuted` for thumbnails, empty-state circles, image placeholders. |
+| Text | `text` primary, `textMuted` secondary, `textOnDark` over photography/dark. |
+| Radii | `sm 10 · md 14 · lg 20 · xl 24 · pill 999` (`src/theme/radii.ts`). Container bars use `pill`. |
+| Spacing | `xs 4 · sm 8 · md 12 · lg 16 · xl 20 · xxl 24 · xxxl 32` (`src/theme/spacing.ts`). Screen padding is `xl` (20). |
+| Icons | `lucide-react-native`, outline style. Slim strokes: ≈1.3 default, ≈1.9 for emphasis. |
+| Gradients/overlays | Only over photography, to protect text contrast. |
+
+### 11.2 Photography rule
+
+Photography appears as a shared background with a dark overlay gradient, not as
+decoration. Text and hairline outlines on top of it are always white. Where a
+background image is required and no asset exists yet, the code keeps a single
+`require(...)` constant so the asset can be swapped in one place
+(`HomeHeroSheet.SHEET_BACKGROUND`).
+
+### 11.3 Bottom navigation (`BottomTabBar`)
+
+- Dark `charcoal` stadium (`radii.pill`), floating with a soft shadow, inset
+  from the screen edges by `spacing.lg`.
+- Five evenly distributed icon-only destinations: Home, Diagnoses, Scan,
+  History, Profile. **No visible labels.**
+- A single white-opacity capsule (`capsuleOnDark`) slides between destinations
+  to mark the selected one (`withTiming`, 240 ms). It stays inside the bar.
+- Unselected icons are white; the selected icon is `lime` and slightly heavier.
+  Selection is signalled by capsule **and** colour **and** stroke weight — never
+  colour alone.
+- The center `Scan` icon is a plain white icon that opens the recording flow; it
+  does not overflow the bar.
+- The bar reports its height through `BottomTabBarHeightCallbackContext` so
+  screens can pad scroll content. Every destination keeps an accessibility label
+  because there are no visible labels.
+
+### 11.4 Upper sheet (`HomeHeroSheet`)
+
+Profile, notifications and weather share one static panel at the top of Home:
+shared photo + green→charcoal overlay gradient, avatar row on top and the slim
+weather block below. Details in §4.A.
+
+### 11.5 Weather wiring
+
+`src/features/home/weather.ts` is the only weather entry point. It currently
+returns a **documented temporary mock** because no provider is configured.
+`WeatherBlock` already renders loading, unavailable and ready states, so wiring a
+real source requires changing only that file.
+
+### 11.6 Known gaps / follow-ups
+
+- **Weather is mocked** (`MOCK_WEATHER`) — replace before release.
+- `DiagnosisListScreen`, `DiagnosisDetailScreen`, the scanning/preview flow and
+  the auth screens still carry their own local grey palettes (e.g.
+  `#6b7280`, `#e5e7eb`, `#16a34a`) rather than the shared tokens. They are
+  visually close (white base, neutral greys, green actions) but not tokenised.
+- The reference's blue and white theme variants are **not** implemented; the app
+  has a single theme.
+- `assets/images/crop-placeholder.png` and the hero photo are placeholders the
+  owner replaces with real assets.
+
 ## Final acceptance criteria
 
-The implementation is acceptable when it captures the reference's agricultural visual identity—forest-green surfaces, lime-green actions, pale sage backgrounds, rounded cards, photography, restrained overlays, and clear information hierarchy—while fitting the existing React Native application, adapting to different devices, using truthful data, and keeping all interactive controls functional.
+The implementation is acceptable when it captures the app's visual identity — a
+white base, neutral dark-grey surfaces, slim visible outlines, green accents,
+photography with restrained overlays, and a clear information hierarchy — while
+fitting the existing React Native application, adapting to different devices,
+using truthful data, and keeping all interactive controls functional.
