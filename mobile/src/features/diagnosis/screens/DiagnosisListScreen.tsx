@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import {Bounce, Chase, Swing, Wander} from "react-native-animated-spinkit"
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Animated, {
   useSharedValue,
@@ -535,9 +536,7 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
         )}
 
         {isProcessing && (
-          <Animated.Text style={[styles.spinner, spinnerStyle]}>
-            ⟳
-          </Animated.Text>
+         <Swing size={28} color={colors.lime}/>
         )}
       </View>
     </View>

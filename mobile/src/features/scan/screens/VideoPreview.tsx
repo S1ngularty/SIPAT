@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { VideoView } from "expo-video";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import { Flow } from "react-native-animated-spinkit";
 import {
   ArrowLeft,
   Play,
@@ -202,10 +203,10 @@ const VideoPreviewScreen = () => {
             accessibilityLabel="Analyze plant"
           >
             {isAnalyzing ? (
-              <ActivityIndicator color={colors.forest} size="small" />
+              <Flow size={32} color={colors.white} />
             ) : (
               <>
-                <ScanLine size={18} color={colors.forest} strokeWidth={1.9} />
+                <ScanLine size={18} color={colors.white} strokeWidth={1.9} />
                 <Text style={styles.analyzeButtonText}>Analyze Plant</Text>
               </>
             )}
@@ -423,7 +424,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   analyzeButtonText: {
-    color: colors.forest,
+    color: colors.white,
     fontSize: 16,
     fontWeight: "700",
   },

@@ -86,7 +86,7 @@ class DetectionService:
         
         self.models = AIModels(
                 "app/models/crop_identification/v2.pt",
-                "app/models/pest_disease_identification/v2.pt"
+                "app/models/pest_disease_identification/v3.pt"
             )
         
         self.storage = R2Storage()
