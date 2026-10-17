@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   },
   permissionContainer: {
     flex: 1,
-    backgroundColor: "#F5F5F0",
+    backgroundColor: "#000",
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
@@ -291,13 +291,13 @@ const styles = StyleSheet.create({
   permissionTitle: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#333",
+    color: "#FFFFFF",
     marginTop: 16,
     marginBottom: 8,
   },
   permissionText: {
     fontSize: 14,
-    color: "#666",
+    color: "rgba(255, 255, 255, 0.7)",
     textAlign: "center",
     marginBottom: 20,
     marginTop: 12,
