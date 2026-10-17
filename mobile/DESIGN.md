@@ -622,11 +622,46 @@ The Diagnoses tab follows the same foundations as Home.
   `ScanLine` icon.
 - Icons are `lucide-react-native` at stroke 1.5, per §11.1.
 
-### 11.7 Known gaps / follow-ups
+### 11.7 Scanner (`VideoScanning`)
+
+The camera screen is the one dark route (§11.1 status bar). It keeps the same
+slim, outline-only language as the rest of the app.
+
+- **Scan frame is minimalist and thin**: a 1 px `rgba(255,255,255,0.3)` hairline
+  rounded box at `radii.xl` with four 26 px corner brackets at 2 px stroke —
+  white idle, `lime` while recording (the box outline also shifts to a translucent
+  lime). No thick borders, no fills, and the overlay is `pointerEvents="none"` so
+  it never blocks the preview.
+- **Controls are outline-only**: round `iconButton`s (close, mute) are transparent
+  with a 1 px `rgba(255,255,255,0.45)` outline and `white` icons at stroke 1.5.
+  The gallery button uses the same treatment. The record button is a 2 px `white`
+  ring around a solid white dot, becoming a `lime` ring with a rounded `lime`
+  square while recording.
+- Accents are `colors.lime` (was the local `#4CAF50`) and `colors.danger` for the
+  timer warning; spacing uses the `spacing`/`radii` scales.
+- **Safe area**: the preview is deliberately full-bleed (`StyleSheet.absoluteFill`),
+  so the screen uses a plain `View` rather than `SafeAreaView` and applies
+  `useSafeAreaInsets()` directly to the absolutely positioned overlays —
+  `paddingTop: insets.top + spacing.xl` on the top bar, `paddingBottom:
+  insets.bottom + spacing.xxxl` on the bottom bar, and `top: insets.top + …` on the
+  recording pill. `SafeAreaView` padding does **not** apply to absolute children,
+  which is what previously pushed the controls under the status bar. The scrims
+  still bleed behind the status bar / home indicator.
+- **No camera-flip control** — the scanner is back-camera only (`facing="back"`),
+  which is what plant capture needs. `useScanning` no longer tracks `cameraType`.
+- **Focus**: `expo-camera` v57 exposes **no tap-to-focus API**. The only focus
+  knob is the iOS-only `autofocus` mode prop; the screen sets `autofocus="off"`
+  (continuous refocus as the plant moves — `"on"` would focus once and lock). The
+  old `focusable` prop was not part of expo-camera and was silently falling through
+  to React Native's generic `ViewProps`, so it has been removed. A tap-to-focus
+  reticle would need a native module or a different camera library.
+
+### 11.8 Known gaps / follow-ups
 
 - **Weather is mocked** (`MOCK_WEATHER`) — replace before release.
-- `DiagnosisDetailScreen`, the scanning/preview flow and the auth screens still
-  carry their own local grey palettes (e.g. `#6b7280`, `#e5e7eb`, `#16a34a`)
+- **No tap-to-focus** anywhere in the app — see §11.7.
+- `DiagnosisDetailScreen`, `VideoPreview` and the auth screens still carry their
+  own local grey palettes (e.g. `#6b7280`, `#e5e7eb`, `#16a34a`, `#4CAF50`)
   rather than the shared tokens. They are visually close (white base, neutral
   greys, green actions) but not tokenised.
 - The reference's blue and white theme variants are **not** implemented; the app
