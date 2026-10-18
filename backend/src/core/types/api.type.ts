@@ -21,6 +21,7 @@ export interface PaginationQuery {
   totalPages?: number;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  [key: string]: unknown;
 }
 
 export interface AuthUser {
