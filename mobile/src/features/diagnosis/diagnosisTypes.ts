@@ -68,14 +68,98 @@ export interface VideoAnalysis {
   updatedAt: string;
 }
 
+/** Bilingual explanation from a crop-problem record. `tl` Tagalog, `en` English. */
+export interface LocalizedText {
+  tl: string;
+  en: string;
+}
+
+export interface CropProblemTreatment {
+  category: string;
+  examples: string[];
+  cautions: string[];
+}
+
+export interface CropProblemSafety {
+  ppe: string[];
+  environmentalPrecautions: string[];
+  harvestRestrictions: string;
+}
+
+export interface CropProblemMedia {
+  url: string;
+  type: string;
+  caption: string;
+}
+
+export interface CropProblemMetadata {
+  version: string;
+  sources: string[];
+  reviewDate: string | null;
+  reviewStatus: string;
+}
+
+/**
+ * Reference record served by `GET /api/v1/crop-problems` — the disease/pest
+ * knowledge base. Mirrors `backend/src/modules/crop-problem/cropProblem.types.ts`.
+ */
+export interface CropProblem {
+  _id: string;
+  id: string;
+  slug: string;
+  name: string;
+  localName: string;
+  type: "disease" | "pest" | "healthy";
+  category: string;
+  scientificName: string;
+  description: LocalizedText;
+  affectedCrops: string[];
+  affectedParts: string[];
+  symptoms: string[];
+  favorableConditions: string[];
+  transmission: string[];
+  severity: "low" | "medium" | "high";
+  differentialDiagnosis: string[];
+  management: string[];
+  treatments: CropProblemTreatment[];
+  actionRefs: string[];
+  safety: CropProblemSafety;
+  diagnosisGuidance: string[];
+  media: CropProblemMedia[];
+  metadata: CropProblemMetadata;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Normalized, display-ready view of a {@link CropProblem}, keyed to the crop +
+ * condition pair detected in a video. The Evidence screen renders this directly.
+ */
 export interface DiseaseInfo {
-  evidenceKey?: string;
+  slug: string;
   crop: string;
   condition: string;
+  name: string;
+  localName?: string;
+  scientificName?: string;
+  type: "disease" | "pest" | "healthy";
+  category: string;
+  severity: "low" | "medium" | "high";
   description?: string;
-  symptoms?: string[];
-  prevention?: string[];
-  treatment?: string[];
+  /** Visible signs / damage. */
+  symptoms: string[];
+  /** Conditions that encourage the problem. */
+  favorableConditions: string[];
+  /** How it spreads, or how the pest moves. */
+  transmission: string[];
+  /** Prevention and non-chemical management. */
+  prevention: string[];
+  /** Treatment categories, flattened into readable lines. */
+  treatment: string[];
+  /** Label/PPE/harvest warnings, or `null` when the record carries none. */
+  safety: CropProblemSafety | null;
+  /** Reference URLs backing the record. */
+  sources: string[];
 }
 
 /**

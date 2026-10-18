@@ -40,6 +40,16 @@ const COLORS = {
 /** Horizontal page margin, per spec (20–24 px). */
 const MARGIN = 22;
 
+/** Chip colors per crop-problem severity. */
+const SEVERITY_STYLES: Record<
+  "low" | "medium" | "high",
+  { bg: string; fg: string }
+> = {
+  low: { bg: "#E7EFE8", fg: "#365B40" },
+  medium: { bg: "#FBF3E0", fg: "#8A6A1F" },
+  high: { bg: "#F7E4E2", fg: "#B4433A" },
+};
+
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const GALLERY_WIDTH = SCREEN_WIDTH - MARGIN * 2;
 
@@ -241,6 +251,22 @@ interface ListBlockProps {
   items?: string[];
 }
 
+/** Bare bullet list, reused by {@link ListBlock} and the Safety group. */
+const Bullets: React.FC<{ items?: string[] }> = ({ items }) => {
+  if (!items || items.length === 0) return null;
+
+  return (
+    <>
+      {items.map((item, idx) => (
+        <View key={idx} style={styles.bulletRow}>
+          <View style={styles.bullet} />
+          <Text style={styles.bulletText}>{item}</Text>
+        </View>
+      ))}
+    </>
+  );
+};
+
 const ListBlock: React.FC<ListBlockProps> = ({ title, items }) => {
   if (!items || items.length === 0) return null;
 
@@ -248,12 +274,7 @@ const ListBlock: React.FC<ListBlockProps> = ({ title, items }) => {
     <View style={styles.block}>
       <Text style={styles.blockTitle}>{title}</Text>
 
-      {items.map((item, idx) => (
-        <View key={idx} style={styles.bulletRow}>
-          <View style={styles.bullet} />
-          <Text style={styles.bulletText}>{item}</Text>
-        </View>
-      ))}
+      <Bullets items={items} />
     </View>
   );
 };
@@ -281,8 +302,15 @@ export const EvidencePreviewScreen: React.FC = () => {
     return meanConfidence(values);
   }, [frames, detections]);
 
-  const diseaseName = prettifyLabel(condition) || "Unidentified condition";
+  const diseaseName =
+    diseaseInfo?.name || prettifyLabel(condition) || "Unidentified condition";
   const cropName = prettifyLabel(crop) || "Crop not identified";
+
+  const hasSafety =
+    !!diseaseInfo &&
+    (diseaseInfo.safety?.ppe?.length ||
+      diseaseInfo.safety?.environmentalPrecautions?.length ||
+      !!diseaseInfo.safety?.harvestRestrictions);
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
@@ -308,6 +336,12 @@ export const EvidencePreviewScreen: React.FC = () => {
           </View>
 
           <Text style={styles.cropName}>{cropName}</Text>
+
+          {diseaseInfo?.scientificName ? (
+            <Text style={styles.scientificName}>
+              {diseaseInfo.scientificName}
+            </Text>
+          ) : null}
         </View>
 
         {/* Carousel */}
@@ -328,15 +362,93 @@ export const EvidencePreviewScreen: React.FC = () => {
             </View>
           ) : diseaseInfo ? (
             <>
+              <View style={styles.metaRow}>
+                <View
+                  style={[
+                    styles.metaChip,
+                    {
+                      backgroundColor: (SEVERITY_STYLES[diseaseInfo.severity] ??
+                        SEVERITY_STYLES.low).bg,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.metaChipText,
+                      {
+                        color: (SEVERITY_STYLES[diseaseInfo.severity] ??
+                          SEVERITY_STYLES.low).fg,
+                      },
+                    ]}
+                  >
+                    {`${diseaseInfo.severity} severity`}
+                  </Text>
+                </View>
+
+                {diseaseInfo.category ? (
+                  <View style={styles.metaChip}>
+                    <Text style={styles.metaChipText}>
+                      {diseaseInfo.category}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+
               {diseaseInfo.description ? (
                 <Text style={styles.description}>
                   {diseaseInfo.description}
                 </Text>
               ) : null}
 
+              {diseaseInfo.localName ? (
+                <View style={styles.localNameBlock}>
+                  <Text style={styles.localNameLabel}>Sa Filipino</Text>
+                  <Text style={styles.localNameText}>
+                    {diseaseInfo.localName}
+                  </Text>
+                </View>
+              ) : null}
+
               <ListBlock title="Symptoms" items={diseaseInfo.symptoms} />
+              <ListBlock
+                title="Favorable conditions"
+                items={diseaseInfo.favorableConditions}
+              />
+              <ListBlock
+                title="How it spreads"
+                items={diseaseInfo.transmission}
+              />
               <ListBlock title="Prevention" items={diseaseInfo.prevention} />
               <ListBlock title="Treatment" items={diseaseInfo.treatment} />
+
+              {hasSafety && diseaseInfo.safety ? (
+                <View style={styles.block}>
+                  <Text style={styles.blockTitle}>Safety</Text>
+
+                  <Bullets items={diseaseInfo.safety.ppe} />
+                  <Bullets
+                    items={diseaseInfo.safety.environmentalPrecautions}
+                  />
+
+                  {diseaseInfo.safety.harvestRestrictions ? (
+                    <Text style={[styles.bulletText, styles.harvestNote]}>
+                      {diseaseInfo.safety.harvestRestrictions}
+                    </Text>
+                  ) : null}
+                </View>
+              ) : null}
+
+              {diseaseInfo.sources.length > 0 ? (
+                <View style={styles.block}>
+                  <Text style={styles.blockTitle}>Sources</Text>
+
+                  {diseaseInfo.sources.map((source) => (
+                    <Text key={source} style={styles.sourceText}>
+                      {source}
+                    </Text>
+                  ))}
+                </View>
+              ) : null}
             </>
           ) : (
             <View style={styles.placeholderBlock}>
@@ -432,6 +544,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textSecondary,
     marginTop: 6,
+  },
+  scientificName: {
+    fontSize: 13,
+    fontStyle: "italic",
+    color: COLORS.textSecondary,
+    marginTop: 4,
+  },
+
+  // ==========================================
+  // META CHIPS
+  // ==========================================
+
+  metaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 16,
+  },
+  metaChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: COLORS.surfaceMuted,
+  },
+  metaChipText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: COLORS.textSecondary,
+    textTransform: "capitalize",
+    letterSpacing: 0.2,
   },
 
   // ==========================================
@@ -542,6 +684,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textSecondary,
     lineHeight: 21,
+  },
+  localNameBlock: {
+    marginTop: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: COLORS.surfaceMuted,
+  },
+  localNameLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    color: COLORS.textSecondary,
+    marginBottom: 6,
+  },
+  localNameText: {
+    fontSize: 14,
+    color: COLORS.text,
+    lineHeight: 21,
+  },
+  sourceText: {
+    fontSize: 13,
+    color: COLORS.statusText,
+    lineHeight: 20,
+    marginBottom: 6,
+  },
+  harvestNote: {
+    fontStyle: "italic",
+    marginTop: 2,
   },
 
   // ==========================================

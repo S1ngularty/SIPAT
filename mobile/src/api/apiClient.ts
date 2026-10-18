@@ -42,9 +42,13 @@ class API {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(
+      const error = new Error(
         errorText || `Request failed with status ${response.status}`,
       );
+      // Preserve the HTTP status so callers can distinguish "not found" from a
+      // genuine failure (e.g. the wrap response body is just text).
+      (error as Error & { status?: number }).status = response.status;
+      throw error;
     }
 
     return response.json();
