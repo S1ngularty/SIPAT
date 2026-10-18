@@ -8,6 +8,7 @@ import {
   View,
   type ImageSourcePropType,
 } from "react-native";
+import { ChevronRight } from "lucide-react-native";
 import { colors, radii, spacing } from "../../../theme";
 import type { VideoAnalysis } from "../../diagnosis/diagnosisTypes";
 import {
@@ -28,9 +29,17 @@ const PLACEHOLDER_IMAGE = require("../../../../assets/images/crop-placeholder.pn
 
 type Props = {
   analysis: VideoAnalysis;
-  width: number;
+  /** Card width. Only used by the "card" variant. */
+  width?: number;
   onPress: (analysis: VideoAnalysis) => void;
+  /**
+   * "card" is the photographic tile used in horizontal carousels; "row" is the
+   * compact thumbnail row used by the vertical list on Home.
+   */
+  variant?: "card" | "row";
 };
+
+const DEFAULT_CARD_WIDTH = 260;
 
 const TONE_COLORS: Record<StatusTone, string> = {
   success: colors.success,
@@ -39,7 +48,12 @@ const TONE_COLORS: Record<StatusTone, string> = {
   neutral: colors.textMuted,
 };
 
-export const DiagnosisCard: React.FC<Props> = ({ analysis, width, onPress }) => {
+export const DiagnosisCard: React.FC<Props> = ({
+  analysis,
+  width = DEFAULT_CARD_WIDTH,
+  onPress,
+  variant = "card",
+}) => {
   const [imageFailed, setImageFailed] = useState(false);
 
   const title = getDiagnosisTitle(analysis);
@@ -48,15 +62,14 @@ export const DiagnosisCard: React.FC<Props> = ({ analysis, width, onPress }) => 
   const topFinding = getTopFinding(analysis);
   const processing = isProcessing(analysis);
 
-  const evidenceUri = topFinding?.evidenceUrl;
+  /** Prefer the video's own thumbnail, then the detected evidence crop. */
+  const imageUri = analysis.video?.thumbnailUrl || topFinding?.evidenceUrl;
   useEffect(() => {
     setImageFailed(false);
-  }, [evidenceUri]);
+  }, [imageUri]);
 
   const imageSource: ImageSourcePropType =
-    evidenceUri && !imageFailed
-      ? { uri: evidenceUri }
-      : PLACEHOLDER_IMAGE;
+    imageUri && !imageFailed ? { uri: imageUri } : PLACEHOLDER_IMAGE;
 
   const metaParts = [formatRelativeTime(analysis.createdAt)].filter(Boolean);
   if (topFinding && analysis.video?.status === "completed") {
@@ -64,6 +77,53 @@ export const DiagnosisCard: React.FC<Props> = ({ analysis, width, onPress }) => 
   } else if (analysis.results?.length) {
     metaParts.push(
       `${analysis.results.length} finding${analysis.results.length > 1 ? "s" : ""}`,
+    );
+  }
+
+  if (variant === "row") {
+    return (
+      <Pressable
+        onPress={() => onPress(analysis)}
+        accessibilityRole="button"
+        accessibilityLabel={`Open diagnosis ${title}`}
+        style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+      >
+        <View style={styles.rowThumb}>
+          <Image
+            source={imageSource}
+            style={styles.image}
+            resizeMode="cover"
+            onError={() => setImageFailed(true)}
+            accessibilityIgnoresInvertColors
+          />
+          {processing ? (
+            <View style={styles.rowThumbOverlay}>
+              <ActivityIndicator size="small" color={colors.textOnDark} />
+            </View>
+          ) : null}
+        </View>
+
+        <View style={styles.rowBody}>
+          <Text style={styles.rowTitle} numberOfLines={1}>
+            {title}
+          </Text>
+
+          <View style={styles.subtitleRow}>
+            <View style={[styles.dot, { backgroundColor: TONE_COLORS[tone] }]} />
+            <Text style={styles.subtitle} numberOfLines={1}>
+              {subtitle}
+            </Text>
+          </View>
+
+          {metaParts.length > 0 ? (
+            <Text style={styles.meta} numberOfLines={1}>
+              {metaParts.join("  ·  ")}
+            </Text>
+          ) : null}
+        </View>
+
+        <ChevronRight size={18} color={colors.textMuted} strokeWidth={1.8} />
+      </Pressable>
     );
   }
 
@@ -130,6 +190,45 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.9,
+  },
+  /* Compact thumbnail row (vertical list on Home). */
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.white,
+  },
+  rowThumb: {
+    width: 64,
+    height: 64,
+    borderRadius: radii.md,
+    overflow: "hidden",
+    backgroundColor: colors.surfaceMuted,
+    flexShrink: 0,
+  },
+  rowThumbOverlay: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(24, 53, 29, 0.45)",
+  },
+  rowBody: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing.xs,
+  },
+  rowTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.text,
   },
   imageWrap: {
     width: "100%",

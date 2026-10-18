@@ -1,0 +1,86 @@
+[
+  {
+    "id": "tip-001",
+    "title": "Suriin ang ilalim ng dahon",
+    "description": "Tingnan ang ilalim ng mga dahon dahil dito maaaring makita ang maliliit na peste, itlog, o unang palatandaan ng pinsala.",
+    "category": "pest-prevention",
+    "crops": ["tomato", "eggplant", "chili", "potato"]
+  },
+  {
+    "id": "tip-002",
+    "title": "Iwasan ang sobrang pagdidilig",
+    "description": "Diligan ang mga halaman ayon sa pangangailangan ng lupa at pananim. Ang sobrang basa ay maaaring magpataas ng panganib ng ilang sakit.",
+    "category": "watering",
+    "crops": ["tomato", "eggplant", "chili", "potato"]
+  },
+  {
+    "id": "tip-003",
+    "title": "Panatilihing malinis ang taniman",
+    "description": "Alisin ang mga nalaglag at may sakit na bahagi ng halaman kung ligtas gawin upang mabawasan ang posibleng pinagmumulan ng impeksiyon.",
+    "category": "sanitation",
+    "crops": ["tomato", "eggplant", "chili", "potato"]
+  },
+  {
+    "id": "tip-004",
+    "title": "Huwag balewalain ang mga batik",
+    "description": "Obserbahan kung lumalaki o dumarami ang mga batik sa dahon. Kunan ng malinaw na video o larawan ang mga sintomas para masuri nang maayos.",
+    "category": "disease-monitoring",
+    "crops": ["tomato", "eggplant", "chili", "potato"]
+  },
+  {
+    "id": "tip-005",
+    "title": "Bigyan ng sapat na espasyo ang halaman",
+    "description": "Ang wastong pagitan ng mga halaman ay nakatutulong sa pagdaloy ng hangin at pagkatuyo ng mga dahon.",
+    "category": "plant-care",
+    "crops": ["tomato", "eggplant", "chili", "potato"]
+  },
+  {
+    "id": "tip-006",
+    "title": "Regular na obserbahan ang mga pananim",
+    "description": "Suriin ang mga dahon, tangkay, at bunga nang regular upang mapansin agad ang mga pagbabago sa kondisyon ng halaman.",
+    "category": "monitoring",
+    "crops": ["tomato", "eggplant", "chili", "potato"]
+  },
+  {
+    "id": "tip-007",
+    "title": "Iwasang hawakan ang mga halaman kapag basa",
+    "description": "Kung maaari, iwasang humawak o magtrabaho sa mga basang halaman upang mabawasan ang pagkalat ng ilang sakit sa pamamagitan ng kamay o kagamitan.",
+    "category": "disease-prevention",
+    "crops": ["tomato", "eggplant", "chili", "potato"]
+  },
+  {
+    "id": "tip-008",
+    "title": "Linisin ang mga kagamitang pangbukid",
+    "description": "Linisin ang mga gunting at iba pang kagamitan pagkatapos gamitin, lalo na kung may hinawakang halaman na may sintomas ng sakit.",
+    "category": "sanitation",
+    "crops": ["tomato", "eggplant", "chili", "potato"]
+  },
+  {
+    "id": "tip-009",
+    "title": "Obserbahan ang pagkulot ng dahon",
+    "description": "Ang pagkulot ng dahon ay maaaring dulot ng peste, sakit, init, o kakulangan sa tubig. Suriin ang iba pang sintomas bago magpasya sa lunas.",
+    "category": "symptom-awareness",
+    "crops": ["tomato", "eggplant", "chili", "potato"]
+  },
+  {
+    "id": "tip-010",
+    "title": "Huwag agad gumamit ng pestisidyo",
+    "description": "Kilalanin muna ang posibleng sanhi ng problema at sundin ang label ng anumang rehistradong produktong gagamitin.",
+    "category": "safe-pest-management",
+    "crops": ["tomato", "eggplant", "chili", "potato"]
+  },
+  {
+    "id": "tip-011",
+    "title": "Alisin ang mga damong nakikipag-agawan sa sustansiya",
+    "description": "Kontrolin ang mga damo sa paligid ng pananim upang mabawasan ang kompetisyon sa tubig, liwanag, at sustansiya.",
+    "category": "weed-management",
+    "crops": ["tomato", "eggplant", "chili", "potato"]
+  },
+  {
+    "id": "tip-012",
+    "title": "Itala ang mga pagbabago sa pananim",
+    "description": "Tandaan kung kailan nagsimula ang sintomas at kung aling mga halaman ang apektado. Makakatulong ito sa pagsubaybay sa paglala ng problema.",
+    "category": "monitoring",
+    "crops": ["tomato", "eggplant", "chili", "potato"]
+  }
+]

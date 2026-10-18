@@ -152,3 +152,7 @@ https://universe.roboflow.com/kavyas-workspace-8szvb/aphids-auto/browse?queryTex
 
 to be added in pest_disease detection dataset:
 https://universe.roboflow.com/test-7/tomato-leaf-disease-1ilgo/browse?queryText=class%3A%22Tomato+leaf+bacterial+spot%22&pageSize=100&startingIndex=0&browseQuery=true(tomato)
+
+
+pest
+https://universe.roboflow.com/bohol-island-state-university-vgjlb/eggplant-disease-detection (eggplant)
