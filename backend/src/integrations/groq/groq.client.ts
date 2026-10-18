@@ -182,7 +182,7 @@ class GroqClient {
           content: JSON.stringify(detectionResult),
         },
       ],
-      model: "openai/gpt-oss-20b",
+      model: "llama-3.3-70b-versatile",
       response_format: {
         type: "json_object",
       },
