@@ -22,9 +22,11 @@ import { colors, radii, spacing } from "../../../theme";
 import { Skeleton } from "../../../components/ui/SkeletonComponent";
 import { HomeHeroSheet } from "../components/HomeHeroSheet";
 import { DiagnosisCard } from "../components/DiagnosisCard";
+import { AgriTipCard } from "../components/AgriTipCard";
 import { BrowseSymptoms, ExploreCropCareCard } from "../components/KnowledgeShortcuts";
 import { getWeatherState } from "../weather";
 import { useDiagnosisList } from "../../diagnosis/hooks/useDiagnosisList";
+import { getSessionTip } from "../utils/agriTips";
 import type { VideoAnalysis } from "../../diagnosis/diagnosisTypes";
 import type { TabParamList } from "../../../navigations/HomeTabNavigation";
 import type { UserStackParamList } from "../../../navigations/UserNavigation";
@@ -173,6 +175,9 @@ const HomeScreen: React.FC = () => {
 
   const hasMoreDiagnoses = analyses.length > MAX_HOME_DIAGNOSES;
 
+  /** Picked once per app session (module-level), so it's stable while open. */
+  const tip = getSessionTip();
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView
@@ -194,6 +199,10 @@ const HomeScreen: React.FC = () => {
           onPressNotifications={openDiagnoses}
           weather={getWeatherState()}
         />
+
+        <SectionHeader title="Agri Tips" />
+
+        {tip ? <AgriTipCard tip={tip} /> : null}
 
         <SectionHeader
           title="Recent Diagnoses"
@@ -222,7 +231,6 @@ const HomeScreen: React.FC = () => {
           </View>
         )}
 
-
         <ExploreCropCareCard onPress={openCropCare} />
 
         <SectionHeader title="Browse Symptoms" />
@@ -230,7 +238,8 @@ const HomeScreen: React.FC = () => {
         <BrowseSymptoms
           onPressSymptom={openSymptom}
           onPressSeeMore={openAllSymptoms}
-        />      </ScrollView>
+        />
+      </ScrollView>
     </SafeAreaView>
   );
 };
