@@ -11,6 +11,7 @@
     "dev": "nodemon --watch src --ext ts --exec tsx src/server.ts",
     "start": "node dist/src/server.js",
     "worker": "tsx src/worker.ts",
+    "seed:crop-problems": "tsx scripts/seed-crop-problems.ts",
     "test": "vitest"
   },
   "author": "",

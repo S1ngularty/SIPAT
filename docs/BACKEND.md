@@ -66,6 +66,7 @@ GET  /api/v1/health          → inline health check (status, timestamp)
      /api/v1/users           → user routes
      /api/v1/videos          → video routes
      /api/v1/diagnosis       → diagnosis routes
+     /api/v1/crop-problems   → crop problem reference routes
 ```
 
 Each module owns its own `Router` in `<module>.route.ts`. Middleware is applied
@@ -92,6 +93,13 @@ at the router level (see §4 for auth details).
 | PATCH    | `/diagnosis/:diagnosisId`             | —           | `renameDiagnosis`                    |
 | GET      | `/diagnosis/video/:videoId`           | —           | `getByVideoId`                       |
 | DELETE   | `/diagnosis/video/:videoId`           | —           | `deleteByVideoId`                    |
+| GET      | `/crop-problems`                      | —           | `getList`                            |
+| GET      | `/crop-problems/slug/:slug`           | —           | `getBySlug`                          |
+| GET      | `/crop-problems/:identifier`          | —           | `getByIdentifier`                    |
+| POST     | `/crop-problems`                      | admin       | `create`                             |
+| POST     | `/crop-problems/bulk`                 | admin       | `bulkUpsert`                         |
+| PATCH    | `/crop-problems/:identifier`          | admin       | `update`                             |
+| DELETE   | `/crop-problems/:identifier`          | admin       | `delete`                             |
 
 ---
 
@@ -173,6 +181,30 @@ route → controller → service → repository → model
 - The list query uses a Mongo aggregation (`$lookup` into `videos` + `$facet`
   for pagination).
 
+### `modules/crop-problem`
+
+- **Model** `crop_problems` — the reference catalog of diseases, pests, and
+  healthy states. Key fields: `id` (stable human-authored record ID, unique),
+  `slug` (unique), `name`, `localName`, `type` (`disease` | `pest` | `healthy`),
+  `category`, `scientificName`, nested `description` (`tl`/`en`),
+  `affectedCrops[]`, `affectedParts[]`, `symptoms[]`, `favorableConditions[]`,
+  `transmission[]`, `severity` (`low` | `medium` | `high`),
+  `differentialDiagnosis[]`, `management[]`, `treatments[]`
+  (`category`/`examples`/`cautions`), `actionRefs[]` (pointers to
+  `agricultural_actions`), nested `safety`, `diagnosisGuidance[]`, `media[]`,
+  and nested `metadata` (version/sources/review date/status). The schema disables
+  Mongoose's `id` virtual so the persisted `id` path is preserved.
+- **Service** — create (guards duplicate `id`/`slug`), idempotent bulk upsert
+  (matched on `id`), fetch by `id`/`_id`/`slug`, paginated + filtered list,
+  update, and delete.
+- **Validation** (`cropProblem.validation.ts`, Zod) is tolerant on import:
+  list-like fields accept a bare string or an array, and `treatments`/`media`
+  accept a string, an object, or an array of either.
+- **Seeding** — `npm run seed:crop-problems` (from `backend/`) reads
+  `seeds/crop-problems.json` and upserts idempotently. Flags: `--file <path>`,
+  `--dry-run`, `--drop`. The admin `POST /crop-problems/bulk` endpoint runs the
+  same validation path.
+
 ---
 
 ## 6. Integrations
@@ -253,6 +285,7 @@ only consumed when that process is running.
 | `users`      | `clerkId` (unique); indexes on `clerkId+isActive`, `role+isActive`, `farmLocation.province+municipality`, `preferredCrops` |
 | `videos`     | `storageKey` (unique), `status`; indexes on `userId+createdAt`, `userId+status`, `status+createdAt` |
 | `diagnoses`  | `videoId` (unique, ref `Video`); embedded `results[]`, `analysis`          |
+| `crop_problems` | `id` (unique), `slug` (unique); indexes on `type+severity`, `affectedCrops+type`, `category+severity`, and a text index over name/local/scientific name |
 
 All schemas use `timestamps: true` and `versionKey: false` (except diagnoses,
 which keeps defaults).
@@ -304,6 +337,7 @@ npm scripts:
 | --------------- | ------------------------------------ | --------------------------- |
 | `npm run dev`   | `nodemon … tsx src/server.ts`        | API dev server (watch)      |
 | `npm run worker`| `tsx src/worker.ts`                  | AI queue worker             |
+| `npm run seed:crop-problems` | `tsx scripts/seed-crop-problems.ts` | Seed crop problem reference data |
 | `npm run build` | `tsc` (cleans `dist/` first)         | Compile to `dist/`          |
 | `npm start`     | `node dist/src/server.js`            | Run compiled API            |
 | `npm test`      | `vitest`                             | Tests                       |
