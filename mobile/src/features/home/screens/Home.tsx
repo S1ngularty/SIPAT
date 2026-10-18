@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  Dimensions,
-  FlatList,
+  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -21,64 +20,47 @@ import { ArrowRight, ScanLine, Sprout } from "lucide-react-native";
 
 import { colors, radii, spacing } from "../../../theme";
 import { Skeleton } from "../../../components/ui/SkeletonComponent";
-import {
-  CategoryFilterList,
-  type CategoryFilter,
-} from "../../../components/ui/CategoryFilterList";
 import { HomeHeroSheet } from "../components/HomeHeroSheet";
 import { DiagnosisCard } from "../components/DiagnosisCard";
+import { BrowseSymptoms, ExploreCropCareCard } from "../components/KnowledgeShortcuts";
 import { getWeatherState } from "../weather";
 import { useDiagnosisList } from "../../diagnosis/hooks/useDiagnosisList";
 import type { VideoAnalysis } from "../../diagnosis/diagnosisTypes";
-import { getDateBucket, type DateBucket } from "../utils/diagnosis";
 import type { TabParamList } from "../../../navigations/HomeTabNavigation";
 import type { UserStackParamList } from "../../../navigations/UserNavigation";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-/** Card width leaves the next card peeking so horizontal scrolling is obvious. */
-const CARD_WIDTH = Math.round(Math.min(260, SCREEN_WIDTH * 0.68));
+/** Home only previews the newest diagnoses; the rest live on the Diagnoses tab. */
+const MAX_HOME_DIAGNOSES = 3;
 
 type HomeNavigation = BottomTabNavigationProp<TabParamList, "Home">;
 type UserStackNavigation = NativeStackNavigationProp<UserStackParamList>;
 
-type HomeFilter = "all" | DateBucket;
-
-const HOME_FILTERS: readonly CategoryFilter<HomeFilter>[] = [
-  { value: "all", label: "All" },
-  { value: "today", label: "Today" },
-  { value: "yesterday", label: "Yesterday" },
-  { value: "last7Days", label: "This week" },
-  { value: "older", label: "Older" },
-];
-
 const SectionHeader: React.FC<{
   title: string;
-  actionLabel: string;
-  onPressAction: () => void;
+  actionLabel?: string;
+  onPressAction?: () => void;
 }> = ({ title, actionLabel, onPressAction }) => (
   <View style={styles.sectionHeader}>
     <Text style={styles.sectionTitle}>{title}</Text>
-    <Pressable
-      onPress={onPressAction}
-      accessibilityRole="button"
-      accessibilityLabel={actionLabel}
-      hitSlop={8}
-      style={({ pressed }) => [styles.seeAll, pressed && styles.pressed]}
-    >
-      <Text style={styles.seeAllText}>{actionLabel}</Text>
-      <ArrowRight size={15} color={colors.green} strokeWidth={2} />
-    </Pressable>
+    {actionLabel && onPressAction ? (
+      <Pressable
+        onPress={onPressAction}
+        accessibilityRole="button"
+        accessibilityLabel={actionLabel}
+        hitSlop={8}
+        style={({ pressed }) => [styles.seeAll, pressed && styles.pressed]}
+      >
+        <Text style={styles.seeAllText}>{actionLabel}</Text>
+        <ArrowRight size={15} color={colors.green} strokeWidth={2} />
+      </Pressable>
+    ) : null}
   </View>
 );
 
-const DiagnosisCardSkeleton: React.FC<{ width: number }> = ({ width }) => (
-  <View style={[styles.skeletonCard, { width }]}>
-    <Skeleton
-      width={width}
-      height={Math.round(width * 0.62)}
-      borderRadius={0}
-    />
-    <View style={styles.skeletonBody}>
+const DiagnosisRowSkeleton: React.FC = () => (
+  <View style={styles.rowSkeleton}>
+    <Skeleton width={64} height={64} borderRadius={radii.md} />
+    <View style={styles.rowSkeletonBody}>
       <Skeleton width="70%" height={14} borderRadius={4} />
       <Skeleton width="50%" height={11} borderRadius={4} />
       <Skeleton width="40%" height={10} borderRadius={4} />
@@ -114,7 +96,6 @@ const HomeScreen: React.FC = () => {
 
   const { analyses, isLoading, reload } = useDiagnosisList();
 
-  const [activeFilter, setActiveFilter] = useState<HomeFilter>("all");
   const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
@@ -149,15 +130,48 @@ const HomeScreen: React.FC = () => {
     }
   }, [reload]);
 
+  /**
+   * Temporary: the Crop Care guide and symptom browser have no screens yet,
+   * so the shortcuts acknowledge the tap instead of navigating nowhere.
+   */
+  const openCropCare = useCallback(() => {
+    Alert.alert(
+      "Explore Crop Care",
+      "Diseases and pests with symptoms, prevention and treatments — coming soon.",
+    );
+  }, []);
+
+  const openSymptom = useCallback((symptom: string) => {
+    Alert.alert(
+      "Browse Symptoms",
+      `Possible causes of "${symptom}" — coming soon.`,
+    );
+  }, []);
+
+  const openAllSymptoms = useCallback(() => {
+    Alert.alert(
+      "Browse Symptoms",
+      "The full symptom list is coming soon.",
+    );
+  }, []);
+
   const displayName =
     user?.firstName || user?.fullName || user?.username || "Farmer";
 
-  const visibleDiagnoses = useMemo(() => {
-    if (activeFilter === "all") return analyses;
-    return analyses.filter(
-      (analysis) => getDateBucket(analysis.createdAt) === activeFilter,
-    );
-  }, [analyses, activeFilter]);
+  /** The newest diagnoses only, newest-first. */
+  const latestDiagnoses = useMemo(
+    () =>
+      [...analyses]
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt ?? 0).getTime() -
+            new Date(a.createdAt ?? 0).getTime(),
+        )
+        .slice(0, MAX_HOME_DIAGNOSES),
+    [analyses],
+  );
+
+  const hasMoreDiagnoses = analyses.length > MAX_HOME_DIAGNOSES;
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -183,45 +197,40 @@ const HomeScreen: React.FC = () => {
 
         <SectionHeader
           title="Recent Diagnoses"
-          actionLabel="See All"
+          actionLabel={hasMoreDiagnoses ? "See More" : undefined}
           onPressAction={openDiagnoses}
         />
 
-        <CategoryFilterList
-          categories={HOME_FILTERS}
-          active={activeFilter}
-          onChange={setActiveFilter}
-          accessibilityLabel="Filter diagnoses by date"
-        />
+        {isLoading ? (
+          <View style={styles.list}>
+            <DiagnosisRowSkeleton />
+            <DiagnosisRowSkeleton />
+            <DiagnosisRowSkeleton />
+          </View>
+        ) : latestDiagnoses.length === 0 ? (
+          <EmptyDiagnoses onRecord={openVideoScan} />
+        ) : (
+          <View style={styles.list}>
+            {latestDiagnoses.map((item) => (
+              <DiagnosisCard
+                key={item._id}
+                analysis={item}
+                variant="row"
+                onPress={openDiagnosis}
+              />
+            ))}
+          </View>
+        )}
 
-        <View style={styles.carousel}>
-          {isLoading ? (
-            <View style={styles.skeletonRow}>
-              <DiagnosisCardSkeleton width={CARD_WIDTH} />
-              <DiagnosisCardSkeleton width={CARD_WIDTH} />
-            </View>
-          ) : visibleDiagnoses.length === 0 ? (
-            <EmptyDiagnoses onRecord={openVideoScan} />
-          ) : (
-            <FlatList
-              horizontal
-              data={visibleDiagnoses}
-              keyExtractor={(item) => item._id}
-              renderItem={({ item }) => (
-                <DiagnosisCard
-                  analysis={item}
-                  width={CARD_WIDTH}
-                  onPress={openDiagnosis}
-                />
-              )}
-              ItemSeparatorComponent={() => <View style={styles.cardGap} />}
-              contentContainerStyle={styles.carouselContent}
-              showsHorizontalScrollIndicator={false}
-              style={styles.carouselList}
-            />
-          )}
-        </View>
-      </ScrollView>
+
+        <ExploreCropCareCard onPress={openCropCare} />
+
+        <SectionHeader title="Browse Symptoms" />
+
+        <BrowseSymptoms
+          onPressSymptom={openSymptom}
+          onPressSeeMore={openAllSymptoms}
+        />      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -254,33 +263,40 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: colors.green,
   },
-  carousel: {
-    marginTop: spacing.lg,
-  },
-  carouselContent: {
+  list: {
+    marginTop: spacing.md,
     paddingHorizontal: spacing.xl,
-  },
-  carouselList: {
-    flexGrow: 0,
-  },
-  cardGap: {
-    width: spacing.md,
-  },
-  skeletonRow: {
-    flexDirection: "row",
     gap: spacing.md,
-    paddingHorizontal: spacing.xl,
   },
-  skeletonCard: {
-    backgroundColor: colors.white,
+  rowSkeleton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    padding: spacing.md,
     borderRadius: radii.lg,
-    overflow: "hidden",
     borderWidth: 1,
     borderColor: colors.borderStrong,
   },
-  skeletonBody: {
-    padding: spacing.md,
+  rowSkeletonBody: {
+    flex: 1,
     gap: spacing.sm,
+  },
+  seeMore: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    alignSelf: "center",
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.xxl,
+    height: 44,
+    borderRadius: radii.pill,
+    backgroundColor: colors.lime,
+  },
+  seeMoreText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.forest,
   },
   emptyCard: {
     marginHorizontal: spacing.xl,
