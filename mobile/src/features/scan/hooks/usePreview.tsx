@@ -220,19 +220,28 @@ export default function usePreview() {
       }
     }
 
-    // Simulate analysis
-    setTimeout(async () => {
-      if (!isMounted.current) return;
-
-      setIsAnalyzing(false);
+    try {
       buttonScale.value = withTiming(1, { duration: 100 });
-
       await handlePresignUpload();
       navigation.navigate("HomeTabs", {
         screen: "Diagnoses",
       });
-      showToast("info", "Uploaded Successfully", "Video is being processed");
-    }, 1000);
+
+      showToast(
+        "info",
+        "Uploaded Successfully",
+        "Video is now being processed",
+      );
+    } catch (error) {
+      console.log(error);
+      showToast(
+        "error",
+        "Upload Failed",
+        "Something went wrong, please try again.",
+      );
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handlePresignUpload = async () => {
