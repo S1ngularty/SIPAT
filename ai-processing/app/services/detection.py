@@ -16,7 +16,7 @@ from models.ai import AIModels
 # CONFIGURATION
 # ============================================================
 
-SAMPLE_FPS = 8
+SAMPLE_FPS = 15
 
 # Rough amount of evidence required before reporting.
 PERSISTENCE_SECONDS = 1.0
@@ -26,7 +26,7 @@ MIN_OBSERVATIONS = 3
 
 # How many sampled frames a track can disappear before
 # we consider the object gone.
-MAX_MISSED_FRAMES = 2
+MAX_MISSED_FRAMES = 15
 
 CROP_CONFIDENCE = 0.40
 
