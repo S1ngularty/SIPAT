@@ -19,7 +19,7 @@ DATASET_PATH = Path(
 )
 
 # Select a class by its exact name from data.yaml.
-CLASS_TO_FILTER = "Mosaic Virus"
+CLASS_TO_FILTER = "Healthy"
 
 # Only images containing exactly this many instances of the
 # selected class qualify for filtering.
@@ -27,7 +27,7 @@ TARGET_INSTANCE_COUNT = 1
 
 # Percentage of matching image-label pairs to move.
 # 100.0 means move every matching pair.
-FILTER_PERCENTAGE = 35.0
+FILTER_PERCENTAGE = 60.0
 
 # Same seed + same dataset + same settings = reproducible selection.
 RANDOM_SEED = 42
