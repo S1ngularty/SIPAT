@@ -28,7 +28,7 @@ import shutil
 #
 
 SOURCE_DATASET = Path(
-    "/home/singularity/Downloads/pest_disease_datasets/set2/filtered_dataset"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/Tomato Leaf Disease.yolo26"
 )
 
 
@@ -45,7 +45,7 @@ SOURCE_DATASET = Path(
 #
 
 MAIN_DATASET = Path(
-    "/home/singularity/Downloads/pest_disease_datasets/set2/main2"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/main"
 )
 
 
@@ -103,7 +103,7 @@ AUTO_RENAME_DUPLICATES = False
 #
 
 SOURCE_CLASSES = {
-   0:'powdery_mildew', 
+   0:'Bacterial Spot', 
 }
 
 
@@ -173,7 +173,7 @@ MAIN_CLASSES = {
 #
 
 CLASS_MAPPING = {
-    0:11,
+    0:19,
 }
 
 
