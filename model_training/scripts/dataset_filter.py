@@ -6,7 +6,7 @@ import shutil
 # CONFIGURATION
 # ============================================================
 
-INPUT_DATASET = Path("/home/singularity/Downloads/pest_disease_datasets/set2/dataset_cleaned")
+INPUT_DATASET = Path("/home/singularity/Downloads/pest_disease_datasets/set2/rust")
 OUTPUT_DATASET = Path("/home/singularity/Downloads/pest_disease_datasets/set2/filtered_dataset")
 
 # Classes you WANT to keep.
@@ -29,8 +29,7 @@ OUTPUT_DATASET = Path("/home/singularity/Downloads/pest_disease_datasets/set2/fi
 # The names here must match your original data.yaml classes.
 
 KEEP_CLASSES = {
-'powdery_mildew':0, 
-
+'leaf_rust':0,
 
 
 #    "Early Blight":0,
@@ -65,7 +64,7 @@ KEEP_CLASSES = {
 #   3: early_blight
 
 ORIGINAL_CLASSES = [
- 'healthy', 'powdery_mildew']
+ 'healthy', 'leaf_rust']
 
 
 # ============================================================
