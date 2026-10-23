@@ -28,7 +28,7 @@ import shutil
 #
 
 SOURCE_DATASET = Path(
-    "/home/singularity/Downloads/pest_disease_datasets/set2/Tomato Leaf Disease.yolo26"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/rust_and_caterpillar"
 )
 
 
@@ -103,7 +103,10 @@ AUTO_RENAME_DUPLICATES = False
 #
 
 SOURCE_CLASSES = {
-   0:'Bacterial Spot', 
+   0:'LEAF_RUST', 
+  1: "LOOPER_CATERPILLARS",
+#   2:"Chili-Wilting"
+
 }
 
 
@@ -137,7 +140,8 @@ MAIN_CLASSES = {
   19: "Bacterial Spot",
   20: "Cercospora Leaf Spot",
   21: "Bacterial Wilt",
-  22: "Leaf Rust"
+  22: "Leaf Rust",
+  23: "Looper"
 }
 
 
@@ -173,7 +177,9 @@ MAIN_CLASSES = {
 #
 
 CLASS_MAPPING = {
-    0:19,
+    0:22,
+    1:23
+ 
 }
 
 

@@ -10,12 +10,12 @@ import yaml
 
 # Raw dataset
 SOURCE_DATASET = Path(
-    "/home/singularity/Downloads/pest_disease_datasets/set2/Wilt.yolo26"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/Aphids auto.yolo26"
 )
 
 # Where the processed dataset will be created
 OUTPUT_DATASET = Path(
-    "/home/singularity/Downloads/processed_dataset"
+    "/home/singularity/Downloads/pest_disease_datasets/processed_dataset"
 )
 
 

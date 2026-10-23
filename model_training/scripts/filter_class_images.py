@@ -15,11 +15,11 @@ import yaml
 # ============================================================
 
 DATASET_PATH = Path(
-    "/home/singularity/Downloads/pest_disease_datasets/set2/backup_main"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/main"
 )
 
 # Select a class by its exact name from data.yaml.
-CLASS_TO_FILTER = "Healthy"
+CLASS_TO_FILTER = "Alternaria"
 
 # Only images containing exactly this many instances of the
 # selected class qualify for filtering.
