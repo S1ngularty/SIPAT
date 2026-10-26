@@ -14,7 +14,7 @@ from PIL import Image
 # ============================================================
 
 DATASET_PATH = Path(
-    "/home/singularity/Downloads/pest_disease_datasets/set2/main"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/filtered_dataset"
 )
 
 OUTPUT_PATH = DATASET_PATH.parent / "dataset_cleaned"

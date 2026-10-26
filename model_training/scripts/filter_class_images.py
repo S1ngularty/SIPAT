@@ -15,11 +15,11 @@ import yaml
 # ============================================================
 
 DATASET_PATH = Path(
-    "/home/singularity/Downloads/pest_disease_datasets/set2/main"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/filtered_dataset"
 )
 
 # Select a class by its exact name from data.yaml.
-CLASS_TO_FILTER = "Alternaria"
+CLASS_TO_FILTER = "rot"
 
 # Only images containing exactly this many instances of the
 # selected class qualify for filtering.
@@ -27,7 +27,7 @@ TARGET_INSTANCE_COUNT = 1
 
 # Percentage of matching image-label pairs to move.
 # 100.0 means move every matching pair.
-FILTER_PERCENTAGE = 60.0
+FILTER_PERCENTAGE = 50.0
 
 # Same seed + same dataset + same settings = reproducible selection.
 RANDOM_SEED = 42
