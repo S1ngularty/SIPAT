@@ -28,7 +28,7 @@ import shutil
 #
 
 SOURCE_DATASET = Path(
-    "/home/singularity/Downloads/pest_disease_datasets/set2/chili only"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/filtered_dataset"
 )
 
 
@@ -103,9 +103,9 @@ AUTO_RENAME_DUPLICATES = False
 #
 
 SOURCE_CLASSES = {
-  0:  "Chili-Bacterial-Spot",
-1: "Chili-Powdery-Mildew",
-2: "Chili-Wilting",
+  0:  "LEAF_RUST",
+# 1: "Chili-Powdery-Mildew",
+# 2: "Chili-Wilting",
 # 3:"Powdery Mildew",
 # 4: "Melon_Thrips",
 # 5:"Wilt"
@@ -180,9 +180,9 @@ MAIN_CLASSES = {
 #
 
 CLASS_MAPPING = {
-    0:19,
-    1:11,
-    2:21,
+    0:22,
+    # 1:11,
+    # 2:21,
     # 3:11,
     # 4:13,
     # 5:21
