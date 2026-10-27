@@ -103,9 +103,9 @@ AUTO_RENAME_DUPLICATES = False
 #
 
 SOURCE_CLASSES = {
-  0:  "LEAF_RUST",
-# 1: "Chili-Powdery-Mildew",
-# 2: "Chili-Wilting",
+  0:  "Leaf Curl",
+# 1: "Spinach- Downy mildew",
+# 2: "anthracnose",
 # 3:"Powdery Mildew",
 # 4: "Melon_Thrips",
 # 5:"Wilt"
@@ -180,9 +180,9 @@ MAIN_CLASSES = {
 #
 
 CLASS_MAPPING = {
-    0:22,
-    # 1:11,
-    # 2:21,
+    0:17,
+    # 1:10,
+    # 2:18,
     # 3:11,
     # 4:13,
     # 5:21

@@ -13,20 +13,20 @@ import yaml
 # ============================================================
 
 DATASET_PATH = Path(
-    "/home/singularity/Downloads/pest_disease_datasets/set2/main"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/filtered_dataset"
 )
 
 # Put the exact class names from data.yaml here.
 TARGET_CLASSES = [
-    "Leaf Rust",
+    "cercospora nicotianae",
 ]
 
-SOURCE_SPLIT = "test"
-DESTINATION_SPLIT = "train"
+SOURCE_SPLIT = "train"
+DESTINATION_SPLIT = "test"
 
 # Percentage of matching images to allocate.
 # Example: 50.0 means move 50% of matching source images.
-PERCENTAGE_TO_MOVE = 85.0
+PERCENTAGE_TO_MOVE = 5.0
 
 # Reproducible random selection.
 RANDOM_SEED = 42
