@@ -317,6 +317,106 @@ IMPORTANT RULES
   at ang mga item sa "terms" array.
 `;
 
+const MAX_ATTEMPTS = 3;
+
+type ChatMessage = Groq.Chat.ChatCompletionMessageParam;
+
+const stripCodeFence = (raw: string): string => {
+  const trimmed = raw.trim();
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+
+  return fenced?.[1]?.trim() || trimmed;
+};
+
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === "string" && value.trim() !== "";
+
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === "string");
+
+const validateGroqAnalysis = (value: unknown): GroqAnalysis => {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error("ang response ay hindi isang JSON object");
+  }
+
+  const record = value as Record<string, unknown>;
+
+  if (!isNonEmptyString(record.summary)) {
+    throw new Error('missing o empty ang "summary" string');
+  }
+
+  if (!isStringArray(record.recommendations)) {
+    throw new Error('ang "recommendations" ay dapat array ng strings');
+  }
+
+  if (!Array.isArray(record.terms)) {
+    throw new Error('ang "terms" ay dapat array');
+  }
+
+  const terms = record.terms.map((item, index) => {
+    if (typeof item !== "object" || item === null || Array.isArray(item)) {
+      throw new Error(`ang "terms[${index}]" ay dapat object`);
+    }
+
+    const term = item as Record<string, unknown>;
+
+    for (const field of ["id", "term", "definition"] as const) {
+      if (!isNonEmptyString(term[field])) {
+        throw new Error(
+          `ang "terms[${index}].${field}" ay dapat non-empty string`,
+        );
+      }
+    }
+
+    return {
+      id: term.id as string,
+      term: term.term as string,
+      definition: term.definition as string,
+    };
+  });
+
+  return {
+    summary: record.summary,
+    recommendations: record.recommendations,
+    terms,
+  };
+};
+
+const parseGroqAnalysis = (raw: string): GroqAnalysis => {
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(stripCodeFence(raw));
+  } catch (error) {
+    throw new Error(`invalid JSON (${(error as Error).message})`);
+  }
+
+  return validateGroqAnalysis(parsed);
+};
+
+const buildRetryPrompt = (reason: string): string =>
+  `HINDI TINANGGAP ang naunang sagot. Problema: ${reason}
+
+Ibalik muli ang sagot bilang VALID JSON lamang na may eksaktong format:
+
+{
+  "summary": "string",
+  "recommendations": ["string"],
+  "terms": [{ "id": "string", "term": "string", "definition": "string" }]
+}
+
+Tandaan:
+- Walang Markdown code fences, walang paliwanag sa labas ng JSON.
+- Ang "summary" ay non-empty string.
+- Ang "recommendations" at "terms" ay arrays, kahit walang laman.
+- Bawat term object ay may non-empty string na id, term, at definition lamang.
+- I-escape nang tama ang quotation marks at huwag maglagay ng trailing commas.
+- Kung tama naman ang content, ituwid lamang ang format.`;
+
+const EMPTY_RESPONSE_PROMPT = `Walang laman ang nauna mong sagot. 
+Ibalik muli ang analysis bilang VALID JSON lamang na may "summary" (string),
+"recommendations" (array ng strings), at "terms" (array ng { id, term, definition }).`;
+
 class GroqClient {
   private groq: Groq;
 
@@ -334,34 +434,66 @@ class GroqClient {
       observations: string;
       evidence_key: string;
     }[],
-  ): Promise<GroqAnalysis | null | undefined> => {
-    const content = await this.groq.chat.completions.create({
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: JSON.stringify(detectionResult),
-        },
-      ],
-      model: "openai/gpt-oss-120b",
-      response_format: {
-        type: "json_object",
+  ): Promise<GroqAnalysis | null> => {
+    const messages: ChatMessage[] = [
+      {
+        role: "system",
+        content: systemPrompt,
       },
-    });
+      {
+        role: "user",
+        content: JSON.stringify(detectionResult),
+      },
+    ];
 
-    const responseContent = content.choices[0]?.message.content;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      const content = await this.groq.chat.completions.create({
+        messages,
+        model: "openai/gpt-oss-120b",
+        response_format: {
+          type: "json_object",
+        },
+      });
 
-    if (!responseContent) {
-      return null;
+      const responseContent = content.choices[0]?.message.content;
+
+      if (!responseContent?.trim()) {
+        console.log(
+          `Groq returned an empty response (attempt ${attempt}/${MAX_ATTEMPTS})`,
+        );
+
+        if (attempt < MAX_ATTEMPTS) {
+          messages.push({ role: "user", content: EMPTY_RESPONSE_PROMPT });
+        }
+
+        continue;
+      }
+
+      try {
+        return parseGroqAnalysis(responseContent);
+      } catch (error) {
+        const reason = (error as Error).message;
+
+        console.log(
+          `Groq response failed validation (attempt ${attempt}/${MAX_ATTEMPTS}): ${reason}`,
+        );
+        console.log("Groq raw response:");
+        console.log(responseContent);
+
+        if (attempt < MAX_ATTEMPTS) {
+          messages.push(
+            { role: "assistant", content: responseContent },
+            { role: "user", content: buildRetryPrompt(reason) },
+          );
+        }
+      }
     }
 
-    console.log("Groq raw response:");
-    console.log(responseContent);
+    console.log(
+      `Groq failed to return a valid analysis after ${MAX_ATTEMPTS} attempts`,
+    );
 
-    return JSON.parse(responseContent) as GroqAnalysis;
+    return null;
   };
 }
 
