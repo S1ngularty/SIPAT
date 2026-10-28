@@ -5,6 +5,7 @@ import type {
   Diagnosis,
   DiagnosisResult,
   DiagnosisWIthDownloadUrls,
+  GroqAnalysis,
 } from "./diagnosis.types.js";
 import { r2Client } from "../../integrations/storage/r2.client.js";
 import { thumbnailService, videoService } from "../video/index.js";
@@ -107,6 +108,26 @@ export class DiagnosisService {
     const diagnosis = await this.diagnosisRepository.updateByVideoId(
       videoId,
       results,
+    );
+
+    if (!diagnosis) {
+      throw new Error("Diagnosis not found");
+    }
+
+    return diagnosis;
+  }
+
+  /**
+   * Store a (re)generated LLM analysis, including the glossary `terms` the
+   * mobile app highlights. `null` clears it.
+   */
+  async updateDiagnosisAnalysis(
+    videoId: string,
+    analysis: GroqAnalysis | null,
+  ): Promise<Diagnosis> {
+    const diagnosis = await this.diagnosisRepository.updateAnalysisByVideoId(
+      videoId,
+      analysis,
     );
 
     if (!diagnosis) {

@@ -1,6 +1,36 @@
 import { Schema, model } from "mongoose";
 import type { HydratedDocument } from "mongoose";
-import type { Diagnosis } from "./diagnosis.types.js";
+import type { Diagnosis, GroqTerm } from "./diagnosis.types.js";
+
+/**
+ * A glossary entry returned by the LLM. `_id: false` keeps the stored/returned
+ * shape identical to `GroqTerm`, so the API and mobile app see exactly
+ * `id`, `term`, `definition`.
+ */
+const groqTermSchema = new Schema<GroqTerm>(
+  {
+    id: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    term: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    definition: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+  },
+  {
+    _id: false,
+  },
+);
 
 const diagnosisSchema = new Schema<Diagnosis>(
   {
@@ -68,6 +98,10 @@ const diagnosisSchema = new Schema<Diagnosis>(
     analysis: {
       summary: String,
       recommendations: [String],
+      terms: {
+        type: [groqTermSchema],
+        default: [],
+      },
     },
   },
   {

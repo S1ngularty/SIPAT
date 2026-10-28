@@ -33,19 +33,12 @@ export class AIProcessingService {
 
       console.log("processed result log:", processResult);
 
-      if (processResult != null && !processResult.success) {
-        await this.videoRepository.videoUpdateStatus(videoId, {
-          status: "failed",
-        });
-
-        throw new Error(`Failed to Process the video: ${videoId}`);
+      if (!processResult?.success) {
+        throw new Error(`AI service failed to process the video: ${videoId}`);
       }
+
       let groqContent: GroqAnalysis | null | undefined;
-      if (
-        processResult?.results !== null &&
-        processResult?.results !== undefined &&
-        processResult?.results?.length > 0
-      ) {
+      if (processResult.results?.length) {
         groqContent = await groqClient.getGroqChatCompletion(
           processResult.results,
         );
@@ -83,6 +76,19 @@ export class AIProcessingService {
       //then return if successfully requested
     } catch (error) {
       console.log(`AI processing Error: ${error}`);
+
+      // Never leave the video stuck in "processing": the UI polls this status.
+      if (videoId) {
+        await this.videoRepository
+          .videoUpdateStatus(videoId, { status: "failed" })
+          .catch((updateError: unknown) => {
+            console.log(
+              `Failed to mark video ${videoId} as failed:`,
+              updateError,
+            );
+          });
+      }
+
       throw error;
     }
   }

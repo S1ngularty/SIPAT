@@ -6,6 +6,7 @@ import type {
   DiagnosisListResult,
   DiagnosisWIthDownloadUrls,
   DiagnosisWithoutEvidenceUrls,
+  GroqAnalysis,
 } from "./diagnosis.types.js";
 import type { Video } from "../video/video.types.js";
 
@@ -93,6 +94,26 @@ export class DiagnosisRepository {
     return DiagnosisModel.findOneAndUpdate(
       { videoId },
       { $set: { results } },
+      {
+        new: true,
+        runValidators: true,
+      },
+    )
+      .lean<Diagnosis>()
+      .exec();
+  }
+
+  /**
+   * Replace the LLM analysis (summary, recommendations and glossary terms) for
+   * a video, e.g. when the analysis is regenerated.
+   */
+  async updateAnalysisByVideoId(
+    videoId: string,
+    analysis: GroqAnalysis | null,
+  ): Promise<Diagnosis | null> {
+    return DiagnosisModel.findOneAndUpdate(
+      { videoId },
+      { $set: { analysis } },
       {
         new: true,
         runValidators: true,
