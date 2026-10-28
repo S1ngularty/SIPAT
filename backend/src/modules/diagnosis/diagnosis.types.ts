@@ -11,9 +11,16 @@ export interface DiagnosisResult {
   evidenceKey: string;
 }
 
+export interface GroqTerm {
+  id: string;
+  term: string;
+  definition: string;
+}
+
 export interface GroqAnalysis {
   summary: string;
   recommendations: string[];
+  terms: GroqTerm[];
 }
 
 export interface CreateDiagnosisInput {

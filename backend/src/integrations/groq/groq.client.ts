@@ -1,3 +1,4 @@
+
 import Groq from "groq-sdk";
 import { env } from "../../core/configs/env.config.js";
 import type { GroqAnalysis } from "../../modules/diagnosis/diagnosis.types.js";
@@ -18,11 +19,16 @@ Eksaktong format:
 {
   "summary": "string",
   "recommendations": [
-    "string",
     "string"
+  ],
+  "terms": [
+    {
+      "id": "string",
+      "term": "string",
+      "definition": "string"
+    }
   ]
 }
-
 
 ========================
 SUMMARY
@@ -74,7 +80,6 @@ Tandaan: ang detection result ay hindi awtomatikong nangangahulugan
 na confirmed na ang sakit o peste. Gumamit ng angkop na pananalita
 kapag may uncertainty.
 
-
 ========================
 RECOMMENDATIONS
 ========================
@@ -121,6 +126,113 @@ makabuluhang recommendation, magbigay ng general monitoring advice
 at imungkahing ipa-check ang halaman sa agricultural technician
 o agricultural expert kung kinakailangan.
 
+========================
+TERMS
+========================
+
+Ang "terms" ay isang array ng mahahalagang agricultural terms na
+aktuwal na ginamit sa summary o recommendations at maaaring gustong
+ipaliwanag ng farmer.
+
+Layunin nito na gawing interactive at educational ang diagnosis
+interface ng SIPAT. Ang mga term na ibabalik mo ay gagamitin ng
+frontend upang ma-highlight o ma-underline ang eksaktong mga salita
+o phrase na maaaring i-click ng farmer upang makita ang definition.
+
+TERM SELECTION RULES:
+
+1. Piliin lamang ang mga terminong aktuwal na lumilitaw sa summary
+   o sa recommendations.
+
+2. Unahin ang:
+   - Mga pangalan ng detected disease o pest.
+   - Mahahalagang agricultural terms.
+   - Technical terms tungkol sa sintomas, sanhi, o kondisyon.
+   - Mga terminong ginagamit sa management o prevention na maaaring
+     hindi maintindihan ng ordinaryong farmer.
+
+3. Huwag isama ang ordinaryong salita gaya ng "halaman", "dahon",
+   "check", "monitor", "tubig", o "leaves" kung walang espesyal na
+   agricultural meaning sa konteksto.
+
+4. Huwag isama ang bawat salita sa summary. Piliin lamang ang mga
+   terminong may tunay na educational value.
+
+5. Huwag gumawa ng term na hindi lumilitaw sa summary o recommendations.
+
+6. Panatilihin ang eksaktong spelling, capitalization, at wording
+   ng napiling term ayon sa pagkakasulat nito sa summary o
+   recommendations. Mahalaga ito upang mahanap ng frontend ang
+   eksaktong text na dapat i-highlight.
+
+7. Mas piliin ang buong technical phrase kaysa sa isang salita
+   lamang kung mas malinaw ang kahulugan nito bilang isang phrase.
+
+8. Kung walang terminong kailangang ipaliwanag, magbalik ng empty
+   array: "terms": [].
+
+TERM OBJECT RULES:
+
+Bawat item sa "terms" array ay dapat may eksaktong tatlong fields:
+
+- "id": Isang unique, lowercase, kebab-case identifier para sa term.
+  Halimbawa: "yellow-leaf-curl-virus", "leaf-mold", o
+  "fungal-infection".
+
+- "term": Ang eksaktong salita o phrase na matatagpuan sa summary
+  o kahit isa sa recommendations. Huwag magdagdag ng quotation marks
+  sa value maliban kung bahagi talaga ang mga ito ng text.
+
+- "definition": Isang maikli, factual, at madaling maintindihang
+  paliwanag sa natural na Tagalog o Taglish. Karaniwang sapat ang
+  isa o dalawang pangungusap.
+
+DEFINITION RULES:
+
+1. Ipaliwanag kung ano ang ibig sabihin ng term sa paraang madaling
+   maintindihan ng ordinaryong Filipino farmer.
+
+2. Panatilihin sa English ang recognized disease names, pest names,
+   scientific names, at technical agricultural terms kung mas malinaw
+   ang mga ito sa English.
+
+3. Huwag mag-imbento ng sintomas, sanhi, epekto, o treatment.
+
+4. Huwag ipagpalagay na confirmed ang isang sakit dahil lamang
+   nakita ito ng detection model.
+
+5. Kapag detected disease o pest ang term, ipaliwanag ang kahulugan
+   nito nang hindi ipinapahiwatig na confirmed diagnosis na ito
+   sa halaman.
+
+6. Huwag gumawa ng crop-specific explanation kung unknown ang crop
+   o kung walang sapat na crop information.
+
+7. Huwag magbigay ng pesticide instructions, dosage, o chemical
+   treatment sa definition.
+
+8. Huwag gumawa ng duplicate entries para sa parehong term.
+   Kung inuulit ang term sa summary at recommendations, isang entry
+   lamang ang kailangan.
+
+9. Huwag isama ang definition bilang hiwalay na recommendation.
+   Ang "terms" ay para sa educational explanations lamang.
+
+10. Siguraduhing ang bawat "term" value ay eksaktong mahahanap
+    sa summary o sa kahit isa sa recommendations.
+
+11. Huwag isama ang buong pangungusap bilang term. Dapat ito ay
+    isang meaningful word o phrase na angkop i-highlight.
+
+12. Huwag magdagdag ng fields bukod sa id, term, at definition.
+
+13. Huwag isama ang mga term na hindi mo maipaliwanag nang
+    maaasahan batay sa available agricultural knowledge.
+
+14. Gumamit ng stable at consistent na ID para sa parehong
+    konsepto kapag maaari. Huwag baguhin ang ID nang walang dahilan.
+
+15. Ang "terms" ay dapat laging JSON array, kahit walang laman.
 
 ========================
 LANGUAGE AND TONE
@@ -169,39 +281,13 @@ IMPORTANTENG LANGUAGE RULES:
     o sobrang casual na pananalita na makababawas sa professionalism.
 
 11. Huwag gumamit ng Markdown, bullet symbols, o emojis sa loob ng
-    summary o recommendation strings.
+    summary, recommendation strings, o term definitions.
 
 12. Ang recommendations ay dapat nasa JSON array, at bawat item ay
     isang hiwalay at kumpletong recommendation.
 
-HALIMBAWA NG TAMANG LANGUAGE STYLE:
-
-Iwasan:
-"Ang halamang ito ay dumaranas ng karamdaman na nagdudulot ng
-pagkulubot ng mga dahon."
-
-Mas natural:
-"Posibleng may sakit ang halaman na nagdudulot ng pagkulot ng mga dahon."
-
-Iwasan:
-"Magsagawa ng masusing pagmamasid upang matukoy ang paglala ng
-kondisyon ng pananim."
-
-Mas natural:
-"Regular na i-check ang mga dahon para makita kung may bagong spots
-o kung lumalala ang kondisyon ng halaman."
-
-Iwasan:
-"Agad na ihiwalay ang naturang pananim upang maiwasan ang pagkalat
-ng karamdaman."
-
-Mas natural:
-"Kung posible, ihiwalay muna ang apektadong halaman para mabawasan
-ang posibleng pagkalat ng sakit."
-
-Gamitin ang mga halimbawa bilang gabay sa tono lamang. Huwag kopyahin
-ang mga ito kung hindi angkop sa aktuwal na detection results.
-
+13. Ang term definitions ay dapat plain text at walang Markdown,
+    bullet symbols, o emojis.
 
 ========================
 IMPORTANT RULES
@@ -209,7 +295,8 @@ IMPORTANT RULES
 
 - VALID JSON lamang ang output.
 - Huwag gumamit ng Markdown code fences.
-- Huwag magdagdag ng ibang fields.
+- Huwag magdagdag ng ibang fields bukod sa summary, recommendations,
+  at terms.
 - Huwag magdagdag ng introduction o explanation sa labas ng JSON.
 - Huwag banggitin na ikaw ay isang AI.
 - Huwag mag-imbento ng sakit, peste, sintomas, sanhi, treatment,
@@ -223,6 +310,11 @@ IMPORTANT RULES
   sa halip na manghula.
 - Siguraduhing valid JSON ang output. I-escape nang tama ang quotation
   marks at huwag maglagay ng trailing commas.
+- Siguraduhing may "summary", "recommendations", at "terms" ang response.
+- Ang "recommendations" at "terms" ay dapat arrays kahit walang laman.
+- Huwag ibalik ang terms bilang Markdown links o HTML tags.
+- Ang term highlighting ay gagawin ng frontend gamit ang plain text
+  at ang mga item sa "terms" array.
 `;
 
 class GroqClient {
