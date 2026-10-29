@@ -1,3 +1,17 @@
 {
-  "python-envs.defaultEnvManager": "ms-python.python:system"
+  "python-envs.defaultEnvManager": "ms-python.python:system",
+  "draw.folder.structure.exclude":[
+    "**/node_modules",
+    "**/.git",
+    "**/dist",
+    "**/.next",
+    "**/out",
+    "**/.venv",
+    "**/.agents",
+    "**/__pycache__",
+    "**/.expo",
+    "**/web",
+    "**/android",
+    "**/ios",
+  ]
 }
