@@ -870,7 +870,7 @@ Huwag itong ituring na kumpirmadong diagnosis.
 ${lines.join("\n")}`;
 };
 
-class GroqClient {
+export class GroqClient {
   private groq: Groq;
 
   constructor() {

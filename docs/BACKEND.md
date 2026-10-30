@@ -67,6 +67,7 @@ GET  /api/v1/health          → inline health check (status, timestamp)
      /api/v1/videos          → video routes
      /api/v1/diagnosis       → diagnosis routes
      /api/v1/crop-problems   → crop problem reference routes
+     /api/v1/chatbot         → chatbot routes
 ```
 
 Each module owns its own `Router` in `<module>.route.ts`. Middleware is applied
@@ -100,6 +101,7 @@ at the router level (see §4 for auth details).
 | POST     | `/crop-problems/bulk`                 | admin       | `bulkUpsert`                         |
 | PATCH    | `/crop-problems/:identifier`          | admin       | `update`                             |
 | DELETE   | `/crop-problems/:identifier`          | admin       | `delete`                             |
+| POST     | `/chatbot/message`                    | session     | `sendMessage`                        |
 
 ---
 
@@ -204,6 +206,19 @@ route → controller → service → repository → model
   `seeds/crop-problems.json` and upserts idempotently. Flags: `--file <path>`,
   `--dry-run`, `--drop`. The admin `POST /crop-problems/bulk` endpoint runs the
   same validation path.
+
+### `modules/chatbot`
+
+- **No model/repository yet** — conversations are client-owned and sent back on
+  every request, so nothing is persisted server-side.
+- **Service** — normalizes history (trims, drops empty turns, keeps the latest
+  20), enforces a 4000-character limit per message, then calls
+  `groqClient.getChatbotCompletion(...)`. Throws when Groq returns no answer.
+- **Controller** — validates `messages[]` (role `user` | `assistant`, non-empty
+  content), the optional diagnosis `context`, `temperature` (0–2), and
+  `maxCompletionTokens`. Responds with `{ role: "assistant", content }`.
+- **Route** — `POST /chatbot/message`, session-protected via
+  `AuthMiddleware.requireSession`.
 
 ---
 
