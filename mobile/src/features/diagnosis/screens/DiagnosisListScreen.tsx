@@ -950,7 +950,7 @@ export const DiagnosisListScreen: React.FC = () => {
             <View style={styles.footer}>
               <ActivityIndicator color={colors.textMuted} />
             </View>
-          ) : null
+          ) : undefined
         }
         showsVerticalScrollIndicator={false}
         SectionSeparatorComponent={() => (
