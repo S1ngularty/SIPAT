@@ -21,6 +21,7 @@ import { ArrowRight, ScanLine, Sprout } from "lucide-react-native";
 import { colors, radii, spacing } from "../../../theme";
 import { Skeleton } from "../../../components/ui/SkeletonComponent";
 import { HomeHeroSheet } from "../components/HomeHeroSheet";
+import { ChatPromptBar } from "../components/ChatPromptBar";
 import { DiagnosisCard } from "../components/DiagnosisCard";
 import { AgriTipCard } from "../components/AgriTipCard";
 import { BrowseSymptoms, ExploreCropCareCard } from "../components/KnowledgeShortcuts";
@@ -150,6 +151,21 @@ const HomeScreen: React.FC = () => {
     );
   }, []);
 
+  /**
+   * Temporary: the assistant has a backend endpoint but no conversation screen
+   * yet, so submitting the prompt acknowledges it instead of dropping the text.
+   */
+  const handleChatSend = useCallback((message: string) => {
+    Alert.alert(
+      "Flora",
+      `The assistant is still being connected. You asked: "${message}"`,
+    );
+  }, []);
+
+  const handleChatMic = useCallback(() => {
+    Alert.alert("Flora", "Voice questions are coming soon.");
+  }, []);
+
   const openAllSymptoms = useCallback(() => {
     Alert.alert(
       "Browse Symptoms",
@@ -199,6 +215,8 @@ const HomeScreen: React.FC = () => {
           onPressNotifications={openDiagnoses}
           weather={getWeatherState()}
         />
+
+        <ChatPromptBar onSend={handleChatSend} onPressMic={handleChatMic} />
 
         <SectionHeader title="Agri Tips" />
 
