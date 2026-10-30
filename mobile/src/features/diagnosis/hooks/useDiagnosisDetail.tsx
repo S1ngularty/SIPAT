@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { diagnosisApi } from "../diagnosisApi";
-import type { VideoAnalysis } from "../diagnosisTypes";
+import type { GroqTerm, VideoAnalysis } from "../diagnosisTypes";
+import { normalizeTerms } from "../utils/termHighlight";
 
 interface UseDiagnosisDetailResult {
   analysis: VideoAnalysis | null;
+  /** Glossary terms from the LLM analysis, safe to render (never undefined). */
+  terms: GroqTerm[];
   isLoading: boolean;
   isRefreshing: boolean;
   error: string | null;
@@ -44,5 +47,10 @@ export const useDiagnosisDetail = (
 
   const refresh = useCallback(() => load(true), [load]);
 
-  return { analysis, isLoading, isRefreshing, error, refresh };
+  const terms = useMemo(
+    () => normalizeTerms(analysis?.analysis?.terms),
+    [analysis?.analysis?.terms],
+  );
+
+  return { analysis, terms, isLoading, isRefreshing, error, refresh };
 };

@@ -27,6 +27,9 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { useDiagnosisDetail } from "../hooks/useDiagnosisDetail";
+import { useGlossary } from "../hooks/useGlossary";
+import { TermGlossaryModal } from "../components/TermGlossaryModal";
+import { TermHighlightText } from "../components/TermHighlightText";
 import type { TrackResult } from "../diagnosisTypes";
 
 // ============================================================
@@ -709,8 +712,10 @@ export const DiagnosisDetailScreen: React.FC = () => {
   const { videoId } = route.params;
   const insets = useSafeAreaInsets();
 
-  const { analysis, isLoading, isRefreshing, error, refresh } =
+  const { analysis, terms, isLoading, isRefreshing, error, refresh } =
     useDiagnosisDetail(videoId);
+
+  const { activeTerm, segmentsFor, openTerm, closeTerm } = useGlossary(terms);
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -754,9 +759,23 @@ export const DiagnosisDetailScreen: React.FC = () => {
     [primary, analysis?.analysis?.summary],
   );
 
+  const observedSegments = useMemo(
+    () => segmentsFor(observedText),
+    [observedText, segmentsFor],
+  );
+
   const actions = useMemo(
-    () => (analysis?.analysis?.recommendations ?? []).map(parseAction),
-    [analysis?.analysis?.recommendations],
+    () =>
+      (analysis?.analysis?.recommendations ?? []).map((recommendation) => {
+        const action = parseAction(recommendation);
+
+        return {
+          ...action,
+          titleSegments: segmentsFor(action.title),
+          explanationSegments: segmentsFor(action.explanation),
+        };
+      }),
+    [analysis?.analysis?.recommendations, segmentsFor],
   );
 
   const openEvidence = useCallback(
@@ -911,7 +930,12 @@ export const DiagnosisDetailScreen: React.FC = () => {
         >
           <Text style={styles.sectionTitle}>Observed symptoms</Text>
 
-          <Text style={styles.bodyText}>{observedText}</Text>
+          <TermHighlightText
+            text={observedText}
+            segments={observedSegments}
+            onPressTerm={openTerm}
+            style={styles.bodyText}
+          />
 
           <TouchableOpacity
             style={styles.linkRow}
@@ -959,12 +983,20 @@ export const DiagnosisDetailScreen: React.FC = () => {
                 </Text>
 
                 <View style={styles.actionContent}>
-                  <Text style={styles.actionTitle}>{action.title}</Text>
+                  <TermHighlightText
+                    text={action.title}
+                    segments={action.titleSegments}
+                    onPressTerm={openTerm}
+                    style={styles.actionTitle}
+                  />
 
                   {action.explanation ? (
-                    <Text style={styles.actionExplanation}>
-                      {action.explanation}
-                    </Text>
+                    <TermHighlightText
+                      text={action.explanation}
+                      segments={action.explanationSegments}
+                      onPressTerm={openTerm}
+                      style={styles.actionExplanation}
+                    />
                   ) : null}
                 </View>
               </View>
@@ -1025,6 +1057,8 @@ export const DiagnosisDetailScreen: React.FC = () => {
         onOpenEvidence={handleOpenEvidence}
         onRefresh={handleRefreshFromMenu}
       />
+
+      <TermGlossaryModal term={activeTerm} onClose={closeTerm} />
     </SafeAreaView>
   );
 };

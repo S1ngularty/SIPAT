@@ -47,9 +47,25 @@ export interface AnalysisVideo {
   thumbnailUrl: string | null;
 }
 
+/**
+ * An agricultural term worth explaining to the farmer. The LLM guarantees that
+ * `term` appears verbatim in the summary or one of the recommendations, so the
+ * UI can highlight it in place.
+ */
+export interface GroqTerm {
+  id: string;
+  term: string;
+  definition: string;
+}
+
 export interface GroqAnalysis {
   summary: string;
   recommendations: string[];
+  /**
+   * Optional because diagnoses created before the glossary prompt shipped have
+   * no `terms` field stored.
+   */
+  terms?: GroqTerm[];
 }
 
 /**
