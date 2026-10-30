@@ -1,9 +1,18 @@
+import { unknown } from "zod";
 import { fastAPIClient } from "../../integrations/fastApi/fastapi.client.js";
 import { groqClient } from "../../integrations/groq/groq.client.js";
 import { r2Client } from "../../integrations/storage/r2.client.js";
 import type { GroqAnalysis } from "../diagnosis/diagnosis.types.js";
 import { diagnosisService } from "../diagnosis/index.js";
 import { VideoRepository } from "./video.repository.js";
+
+const CROP_LABELS: Record<string, string> = {
+  eggplant_leaf: "talong",
+  tomato_leaf: "kamatis",
+  tomato_lear: "kamatis",
+  chili_leaves: "sili",
+  potato_leaf: "patatas",
+};
 
 export class AIProcessingService {
   constructor(private readonly videoRepository: VideoRepository) {}
@@ -39,9 +48,13 @@ export class AIProcessingService {
 
       let groqContent: GroqAnalysis | null | undefined;
       if (processResult.results?.length) {
-        groqContent = await groqClient.getGroqChatCompletion(
-          processResult.results,
-        );
+
+        const normalizeResult = processResult.results?.map((detection) => ({
+          ...detection,
+          crop: CROP_LABELS[detection.crop] ?? "unknown",
+        }));
+        
+        groqContent = await groqClient.getGroqChatCompletion(normalizeResult);
       }
 
       const diagnosisData =
