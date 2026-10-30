@@ -6,14 +6,16 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
-  ScrollView,
   StyleSheet,
   Modal,
   TextInput,
   Pressable,
   Alert,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import {Bounce, Chase, Swing, Wander} from "react-native-animated-spinkit"
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Animated, {
   useSharedValue,
@@ -22,144 +24,50 @@ import Animated, {
   withTiming,
   withSpring,
   Easing,
-  runOnJS,
+  cancelAnimation,
 } from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Svg, { Path, Circle, Rect } from "react-native-svg";
+import {
+  Leaf,
+  Pencil,
+  ScanLine,
+  Search,
+  Trash2,
+  Video,
+} from "lucide-react-native";
 
-import { useDiagnosisList } from "../hooks/useDiagnosisList";
-import type { VideoAnalysis, TrackResult } from "../diagnosisTypes";
+import { useVideoList } from "../hooks/useVideoList";
+import type { VideoListItem, TrackResult } from "../diagnosisTypes";
+import { Skeleton } from "../../../components/ui/SkeletonComponent";
+import { CategoryFilterList } from "../../../components/ui/CategoryFilterList";
+import { colors, radii, spacing } from "../../../theme";
+import { scheduleOnRN } from "react-native-worklets";
 
 // ==========================================
 // ICONS
 // ==========================================
 
-interface IconProps {
-  size?: number;
-  color?: string;
-}
-
-const SearchIcon: React.FC<IconProps> = ({ size = 22, color = "#9ca3af" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Circle
-      cx="11"
-      cy="11"
-      r="7"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M20 20L16.5 16.5"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const LeafIcon: React.FC<IconProps> = ({ size = 22, color = "#9ca3af" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M20 4C20 4 14 3 9.5 7.5C5 12 5 20 5 20C5 20 13 20 17.5 15.5C22 11 20 4 20 4Z"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M5 20C5 20 8 15 12 12"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const VideoIcon: React.FC<IconProps> = ({ size = 20, color = "#6b7280" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Rect
-      x="3"
-      y="6"
-      width="13"
-      height="12"
-      rx="2"
-      stroke={color}
-      strokeWidth="1.5"
-    />
-    <Path
-      d="M16 10L21 7.5V16.5L16 14"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const PencilIcon: React.FC<IconProps> = ({ size = 22, color = "#374151" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M4 20L8.5 19L19 8.5C19.5 8 19.5 7 19 6.5L17.5 5C17 4.5 16 4.5 15.5 5L5 15.5L4 20Z"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinejoin="round"
-    />
-    <Path d="M14.5 6L18 9.5" stroke={color} strokeWidth="1.5" />
-  </Svg>
-);
-
-const TrashIcon: React.FC<IconProps> = ({ size = 22, color = "#dc2626" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path d="M5 7H19" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-    <Path
-      d="M9 7V5C9 4.5 9.5 4 10 4H14C14.5 4 15 4.5 15 5V7"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M7 7L8 19C8 19.5 8.5 20 9 20H15C15.5 20 16 19.5 16 19L17 7"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M10 11V17"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-    <Path
-      d="M14 11V17"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-  </Svg>
-);
+/** Slim outline weight shared by every icon on this screen (§11). */
+const ICON_STROKE = 1.5;
 
 // ==========================================
 // HELPERS
 // ==========================================
 
-const getDisplayName = (analysis: VideoAnalysis): string => {
-  const named = analysis.diagnosisName?.trim();
+const getDisplayName = (item: VideoListItem): string => {
+  const named = item.diagnosis?.diagnosisName?.trim();
   if (named) return named;
-  return analysis.video?.originalFileName || "Untitled video";
+  return item.originalFileName || "Untitled video";
 };
 
-const getTopFinding = (analysis: VideoAnalysis): TrackResult | null => {
-  if (!analysis.results || analysis.results.length === 0) {
+const getTopFinding = (item: VideoListItem): TrackResult | null => {
+  const results = item.diagnosis?.results;
+
+  if (!results || results.length === 0) {
     return null;
   }
 
-  return analysis.results.reduce((best, curr) =>
+  return results.reduce((best, curr) =>
     curr.confidence > best.confidence ? curr : best,
   );
 };
@@ -224,12 +132,51 @@ const getDateBucket = (dateString: string): DateBucket => {
   return "older";
 };
 
+const DiagnosisItemSkeleton: React.FC = () => (
+  <View style={styles.skeletonItem}>
+    {/* Video thumbnail placeholder */}
+    <Skeleton width={42} height={42} borderRadius={10} />
+
+    {/* Diagnosis title and metadata placeholders */}
+    <View style={styles.skeletonContent}>
+      <Skeleton width="75%" height={14} borderRadius={4} />
+
+      <Skeleton width="90%" height={12} borderRadius={4} />
+
+      <Skeleton width="45%" height={10} borderRadius={4} />
+    </View>
+
+    {/* Confidence placeholder */}
+    <View style={styles.skeletonTrailing}>
+      <Skeleton width={34} height={14} borderRadius={4} />
+      <Skeleton width={48} height={8} borderRadius={4} />
+    </View>
+  </View>
+);
+
+const DiagnosisListSkeleton: React.FC = () => (
+  <View style={styles.skeletonList}>
+    <View style={styles.sectionHeader}>
+      <Skeleton width={65} height={12} borderRadius={4} />
+    </View>
+
+    {Array.from({ length: 5 }, (_, index) => (
+      <DiagnosisItemSkeleton key={index} />
+    ))}
+  </View>
+);
+
 // ==========================================
 // FILTER CHIPS
 // ==========================================
 
 type FilterValue = "all" | DateBucket;
 
+/**
+ * Date buckets offered as filters. They are rendered by the shared
+ * `CategoryFilterList`, so the Diagnoses chips match Home exactly
+ * (lime fill + check glyph for the active chip).
+ */
 const FILTERS: { value: FilterValue; label: string }[] = [
   { value: "all", label: "All" },
   { value: "today", label: "Today" },
@@ -238,38 +185,6 @@ const FILTERS: { value: FilterValue; label: string }[] = [
   { value: "last7Days", label: "Last 7 days" },
   { value: "older", label: "Older" },
 ];
-
-interface FilterChipsProps {
-  active: FilterValue;
-  onChange: (value: FilterValue) => void;
-}
-
-const FilterChips: React.FC<FilterChipsProps> = ({ active, onChange }) => (
-  <View style={styles.filterContainer}>
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.chipsContent}
-    >
-      {FILTERS.map((filter) => {
-        const isActive = filter.value === active;
-
-        return (
-          <TouchableOpacity
-            key={filter.value}
-            onPress={() => onChange(filter.value)}
-            activeOpacity={0.7}
-            style={[styles.chip, isActive && styles.chipActive]}
-          >
-            <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-              {filter.label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
-  </View>
-);
 
 // ==========================================
 // RIPPLE
@@ -293,7 +208,7 @@ const Ripple: React.FC<RippleProps> = ({ x, y, onDone }) => {
       1,
       { duration: RIPPLE_DURATION, easing: Easing.out(Easing.quad) },
       (finished) => {
-        if (finished) runOnJS(onDone)();
+        if (finished) scheduleOnRN(onDone);
       },
     );
     opacity.value = withTiming(0, {
@@ -311,7 +226,7 @@ const Ripple: React.FC<RippleProps> = ({ x, y, onDone }) => {
       width: size,
       height: size,
       borderRadius: size / 2,
-      backgroundColor: "#111827",
+      backgroundColor: colors.charcoal,
       opacity: opacity.value,
     };
   });
@@ -375,7 +290,7 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
     .failOffsetY([-12, 12])
     .onStart(() => {
       startX.value = translateX.value;
-      runOnJS(showActions)(true);
+      scheduleOnRN(showActions, true);
     })
     .onUpdate((e) => {
       const next = startX.value + e.translationX;
@@ -394,10 +309,10 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
 
       if (shouldOpen) {
         translateX.value = withSpring(-TOTAL_ACTIONS_WIDTH, springConfig);
-        runOnJS(showActions)(true);
+        scheduleOnRN(showActions, true);
       } else {
         translateX.value = withSpring(0, springConfig);
-        runOnJS(showActions)(false);
+        scheduleOnRN(showActions, false);
       }
     });
 
@@ -405,14 +320,14 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
     .maxDuration(250)
     .onEnd((e, success) => {
       if (!success) return;
-      runOnJS(triggerRipple)(e.x, e.y);
-      runOnJS(onPress)();
+      scheduleOnRN(triggerRipple, e.x, e.y);
+      scheduleOnRN(onPress);
     });
 
   const longPressGesture = Gesture.LongPress()
     .minDuration(400)
     .onStart(() => {
-      runOnJS(onLongPress)();
+      scheduleOnRN(onLongPress);
     });
 
   const composed = Gesture.Race(
@@ -436,7 +351,7 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
             }}
             activeOpacity={0.8}
           >
-            <PencilIcon size={22} color="#374151" />
+            <Pencil size={22} color={colors.text} strokeWidth={ICON_STROKE} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -447,7 +362,11 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
             }}
             activeOpacity={0.8}
           >
-            <TrashIcon size={22} color="#dc2626" />
+            <Trash2
+              size={22}
+              color={colors.danger}
+              strokeWidth={ICON_STROKE}
+            />
           </TouchableOpacity>
         </View>
       )}
@@ -475,15 +394,15 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
 // ==========================================
 
 interface DiagnosisItemProps {
-  analysis: VideoAnalysis;
-  onPress: (analysis: VideoAnalysis) => void;
-  onRename: (analysis: VideoAnalysis) => void;
-  onDelete: (analysis: VideoAnalysis) => void;
-  onOpenMenu: (analysis: VideoAnalysis) => void;
+  item: VideoListItem;
+  onPress: (item: VideoListItem) => void;
+  onRename: (item: VideoListItem) => void;
+  onDelete: (item: VideoListItem) => void;
+  onOpenMenu: (item: VideoListItem) => void;
 }
 
 const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
-  analysis,
+  item,
   onPress,
   onRename,
   onDelete,
@@ -491,22 +410,39 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
 }) => {
   const rotation = useSharedValue(0);
 
-  const status = analysis.video?.status ?? "processing";
-  const topFinding = getTopFinding(analysis);
+  const diagnosis = item.diagnosis;
+  const hasDiagnosis = !!diagnosis;
+  const topFinding = getTopFinding(item);
+  const status = item.status;
 
-  const isProcessing = status === "processing" || status === "uploaded";
+  // A video without a diagnosis is still moving through the pipeline and gets
+  // a spinner; once it has a diagnosis the card shows its confidence instead.
+  const isProcessing =
+    !hasDiagnosis &&
+    (status === "pending_upload" ||
+      status === "uploaded" ||
+      status === "processing");
 
   React.useEffect(() => {
-    if (isProcessing) {
-      rotation.value = withRepeat(
-        withTiming(360, {
-          duration: 1200,
-          easing: Easing.linear,
-        }),
-        -1,
-        false,
-      );
+    if (!isProcessing) {
+      cancelAnimation(rotation);
+      rotation.value = 0;
+      return;
     }
+
+    rotation.value = 0;
+    rotation.value = withRepeat(
+      withTiming(360, {
+        duration: 1200,
+        easing: Easing.linear,
+      }),
+      -1,
+      false,
+    );
+
+    return () => {
+      cancelAnimation(rotation);
+    };
   }, [isProcessing, rotation]);
 
   const spinnerStyle = useAnimatedStyle(() => ({
@@ -514,6 +450,10 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
   }));
 
   const getStatusLabel = (): string => {
+    if (diagnosis && topFinding) {
+      return `${topFinding.crop} · ${topFinding.condition}`;
+    }
+
     switch (status) {
       case "pending_upload":
         return "Waiting to upload";
@@ -522,9 +462,7 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
       case "processing":
         return "Analyzing video";
       case "completed":
-        return topFinding
-          ? `${topFinding.crop} · ${topFinding.condition}`
-          : "Analysis complete";
+        return "Analysis complete";
       case "failed":
         return "Analysis failed";
       default:
@@ -533,75 +471,91 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
   };
 
   const getStatusColor = (): string => {
+    if (hasDiagnosis) return colors.success;
+
     switch (status) {
-      case "completed":
-        return "#16a34a";
       case "failed":
-        return "#dc2626";
+        return colors.danger;
       default:
-        return "#6b7280";
+        return colors.textMuted;
     }
   };
 
+  const content = (
+    <View style={styles.item}>
+      <View style={styles.thumbnail}>
+        {item.thumbnailUrl ? (
+          <Image
+            source={{ uri: item.thumbnailUrl }}
+            style={styles.thumbnailImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <Video size={19} color={colors.textMuted} strokeWidth={ICON_STROKE} />
+        )}
+      </View>
+
+      <View style={styles.content}>
+        <Text style={styles.title} numberOfLines={1} ellipsizeMode="middle">
+          {getDisplayName(item)}
+        </Text>
+
+        <View style={styles.subtitleRow}>
+          <View
+            style={[styles.statusDot, { backgroundColor: getStatusColor() }]}
+          />
+          <Text style={styles.subtitle} numberOfLines={1}>
+            {getStatusLabel()}
+          </Text>
+        </View>
+
+        <Text style={styles.meta}>
+          {formatRelativeTime(item.createdAt)}
+          {diagnosis?.results?.length
+            ? ` · ${diagnosis.results.length} finding${
+                diagnosis.results.length !== 1 ? "s" : ""
+              }`
+            : ""}
+        </Text>
+      </View>
+
+      <View style={styles.trailing}>
+        {hasDiagnosis && topFinding && (
+          <View style={styles.confidenceContainer}>
+            <Text style={styles.percent}>
+              {Math.round(topFinding.confidence * 100)}%
+            </Text>
+            <Text style={styles.confidenceLabel}>confidence</Text>
+          </View>
+        )}
+
+        {!hasDiagnosis && status === "failed" && (
+          <View style={styles.failedCircle}>
+            <Text style={styles.failed}>!</Text>
+          </View>
+        )}
+
+        {isProcessing && (
+         <Swing size={28} color={colors.lime}/>
+        )}
+      </View>
+    </View>
+  );
+
+  // Videos without a diagnosis are informational only: nothing to rename or
+  // delete yet, and tapping does nothing.
+  if (!hasDiagnosis) {
+    return <View style={styles.staticWrapper}>{content}</View>;
+  }
+
   return (
     <SwipeableRow
-      onPress={() => onPress(analysis)}
-      onRename={() => onRename(analysis)}
-      onDelete={() => onDelete(analysis)}
-      onLongPress={() => onOpenMenu(analysis)}
+      onPress={() => onPress(item)}
+      onRename={() => onRename(item)}
+      onDelete={() => onDelete(item)}
+      onLongPress={() => onOpenMenu(item)}
     >
-      <View style={styles.item}>
-        <View style={styles.thumbnail}>
-          <VideoIcon size={19} color="#6b7280" />
-        </View>
-
-        <View style={styles.content}>
-          <Text style={styles.title} numberOfLines={1} ellipsizeMode="middle">
-            {getDisplayName(analysis)}
-          </Text>
-
-          <View style={styles.subtitleRow}>
-            <View
-              style={[styles.statusDot, { backgroundColor: getStatusColor() }]}
-            />
-            <Text style={styles.subtitle} numberOfLines={1}>
-              {getStatusLabel()}
-            </Text>
-          </View>
-
-          <Text style={styles.meta}>
-            {formatRelativeTime(analysis.createdAt)}
-            {analysis.results?.length
-              ? ` · ${analysis.results.length} finding${
-                  analysis.results.length !== 1 ? "s" : ""
-                }`
-              : ""}
-          </Text>
-        </View>
-
-        <View style={styles.trailing}>
-          {isProcessing && (
-            <Animated.Text style={[styles.spinner, spinnerStyle]}>
-              ⟳
-            </Animated.Text>
-          )}
-
-          {status === "completed" && topFinding && (
-            <View style={styles.confidenceContainer}>
-              <Text style={styles.percent}>
-                {Math.round(topFinding.confidence * 100)}%
-              </Text>
-              <Text style={styles.confidenceLabel}>confidence</Text>
-            </View>
-          )}
-
-          {status === "failed" && (
-            <View style={styles.failedCircle}>
-              <Text style={styles.failed}>!</Text>
-            </View>
-          )}
-        </View>
-      </View>
+      {content}
     </SwipeableRow>
   );
 };
@@ -663,9 +617,9 @@ const RenameModal: React.FC<RenameModalProps> = ({
             onChangeText={setValue}
             autoFocus
             placeholder="Diagnosis name"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={colors.textMuted}
             style={styles.modalInput}
-            selectionColor="#16a34a"
+            selectionColor={colors.green}
           />
 
           <View style={styles.modalActions}>
@@ -697,23 +651,23 @@ const RenameModal: React.FC<RenameModalProps> = ({
 // ==========================================
 
 interface ActionSheetProps {
-  analysis: VideoAnalysis | null;
+  item: VideoListItem | null;
   onClose: () => void;
-  onRename: (analysis: VideoAnalysis) => void;
-  onDelete: (analysis: VideoAnalysis) => void;
+  onRename: (item: VideoListItem) => void;
+  onDelete: (item: VideoListItem) => void;
 }
 
 const ActionSheet: React.FC<ActionSheetProps> = ({
-  analysis,
+  item,
   onClose,
   onRename,
   onDelete,
 }) => {
-  if (!analysis) return null;
+  if (!item) return null;
 
   return (
     <Modal
-      visible={!!analysis}
+      visible={!!item}
       transparent
       animationType="fade"
       onRequestClose={onClose}
@@ -721,18 +675,18 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
       <Pressable style={styles.modalBackdrop} onPress={onClose}>
         <Pressable style={styles.sheetCard} onPress={() => {}}>
           <Text style={styles.sheetTitle} numberOfLines={1}>
-            {getDisplayName(analysis)}
+            {getDisplayName(item)}
           </Text>
 
           <TouchableOpacity
             style={styles.sheetAction}
             onPress={() => {
               onClose();
-              onRename(analysis);
+              onRename(item);
             }}
             activeOpacity={0.7}
           >
-            <PencilIcon size={18} color="#111827" />
+            <Pencil size={18} color={colors.text} strokeWidth={ICON_STROKE} />
             <Text style={styles.sheetActionText}>Rename</Text>
           </TouchableOpacity>
 
@@ -742,11 +696,15 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
             style={styles.sheetAction}
             onPress={() => {
               onClose();
-              onDelete(analysis);
+              onDelete(item);
             }}
             activeOpacity={0.7}
           >
-            <TrashIcon size={18} color="#dc2626" />
+            <Trash2
+              size={18}
+              color={colors.danger}
+              strokeWidth={ICON_STROKE}
+            />
             <Text
               style={[styles.sheetActionText, styles.sheetActionTextDanger]}
             >
@@ -771,11 +729,15 @@ interface EmptyStateProps {
 const EmptyState: React.FC<EmptyStateProps> = ({ onRecord, hasFilter }) => (
   <View style={styles.empty}>
     <View style={styles.emptyIconContainer}>
-      {hasFilter ? <SearchIcon size={22} /> : <LeafIcon size={22} />}
+      {hasFilter ? (
+        <Search size={26} color={colors.green} strokeWidth={1.8} />
+      ) : (
+        <Leaf size={26} color={colors.green} strokeWidth={1.8} />
+      )}
     </View>
 
     <Text style={styles.emptyTitle}>
-      {hasFilter ? "No results" : "No diagnoses yet"}
+      {hasFilter ? "No results" : "No videos yet"}
     </Text>
 
     <Text style={styles.emptyText}>
@@ -788,7 +750,10 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onRecord, hasFilter }) => (
       style={styles.emptyButton}
       onPress={onRecord}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel="Record a video"
     >
+      <ScanLine size={18} color={colors.forest} strokeWidth={2.2} />
       <Text style={styles.emptyButtonText}>Record Video</Text>
     </TouchableOpacity>
   </View>
@@ -811,31 +776,37 @@ const Header: React.FC = () => (
 
 export const DiagnosisListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const tabBarHeight = useBottomTabBarHeight();
 
   const {
-    analyses,
+    videos,
     isLoading,
     isRefreshing,
     refresh,
+    reload,
     loadMore,
     hasMore,
-    renameAnalysis,
-    deleteAnalysis,
-  } = useDiagnosisList();
+    renameVideo,
+    deleteVideo,
+  } = useVideoList();
 
   const [activeFilter, setActiveFilter] = useState<FilterValue>("all");
-  const [menuTarget, setMenuTarget] = useState<VideoAnalysis | null>(null);
-  const [renameTarget, setRenameTarget] = useState<VideoAnalysis | null>(null);
+  const [menuTarget, setMenuTarget] = useState<VideoListItem | null>(null);
+  const [renameTarget, setRenameTarget] = useState<VideoListItem | null>(null);
 
+  // Silent on focus: update rows in place instead of flashing the skeleton.
   useFocusEffect(
     useCallback(() => {
-      refresh();
-    }, [refresh]),
+      reload();
+    }, [reload]),
   );
 
-  const handleItemPress = (analysis: VideoAnalysis) => {
+  const handleItemPress = (item: VideoListItem) => {
+    // Only videos that already have a diagnosis open the detail screen.
+    if (!item.diagnosis) return;
+
     navigation.getParent().navigate("DiagnosisDetail", {
-      videoId: analysis._id,
+      videoId: item.diagnosis._id,
     });
   };
 
@@ -843,32 +814,36 @@ export const DiagnosisListScreen: React.FC = () => {
     navigation.getParent()?.navigate("VideoScanning");
   };
 
-  const handleOpenMenu = (analysis: VideoAnalysis) => {
-    setMenuTarget(analysis);
+  const handleOpenMenu = (item: VideoListItem) => {
+    setMenuTarget(item);
   };
 
-  const handleOpenRename = (analysis: VideoAnalysis) => {
-    setRenameTarget(analysis);
+  const handleOpenRename = (item: VideoListItem) => {
+    setRenameTarget(item);
   };
 
   const handleSubmitRename = async (value: string) => {
-    if (!renameTarget) return;
-    const target = renameTarget;
+    if (!renameTarget?.diagnosis) {
+      setRenameTarget(null);
+      return;
+    }
+
+    const diagnosisId = renameTarget.diagnosis._id;
     setRenameTarget(null);
-    await renameAnalysis(target._id, value);
+    await renameVideo(diagnosisId, value);
   };
 
-  const handleDelete = (analysis: VideoAnalysis) => {
+  const handleDelete = (item: VideoListItem) => {
     Alert.alert(
-      "Delete diagnosis?",
-      `"${getDisplayName(analysis)}" will be permanently removed.`,
+      "Delete video?",
+      `"${getDisplayName(item)}" will be permanently removed.`,
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Delete",
           style: "destructive",
           onPress: () => {
-            deleteAnalysis(analysis.video._id);
+            deleteVideo(item._id);
           },
         },
       ],
@@ -878,12 +853,12 @@ export const DiagnosisListScreen: React.FC = () => {
   const sections = useMemo(() => {
     const filtered =
       activeFilter === "all"
-        ? analyses
-        : analyses.filter(
-            (analysis) => getDateBucket(analysis.createdAt) === activeFilter,
+        ? videos
+        : videos.filter(
+            (item) => getDateBucket(item.createdAt) === activeFilter,
           );
 
-    const grouped: Record<DateBucket, VideoAnalysis[]> = {
+    const grouped: Record<DateBucket, VideoListItem[]> = {
       today: [],
       yesterday: [],
       last3Days: [],
@@ -891,8 +866,8 @@ export const DiagnosisListScreen: React.FC = () => {
       older: [],
     };
 
-    filtered.forEach((analysis) => {
-      grouped[getDateBucket(analysis.createdAt)].push(analysis);
+    filtered.forEach((item) => {
+      grouped[getDateBucket(item.createdAt)].push(item);
     });
 
     return BUCKET_ORDER.filter((bucket) => grouped[bucket].length > 0).map(
@@ -902,17 +877,24 @@ export const DiagnosisListScreen: React.FC = () => {
         data: grouped[bucket],
       }),
     );
-  }, [analyses, activeFilter]);
+  }, [videos, activeFilter]);
 
   const hasFilter = activeFilter !== "all";
 
-  if (isLoading && analyses.length === 0) {
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.safe} edges={["top"]}>
         <Header />
-        <FilterChips active={activeFilter} onChange={setActiveFilter} />
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#6b7280" />
+        <View style={styles.filters}>
+          <CategoryFilterList
+            categories={FILTERS}
+            active={activeFilter}
+            onChange={setActiveFilter}
+            accessibilityLabel="Filter diagnoses by date"
+          />
+        </View>
+        <View style={{ paddingBottom: tabBarHeight }}>
+          <DiagnosisListSkeleton />
         </View>
       </SafeAreaView>
     );
@@ -921,14 +903,21 @@ export const DiagnosisListScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <Header />
-      <FilterChips active={activeFilter} onChange={setActiveFilter} />
+      <View style={styles.filters}>
+        <CategoryFilterList
+          categories={FILTERS}
+          active={activeFilter}
+          onChange={setActiveFilter}
+          accessibilityLabel="Filter diagnoses by date"
+        />
+      </View>
 
       <SectionList
         sections={sections}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <DiagnosisItem
-            analysis={item}
+            item={item}
             onPress={handleItemPress}
             onRename={handleOpenRename}
             onDelete={handleDelete}
@@ -939,14 +928,16 @@ export const DiagnosisListScreen: React.FC = () => {
           <SectionHeader title={section.title} count={section.data.length} />
         )}
         stickySectionHeadersEnabled={false}
-        contentContainerStyle={
-          sections.length === 0 ? styles.listEmpty : styles.list
-        }
+        contentContainerStyle={[
+          sections.length === 0 ? styles.listEmpty : styles.list,
+          { paddingBottom: tabBarHeight + spacing.xl },
+        ]}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={refresh}
-            tintColor="#6b7280"
+            tintColor={colors.green}
+            colors={[colors.green]}
           />
         }
         onEndReached={hasMore && activeFilter === "all" ? loadMore : undefined}
@@ -957,9 +948,9 @@ export const DiagnosisListScreen: React.FC = () => {
         ListFooterComponent={
           hasMore && activeFilter === "all" ? (
             <View style={styles.footer}>
-              <ActivityIndicator color="#6b7280" />
+              <ActivityIndicator color={colors.textMuted} />
             </View>
-          ) : null
+          ) : undefined
         }
         showsVerticalScrollIndicator={false}
         SectionSeparatorComponent={() => (
@@ -968,7 +959,7 @@ export const DiagnosisListScreen: React.FC = () => {
       />
 
       <ActionSheet
-        analysis={menuTarget}
+        item={menuTarget}
         onClose={() => setMenuTarget(null)}
         onRename={handleOpenRename}
         onDelete={handleDelete}
@@ -978,7 +969,8 @@ export const DiagnosisListScreen: React.FC = () => {
         visible={!!renameTarget}
         initialValue={
           renameTarget
-            ? (renameTarget.diagnosisName ?? getDisplayName(renameTarget))
+            ? (renameTarget.diagnosis?.diagnosisName ??
+              getDisplayName(renameTarget))
             : ""
         }
         onCancel={() => setRenameTarget(null)}
@@ -995,125 +987,97 @@ export const DiagnosisListScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: "#ffffff",
-  },
-
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: colors.white,
   },
 
   // Header
   header: {
-    paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 10,
-    backgroundColor: "#ffffff",
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.white,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#111827",
+    color: colors.text,
     letterSpacing: -0.6,
   },
   headerSubtitle: {
     fontSize: 13,
-    color: "#9ca3af",
-    marginTop: 3,
+    color: colors.textMuted,
+    marginTop: spacing.xs,
   },
 
-  // Filters
-  filterContainer: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
-  },
-  chipsContent: {
-    paddingHorizontal: 18,
-    paddingTop: 4,
-    paddingBottom: 12,
-    gap: 10,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#ffffff",
-  },
-  chipActive: {
-    backgroundColor: "#111827",
-    borderColor: "#111827",
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#6b7280",
-  },
-  chipTextActive: {
-    color: "#ffffff",
-    fontWeight: "600",
+  // Filters (chips themselves come from the shared CategoryFilterList)
+  filters: {
+    paddingBottom: spacing.md,
   },
 
   // Section header
   sectionHeader: {
-    paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 6,
-    backgroundColor: "#ffffff",
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xs,
+    backgroundColor: colors.white,
   },
   sectionHeaderLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   sectionTitle: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#6b7280",
+    color: colors.textMuted,
     letterSpacing: 0.7,
     textTransform: "uppercase",
   },
   sectionCountContainer: {
     minWidth: 20,
     height: 20,
-    paddingHorizontal: 6,
-    borderRadius: 10,
-    backgroundColor: "#f3f4f6",
+    paddingHorizontal: spacing.xs,
+    borderRadius: radii.sm,
+    backgroundColor: colors.surfaceMuted,
     justifyContent: "center",
     alignItems: "center",
   },
   sectionCount: {
     fontSize: 10,
     fontWeight: "600",
-    color: "#6b7280",
+    color: colors.textMuted,
   },
 
   // List
   list: {
-    paddingBottom: 20,
+    paddingBottom: spacing.xl,
   },
   listEmpty: {
     flexGrow: 1,
   },
   sectionSeparator: {
-    height: 6,
+    height: spacing.sm,
   },
 
   // Swipeable wrapper
   swipeWrapper: {
-    marginHorizontal: 14,
-    marginVertical: 4,
-    borderRadius: 12,
+    marginHorizontal: spacing.xl,
+    marginVertical: spacing.xs,
+    borderRadius: radii.md,
     overflow: "hidden",
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.white,
+  },
+  // Non-actionable rows (videos without a diagnosis yet).
+  staticWrapper: {
+    marginHorizontal: spacing.xl,
+    marginVertical: spacing.xs,
+    borderRadius: radii.md,
+    overflow: "hidden",
+    backgroundColor: colors.white,
   },
   swipeContent: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
+    backgroundColor: colors.white,
+    borderRadius: radii.md,
     overflow: "hidden",
   },
   actionsContainer: {
@@ -1127,10 +1091,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   actionRename: {
-    backgroundColor: "#f3f4f6",
+    backgroundColor: colors.surfaceMuted,
   },
   actionDelete: {
-    backgroundColor: "#e5e7eb",
+    backgroundColor: colors.borderStrong,
   },
 
   // Item
@@ -1138,22 +1102,27 @@ const styles = StyleSheet.create({
     minHeight: 68,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: "#ffffff",
-    gap: 14,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radii.md,
+    backgroundColor: colors.white,
+    gap: spacing.md,
     borderWidth: 1,
-    borderColor: "#f3f4f6",
+    borderColor: colors.borderStrong,
   },
   thumbnail: {
     width: 42,
     height: 42,
-    borderRadius: 10,
-    backgroundColor: "#f3f4f6",
+    borderRadius: radii.sm,
+    backgroundColor: colors.surfaceMuted,
     justifyContent: "center",
     alignItems: "center",
     flexShrink: 0,
+    overflow: "hidden",
+  },
+  thumbnailImage: {
+    width: "100%",
+    height: "100%",
   },
   content: {
     flex: 1,
@@ -1163,7 +1132,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#111827",
+    color: colors.text,
   },
   subtitleRow: {
     flexDirection: "row",
@@ -1179,11 +1148,11 @@ const styles = StyleSheet.create({
   subtitle: {
     flex: 1,
     fontSize: 12,
-    color: "#6b7280",
+    color: colors.textMuted,
   },
   meta: {
     fontSize: 11,
-    color: "#9ca3af",
+    color: colors.textMuted,
   },
 
   // Trailing
@@ -1195,7 +1164,7 @@ const styles = StyleSheet.create({
   },
   spinner: {
     fontSize: 18,
-    color: "#6b7280",
+    color: colors.textMuted,
   },
   confidenceContainer: {
     alignItems: "flex-end",
@@ -1203,25 +1172,25 @@ const styles = StyleSheet.create({
   percent: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#16a34a",
+    color: colors.green,
   },
   confidenceLabel: {
     fontSize: 8,
-    color: "#9ca3af",
+    color: colors.textMuted,
     marginTop: 1,
   },
   failedCircle: {
     width: 22,
     height: 22,
-    borderRadius: 11,
-    backgroundColor: "#fef2f2",
+    borderRadius: radii.pill,
+    backgroundColor: colors.surfaceMuted,
     justifyContent: "center",
     alignItems: "center",
   },
   failed: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#dc2626",
+    color: colors.danger,
   },
 
   // Empty
@@ -1229,146 +1198,178 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 32,
-    paddingBottom: 40,
+    paddingHorizontal: spacing.xxxl,
+    paddingBottom: spacing.xxxl,
   },
   emptyIconContainer: {
     width: 60,
     height: 60,
-    borderRadius: 16,
-    backgroundColor: "#f3f4f6",
+    borderRadius: radii.pill,
+    backgroundColor: colors.surfaceMuted,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   emptyTitle: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#111827",
-    marginBottom: 5,
+    fontWeight: "700",
+    color: colors.text,
+    marginBottom: spacing.xs,
   },
   emptyText: {
     maxWidth: 280,
     fontSize: 13,
-    color: "#6b7280",
+    color: colors.textMuted,
     textAlign: "center",
-    marginBottom: 18,
+    marginBottom: spacing.lg,
     lineHeight: 19,
   },
   emptyButton: {
-    borderWidth: 1.5,
-    borderColor: "#16a34a",
-    backgroundColor: "#ffffff",
-    paddingHorizontal: 22,
-    paddingVertical: 10,
-    borderRadius: 999,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.lime,
+    paddingHorizontal: spacing.xxl,
+    height: 46,
+    borderRadius: radii.pill,
   },
   emptyButtonText: {
-    color: "#16a34a",
-    fontSize: 13,
-    fontWeight: "600",
+    color: colors.forest,
+    fontSize: 15,
+    fontWeight: "700",
   },
 
   // Footer
   footer: {
-    paddingVertical: 14,
+    paddingVertical: spacing.md,
   },
 
   // Modal backdrop
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(17, 24, 39, 0.4)",
+    backgroundColor: colors.backdrop,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 32,
+    paddingHorizontal: spacing.xxxl,
   },
 
   // Rename modal
   modalCard: {
     width: "100%",
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 20,
-    gap: 14,
+    backgroundColor: colors.white,
+    borderRadius: radii.lg,
+    padding: spacing.xl,
+    gap: spacing.md,
   },
   modalTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#111827",
+    color: colors.text,
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: colors.borderStrong,
+    borderRadius: radii.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     fontSize: 14,
-    color: "#111827",
-    backgroundColor: "#ffffff",
+    color: colors.text,
+    backgroundColor: colors.white,
   },
   modalActions: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    gap: 8,
+    gap: spacing.sm,
   },
   modalButton: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 999,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.pill,
   },
   modalButtonGhost: {
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: colors.borderStrong,
   },
   modalButtonGhostText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#6b7280",
+    color: colors.textMuted,
   },
   modalButtonPrimary: {
-    backgroundColor: "#16a34a",
+    backgroundColor: colors.lime,
   },
   modalButtonPrimaryText: {
     fontSize: 13,
-    fontWeight: "600",
-    color: "#ffffff",
+    fontWeight: "700",
+    color: colors.forest,
   },
 
   // Action sheet
   sheetCard: {
     width: "100%",
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
+    backgroundColor: colors.white,
+    borderRadius: radii.lg,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
   },
   sheetTitle: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#9ca3af",
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 8,
+    color: colors.textMuted,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
   },
   sheetAction: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
   sheetActionText: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#111827",
+    color: colors.text,
   },
   sheetActionTextDanger: {
-    color: "#dc2626",
+    color: colors.danger,
   },
   sheetDivider: {
     height: 1,
-    backgroundColor: "#f3f4f6",
-    marginHorizontal: 16,
+    backgroundColor: colors.borderStrong,
+    marginHorizontal: spacing.lg,
+  },
+
+  skeletonList: {
+    paddingBottom: spacing.xl,
+  },
+
+  skeletonItem: {
+    minHeight: 68,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    marginHorizontal: spacing.xl,
+    marginVertical: spacing.xs,
+    gap: spacing.md,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.white,
+  },
+
+  skeletonContent: {
+    flex: 1,
+    minWidth: 0,
+    gap: 7,
+  },
+
+  skeletonTrailing: {
+    width: 58,
+    alignItems: "flex-end",
+    gap: 5,
   },
 });

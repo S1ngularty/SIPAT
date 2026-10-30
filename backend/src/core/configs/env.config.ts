@@ -24,8 +24,17 @@ export const env = {
     redis_port: requiredEnv("REDIS_PORT"),
   },
 
-  fastapi:{
-    based_url: requiredEnv("FASTAPI_URL")
+  fastapi: {
+    based_url: requiredEnv("FASTAPI_URL"),
+    /**
+     * How long the worker waits for `/detection/process` before giving up.
+     * Detection downloads the clip, runs YOLO tracking and uploads evidence
+     * crops, so it can legitimately take several minutes. Default: 15 minutes.
+     */
+    timeout_ms:
+      Number(process.env.FASTAPI_TIMEOUT_MS) > 0
+        ? Number(process.env.FASTAPI_TIMEOUT_MS)
+        : 15 * 60 * 1000,
   },
   
   groq:{

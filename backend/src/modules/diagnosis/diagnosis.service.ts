@@ -5,9 +5,10 @@ import type {
   Diagnosis,
   DiagnosisResult,
   DiagnosisWIthDownloadUrls,
+  GroqAnalysis,
 } from "./diagnosis.types.js";
 import { r2Client } from "../../integrations/storage/r2.client.js";
-import { videoService } from "../video/index.js";
+import { thumbnailService, videoService } from "../video/index.js";
 
 export class DiagnosisService {
   constructor(private readonly diagnosisRepository: DiagnosisRepository) {}
@@ -30,8 +31,22 @@ export class DiagnosisService {
       limit,
     );
 
+    // Attach a pre-signed GET so the client can render each video's preview
+    // image in the diagnosis list.
+    const data = await Promise.all(
+      DiagnosisList.data.map(async (item) => ({
+        ...item,
+        video: {
+          ...item.video,
+          thumbnailUrl: await thumbnailService.createDownloadUrl(
+            item.video.thumbnailStorageKey,
+          ),
+        },
+      })),
+    );
+
     return {
-      data: DiagnosisList.data,
+      data,
       meta: {
         page: DiagnosisList.page,
         limit: DiagnosisList.limit,
@@ -71,6 +86,9 @@ export class DiagnosisService {
       evidenceVideoUrl: await r2Client.createDownloadUrl(
         diagnosis.video.storageKey,
       ),
+      thumbnailUrl: await thumbnailService.createDownloadUrl(
+        diagnosis.video.thumbnailStorageKey,
+      ),
     };
 
     return {
@@ -90,6 +108,26 @@ export class DiagnosisService {
     const diagnosis = await this.diagnosisRepository.updateByVideoId(
       videoId,
       results,
+    );
+
+    if (!diagnosis) {
+      throw new Error("Diagnosis not found");
+    }
+
+    return diagnosis;
+  }
+
+  /**
+   * Store a (re)generated LLM analysis, including the glossary `terms` the
+   * mobile app highlights. `null` clears it.
+   */
+  async updateDiagnosisAnalysis(
+    videoId: string,
+    analysis: GroqAnalysis | null,
+  ): Promise<Diagnosis> {
+    const diagnosis = await this.diagnosisRepository.updateAnalysisByVideoId(
+      videoId,
+      analysis,
     );
 
     if (!diagnosis) {

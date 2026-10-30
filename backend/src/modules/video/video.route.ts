@@ -8,9 +8,18 @@ const router = Router();
 router.use(AuthMiddleware.requireSession);
 // router.use(AuthMiddleware.requireRole("user"));
 
+// List the signed-in user's videos with their diagnosis joined.
+router.route("/").get(videoController.getVideoList);
+
 router.route("/upload").post(videoController.createVideoUpload);
 router
   .route("/:videoId/uploaded")
   .patch(videoController.updateVideoUploadStatus);
+
+// Preview image: POST mints a presigned PUT, PATCH records the uploaded key.
+router
+  .route("/:videoId/thumbnail")
+  .post(videoController.createThumbnailUpload)
+  .patch(videoController.attachThumbnail);
 
 export default router;

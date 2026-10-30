@@ -16,17 +16,17 @@ from models.ai import AIModels
 # CONFIGURATION
 # ============================================================
 
-SAMPLE_FPS = 20
+SAMPLE_FPS = 15
 
 # Rough amount of evidence required before reporting.
 PERSISTENCE_SECONDS = 1.0
 
-# At 5 FPS, we expect around 5 observations per second.
-MIN_OBSERVATIONS = 8
+# Observations expected per second at the sampling rate above.
+MIN_OBSERVATIONS = 3
 
 # How many sampled frames a track can disappear before
 # we consider the object gone.
-MAX_MISSED_FRAMES = 8
+MAX_MISSED_FRAMES = 15
 
 CROP_CONFIDENCE = 0.40
 
@@ -86,7 +86,7 @@ class DetectionService:
         
         self.models = AIModels(
                 "app/models/crop_identification/v2.pt",
-                "app/models/pest_disease_identification/v2.pt"
+                "app/models/pest_disease_identification/v3.pt"
             )
         
         self.storage = R2Storage()

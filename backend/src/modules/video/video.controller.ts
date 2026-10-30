@@ -1,13 +1,55 @@
 import type { Request, Response, NextFunction } from "express";
 
 import { VideoService } from "./video.service.js";
-import type { CreateVideoInput, Video } from "./video.types.js";
+import { ThumbnailService } from "./thumbnail.service.js";
+import type {
+  AttachThumbnailInput,
+  CreateThumbnailUploadInput,
+  CreateVideoInput,
+  Video,
+} from "./video.types.js";
 import type { ApiResponse } from "../../core/types/api.type.js";
-import type { IPresignedUploadResponse } from "./video.dto.js";
+import type {
+  IAttachThumbnailResponse,
+  IPresignedThumbnailUploadResponse,
+  IPresignedUploadResponse,
+  IVideoListRow,
+} from "./video.dto.js";
 import { wrapResponse } from "../../core/utils/response.util.js";
 
 export class VideoController {
-  constructor(private readonly videoService: VideoService) {}
+  constructor(
+    private readonly videoService: VideoService,
+    private readonly thumbnailService: ThumbnailService,
+  ) {}
+
+  /**
+   * The signed-in user's videos (any status), each with its diagnosis joined
+   * and a presigned preview URL. Drives the Diagnoses list.
+   */
+  getVideoList = async (
+    req: Request<{}, {}, {}, { page?: string; limit?: string }>,
+    res: Response<ApiResponse<IVideoListRow[]>>,
+    next: NextFunction,
+  ) => {
+    try {
+      const { userId } = req.auth;
+
+      if (!userId) throw new Error("missing userId");
+
+      const { page, limit } = req.query;
+
+      const { data, meta } = await this.videoService.getVideoList(
+        userId,
+        Number(page) || 1,
+        Number(limit) || 10,
+      );
+
+      wrapResponse("OK", 200, res, data, meta);
+    } catch (error) {
+      next(error);
+    }
+  };
 
   createVideoUpload = async (
     req: Request<{}, {}, CreateVideoInput>,
@@ -53,6 +95,64 @@ export class VideoController {
       if (!videoId) throw new Error("Video ID is required");
 
       const result = await this.videoService.updateUploadedVideoStatus(videoId);
+
+      wrapResponse("OK", 200, res, result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Step 1 of the thumbnail flow: hand the client a presigned PUT plus the key
+   * its rendered preview image must be stored at.
+   */
+  createThumbnailUpload = async (
+    req: Request<{ videoId: string }, {}, CreateThumbnailUploadInput>,
+    res: Response<ApiResponse<IPresignedThumbnailUploadResponse>>,
+    next: NextFunction,
+  ) => {
+    try {
+      const { userId } = req.auth;
+      const { videoId } = req.params;
+      const { contentType } = req.body;
+
+      if (!userId) throw new Error("missing userId");
+      if (!videoId) throw new Error("Video ID is required");
+      if (!contentType) throw new Error("contentType is required");
+
+      const result = await this.thumbnailService.createUpload(
+        userId,
+        videoId,
+        contentType,
+      );
+
+      wrapResponse("OK", 200, res, result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /** Step 3: record the uploaded thumbnail on the video. */
+  attachThumbnail = async (
+    req: Request<{ videoId: string }, {}, AttachThumbnailInput>,
+    res: Response<ApiResponse<IAttachThumbnailResponse>>,
+    next: NextFunction,
+  ) => {
+    try {
+      const { userId } = req.auth;
+      const { videoId } = req.params;
+      const { thumbnailStorageKey } = req.body;
+
+      if (!userId) throw new Error("missing userId");
+      if (!videoId) throw new Error("Video ID is required");
+      if (!thumbnailStorageKey)
+        throw new Error("thumbnailStorageKey is required");
+
+      const result = await this.thumbnailService.attach(
+        userId,
+        videoId,
+        thumbnailStorageKey,
+      );
 
       wrapResponse("OK", 200, res, result);
     } catch (error) {

@@ -3,12 +3,19 @@ import { r2Client } from "../../integrations/storage/r2.client.js";
 
 import type { CreateVideoInput, Video } from "./video.types.js";
 import { validateVideoUpload } from "./video.validation.js";
-import type { IPresignedUploadResponse } from "./video.dto.js";
+import type {
+  IPresignedUploadResponse,
+  IVideoListRow,
+} from "./video.dto.js";
 import { AIQueue } from "../../jobs/queues/ai.queue.js";
 import type { VideoRepository } from "./video.repository.js";
+import type { ThumbnailService } from "./thumbnail.service.js";
 
 export class VideoService {
-  constructor(private readonly videoRepository: VideoRepository) {}
+  constructor(
+    private readonly videoRepository: VideoRepository,
+    private readonly thumbnailService: ThumbnailService,
+  ) {}
 
   private generateVideoMetadata(userId: string, input: CreateVideoInput) {
     const videoId = randomUUID();
@@ -82,6 +89,45 @@ export class VideoService {
     };
   }
 
+  /**
+   * The signed-in user's videos, newest first, each with its diagnosis joined
+   * (or `null` when the video has none yet) and a presigned preview URL.
+   */
+  async getVideoList(
+    userId: string,
+    page = 1,
+    limit = 10,
+  ): Promise<{
+    data: IVideoListRow[];
+    meta: { page: number; limit: number; total: number; totalPages: number };
+  }> {
+    const result = await this.videoRepository.findPaginatedWithDiagnosis({
+      userId,
+      page,
+      limit,
+    });
+
+    const data = await Promise.all(
+      result.data.map(async (video) => ({
+        ...video,
+        diagnosis: video.diagnosis ?? null,
+        thumbnailUrl: await this.thumbnailService.createDownloadUrl(
+          video.thumbnailStorageKey,
+        ),
+      })),
+    );
+
+    return {
+      data,
+      meta: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: result.totalPages,
+      },
+    };
+  }
+
   async updateUploadedVideoStatus(videoId: string): Promise<Video> {
     const result = await this.videoRepository.videoUpdateStatus(videoId, {
       status: "uploaded",
@@ -96,12 +142,39 @@ export class VideoService {
     return result?.toObject();
   }
 
+  /**
+   * `videos/{userId}/{videoId}/clip.mp4` -> `videos/{userId}/{videoId}/`.
+   * Everything belonging to a video (recording + preview image) lives in that
+   * directory, so trimming the storage key to it addresses them as a group.
+   */
+  private storageDirectory(storageKey: string): string {
+    const lastSlash = storageKey.lastIndexOf("/");
+
+    return lastSlash === -1 ? storageKey : storageKey.slice(0, lastSlash + 1);
+  }
+
   async deleteVideo(videoId: string): Promise<Video> {
     const result = await this.videoRepository.deleteVideo(videoId);
 
     if (!result) throw new Error(`Failed to delete the video ${videoId}`);
 
-    r2Client.deleteObject(result.storageKey);
+    // The recording, its evidence crops and its preview image share one folder,
+    // so a single prefix delete clears all of it — no need to delete each
+    // object (video, thumbnail, evidence, …) one by one.
+    const videoDirectory = this.storageDirectory(result.storageKey);
+
+    await r2Client.deletePrefix(videoDirectory);
+
+    // Older preview images were keyed off the document `_id` and so landed in a
+    // different folder. Clean that up as well when it is elsewhere, so deleting
+    // a video never leaves its thumbnail behind.
+    const thumbnailDirectory = result.thumbnailStorageKey
+      ? this.storageDirectory(result.thumbnailStorageKey)
+      : null;
+
+    if (thumbnailDirectory && thumbnailDirectory !== videoDirectory) {
+      await r2Client.deletePrefix(thumbnailDirectory);
+    }
 
     return result;
   }

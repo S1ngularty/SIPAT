@@ -4,11 +4,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Dimensions,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { VideoView } from "expo-video";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import { Flow } from "react-native-animated-spinkit";
 import {
   ArrowLeft,
   Play,
@@ -20,8 +21,12 @@ import {
 } from "lucide-react-native";
 import { formatTime } from "../../../utils/formatTime";
 import usePreview from "../hooks/usePreview";
+import { CircularIconButton } from "../../../components/ui/CircularIconButton";
+import { colors, radii, spacing } from "../../../theme";
 
-const { width, height } = Dimensions.get("window");
+/** Slim outline strokes, per DESIGN.md §11.1. */
+const ICON_STROKE = 1.5;
+const CONTROL_SIZE = 40;
 
 const VideoPreviewScreen = () => {
   const {
@@ -36,6 +41,7 @@ const VideoPreviewScreen = () => {
     animatedButtonStyle,
     player,
     videoUri,
+    thumbnailUri,
     navigation,
 
     handlePlayPause,
@@ -44,16 +50,33 @@ const VideoPreviewScreen = () => {
     handleSaveDraft,
   } = usePreview();
 
+  const isBusy = isAnalyzing || isSaving;
+
+  const handleBack = () => {
+    if (player) {
+      player.pause();
+    }
+    navigation.goBack();
+  };
+
   if (!videoUri) {
     return (
       <SafeAreaView style={styles.errorContainer}>
-        <Leaf size={48} color="#999" strokeWidth={1.5} />
-        <Text style={styles.errorText}>No video found</Text>
+        <View style={styles.errorIcon}>
+          <Leaf size={28} color={colors.green} strokeWidth={ICON_STROKE} />
+        </View>
+        <Text style={styles.errorTitle}>No video found</Text>
+        <Text style={styles.errorText}>
+          Record a clip before opening the preview.
+        </Text>
         <TouchableOpacity
-          style={styles.errorButton}
+          style={styles.primaryButton}
           onPress={() => navigation.goBack()}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
-          <Text style={styles.errorButtonText}>Go Back</Text>
+          <Text style={styles.primaryButtonText}>Go Back</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -63,34 +86,46 @@ const VideoPreviewScreen = () => {
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       {/* Header */}
       <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => {
-            if (player) {
-              player.pause();
-            }
-            navigation.goBack();
-          }}
+        <CircularIconButton
+          onPress={handleBack}
+          accessibilityLabel="Close video preview"
+          variant="neutral"
+          size={CONTROL_SIZE}
         >
-          <ArrowLeft size={24} color="#2E7D32" strokeWidth={2} />
-        </TouchableOpacity>
+          <ArrowLeft size={20} color={colors.text} strokeWidth={ICON_STROKE} />
+        </CircularIconButton>
+
         <Text style={styles.headerTitle}>Video Preview</Text>
+
         <View style={styles.headerPlaceholder} />
       </Animated.View>
 
-      {/* Video Player */}
+      {/* Video card */}
       <View style={styles.videoContainer}>
+        {/* Poster: a frame rendered from this very recording, so the card is
+            never a black hole while the player warms up. */}
+        {isLoading && thumbnailUri && (
+          <Image
+            source={{ uri: thumbnailUri }}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+            accessible={false}
+          />
+        )}
+
         <VideoView
           player={player}
           style={styles.video}
           contentFit="contain"
           nativeControls={false}
+          // Android's SurfaceView ignores the parent's rounded corners.
+          surfaceType="textureView"
         />
 
         {/* Loading Indicator */}
         {isLoading && (
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#4CAF50" />
+            <ActivityIndicator size="large" color={colors.lime} />
           </View>
         )}
 
@@ -100,10 +135,16 @@ const VideoPreviewScreen = () => {
             style={styles.playOverlay}
             onPress={handlePlayPause}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={isPlaying ? "Pause video" : "Play video"}
           >
             {hasEnded ? (
               <View style={styles.replayButton}>
-                <RotateCcw size={32} color="#fff" strokeWidth={2} />
+                <RotateCcw
+                  size={18}
+                  color={colors.textOnDark}
+                  strokeWidth={ICON_STROKE}
+                />
                 <Text style={styles.replayText}>Replay</Text>
               </View>
             ) : (
@@ -111,9 +152,17 @@ const VideoPreviewScreen = () => {
                 style={[styles.playButton, animatedPlayButtonStyle]}
               >
                 {isPlaying ? (
-                  <Pause size={36} color="#fff" strokeWidth={2} />
+                  <Pause
+                    size={30}
+                    color={colors.textOnDark}
+                    strokeWidth={ICON_STROKE}
+                  />
                 ) : (
-                  <Play size={36} color="#fff" strokeWidth={2} />
+                  <Play
+                    size={30}
+                    color={colors.textOnDark}
+                    strokeWidth={ICON_STROKE}
+                  />
                 )}
               </Animated.View>
             )}
@@ -146,16 +195,18 @@ const VideoPreviewScreen = () => {
         {/* Analyze Button - Primary */}
         <Animated.View style={animatedButtonStyle}>
           <TouchableOpacity
-            style={[styles.analyzeButton, isAnalyzing && styles.buttonDisabled]}
+            style={[styles.analyzeButton, isBusy && styles.buttonDisabled]}
             onPress={handleAnalyze}
-            disabled={isAnalyzing || isSaving}
+            disabled={isBusy}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Analyze plant"
           >
             {isAnalyzing ? (
-              <ActivityIndicator color="#fff" size="small" />
+              <Flow size={32} color={colors.white} />
             ) : (
               <>
-                <ScanLine size={20} color="#fff" strokeWidth={2} />
+                <ScanLine size={18} color={colors.white} strokeWidth={1.9} />
                 <Text style={styles.analyzeButtonText}>Analyze Plant</Text>
               </>
             )}
@@ -165,26 +216,38 @@ const VideoPreviewScreen = () => {
         {/* Secondary Actions */}
         <View style={styles.secondaryActions}>
           <TouchableOpacity
-            style={styles.secondaryButton}
+            style={[styles.secondaryButton, isBusy && styles.buttonDisabled]}
             onPress={handleRecapture}
-            disabled={isAnalyzing || isSaving}
+            disabled={isBusy}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Recapture video"
           >
-            <RotateCcw size={20} color="#4CAF50" strokeWidth={2} />
+            <RotateCcw
+              size={18}
+              color={colors.green}
+              strokeWidth={ICON_STROKE}
+            />
             <Text style={styles.secondaryButtonText}>Recapture</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.secondaryButton}
+            style={[styles.secondaryButton, isBusy && styles.buttonDisabled]}
             onPress={handleSaveDraft}
-            disabled={isAnalyzing || isSaving}
+            disabled={isBusy}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Save video to drafts"
           >
             {isSaving ? (
-              <ActivityIndicator color="#4CAF50" size="small" />
+              <ActivityIndicator color={colors.green} size="small" />
             ) : (
               <>
-                <Save size={20} color="#4CAF50" strokeWidth={2} />
+                <Save
+                  size={18}
+                  color={colors.green}
+                  strokeWidth={ICON_STROKE}
+                />
                 <Text style={styles.secondaryButtonText}>Save to Draft</Text>
               </>
             )}
@@ -198,72 +261,88 @@ const VideoPreviewScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F0",
+    backgroundColor: colors.white,
   },
+
+  // Missing-video state — mirrors the app's other empty states (§11.6).
   errorContainer: {
     flex: 1,
-    backgroundColor: "#F5F5F0",
+    backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",
-    padding: 24,
+    padding: spacing.xxl,
   },
-  errorText: {
+  errorIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: radii.pill,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.lg,
+  },
+  errorTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#333",
-    marginTop: 16,
-    marginBottom: 20,
+    color: colors.text,
   },
-  errorButton: {
-    backgroundColor: "#4CAF50",
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
+  errorText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    textAlign: "center",
+    marginTop: spacing.xs,
+    marginBottom: spacing.xl,
   },
-  errorButtonText: {
-    color: "#fff",
+  primaryButton: {
+    backgroundColor: colors.lime,
+    paddingHorizontal: spacing.xxxl,
+    paddingVertical: spacing.md,
+    borderRadius: radii.pill,
+  },
+  primaryButtonText: {
+    color: colors.forest,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
   },
+
+  // Header
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 16,
-    backgroundColor: "#fff",
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#F5F5F0",
-    alignItems: "center",
-    justifyContent: "center",
+    borderBottomColor: colors.borderStrong,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#2E7D32",
+    color: colors.text,
   },
   headerPlaceholder: {
-    width: 40,
-    height: 40,
+    width: CONTROL_SIZE,
+    height: CONTROL_SIZE,
   },
+
+  // Video card — a dark rounded surface rather than a full-bleed band.
   videoContainer: {
     flex: 1,
-    backgroundColor: "#000",
+    margin: spacing.xl,
+    borderRadius: radii.lg,
+    overflow: "hidden",
+    backgroundColor: colors.charcoal,
     justifyContent: "center",
     alignItems: "center",
   },
   video: {
-    width: width,
-    height: height * 0.6,
+    flex: 1,
+    width: "100%",
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: colors.backdrop,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -271,93 +350,102 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.2)",
+    backgroundColor: "rgba(0, 0, 0, 0.15)",
   },
   playButton: {
     width: 72,
     height: 72,
-    borderRadius: 36,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    borderRadius: radii.pill,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "#fff",
+    borderWidth: 1,
+    borderColor: colors.outlineOnDark,
   },
   replayButton: {
+    flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    padding: 20,
-    borderRadius: 16,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.pill,
+    backgroundColor: colors.backdrop,
+    borderWidth: 1,
+    borderColor: colors.outlineOnDark,
   },
   replayText: {
-    color: "#fff",
+    color: colors.textOnDark,
     fontSize: 14,
     fontWeight: "600",
   },
   progressContainer: {
     position: "absolute",
-    bottom: 20,
-    left: 20,
-    right: 20,
-    gap: 8,
+    bottom: spacing.lg,
+    left: spacing.lg,
+    right: spacing.lg,
+    gap: spacing.sm,
   },
   progressBackground: {
-    height: 4,
-    backgroundColor: "rgba(255,255,255,0.3)",
-    borderRadius: 2,
+    height: 3,
+    backgroundColor: colors.outlineOnDark,
+    borderRadius: radii.pill,
+    overflow: "hidden",
   },
   progressFill: {
     height: "100%",
-    backgroundColor: "#4CAF50",
-    borderRadius: 2,
+    backgroundColor: colors.lime,
+    borderRadius: radii.pill,
   },
   timeText: {
-    color: "#fff",
+    color: colors.textOnDark,
     fontSize: 12,
     textAlign: "center",
-    fontFamily: "monospace",
+    fontVariant: ["tabular-nums"],
   },
+
+  // Actions
   actionsContainer: {
-    padding: 20,
-    backgroundColor: "#fff",
-    gap: 16,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xl,
+    backgroundColor: colors.white,
+    gap: spacing.lg,
   },
   analyzeButton: {
-    backgroundColor: "#4CAF50",
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: colors.lime,
+    borderRadius: radii.pill,
+    paddingVertical: spacing.lg,
+    minHeight: 52,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   buttonDisabled: {
-    opacity: 0.7,
+    opacity: 0.5,
   },
   analyzeButtonText: {
-    color: "#fff",
+    color: colors.white,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   secondaryActions: {
     flexDirection: "row",
-    gap: 12,
+    gap: spacing.md,
   },
   secondaryButton: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-    paddingVertical: 14,
-    borderRadius: 12,
+    gap: spacing.sm,
+    paddingVertical: spacing.lg,
+    borderRadius: radii.pill,
     borderWidth: 1,
-    borderColor: "#4CAF50",
-    backgroundColor: "#F8FDF8",
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.white,
   },
   secondaryButtonText: {
-    color: "#4CAF50",
+    color: colors.text,
     fontSize: 14,
     fontWeight: "600",
   },

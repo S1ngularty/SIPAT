@@ -8,7 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { useState, useCallback } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { CameraView } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
@@ -19,23 +19,25 @@ import {
   Mic,
   MicOff,
   Camera as CameraIcon,
-  LucideSwitchCamera,
   Image as ImageIcon,
 } from "lucide-react-native";
 import useScanning from "../hooks/useScanning";
 import { formatTime } from "../../../utils/formatTime";
+import { colors, radii, spacing } from "../../../theme";
 
 const MAX_DURATION = 15; // seconds
+/** Diameter of the round top controls (close / mute), in px. */
+const TOP_CONTROL_SIZE = 40;
 const { width, height } = Dimensions.get("window");
 
 const VideoScanningScreen = () => {
   const [isPickingVideo, setPickingVideo] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const {
     hasPermission,
     isRecording,
     recordingTime,
-    cameraType,
     isProcessing,
     isMuted,
     navigation,
@@ -44,7 +46,6 @@ const VideoScanningScreen = () => {
 
     startRecording,
     stopRecording,
-    toggleCameraType,
     toggleMute,
   } = useScanning();
 
@@ -95,7 +96,7 @@ const VideoScanningScreen = () => {
   if (hasPermission === null) {
     return (
       <SafeAreaView style={styles.permissionContainer}>
-        <ActivityIndicator size="large" color="#4CAF50" />
+        <ActivityIndicator size="large" color={colors.lime} />
         <Text style={styles.permissionText}>
           Requesting camera and microphone permission...
         </Text>
@@ -106,7 +107,7 @@ const VideoScanningScreen = () => {
   if (hasPermission === false) {
     return (
       <SafeAreaView style={styles.permissionContainer}>
-        <CameraIcon size={48} color="#999" strokeWidth={1.5} />
+        <CameraIcon size={48} color={colors.textMuted} strokeWidth={1.5} />
         <Text style={styles.permissionTitle}>Permissions Required</Text>
         <Text style={styles.permissionText}>
           Please grant camera and microphone permissions to record plant videos.
@@ -122,17 +123,24 @@ const VideoScanningScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+    <View style={styles.container}>
       {/* Camera View */}
+      {/*
+        expo-camera (v57) exposes no tap-to-focus API — only this `autofocus`
+        mode prop, and it is iOS-only. "off" keeps the camera refocusing
+        continuously as the plant moves; "on" would focus once and then lock.
+        (The previous `focusable` prop is not part of expo-camera and was being
+        swallowed by React Native's generic View prop.)
+      */}
       <CameraView
         ref={cameraRef}
         mode="video"
-        focusable={true}
         style={StyleSheet.absoluteFill}
-        facing={cameraType}
+        facing="back"
         videoQuality="720p"
         mute={isMuted}
         ratio="16:9"
+        autofocus="off"
         onCameraReady={() => {
           console.log("Camera is ready");
         }}
@@ -144,51 +152,69 @@ const VideoScanningScreen = () => {
       {/* Top Overlay */}
       <Animated.View
         entering={FadeInDown.duration(400)}
-        style={styles.topOverlay}
+        style={[styles.topOverlay, { paddingTop: insets.top + spacing.xl }]}
       >
         <TouchableOpacity
-          style={styles.backButton}
+          style={styles.iconButton}
           onPress={() => navigation.goBack()}
           disabled={isRecording}
+          accessibilityRole="button"
+          accessibilityLabel="Close scanner"
         >
-          <ArrowLeft size={24} color="#fff" strokeWidth={2} />
+          <ArrowLeft size={22} color={colors.white} strokeWidth={1.5} />
         </TouchableOpacity>
 
         <View style={styles.titleContainer}>
-          <Leaf size={20} color="#4CAF50" strokeWidth={1.5} />
+          <Leaf size={20} color={colors.lime} strokeWidth={1.5} />
           <Text style={styles.titleText}>Scan Plant</Text>
         </View>
 
-        <View style={styles.topRightControls}>
-          <TouchableOpacity
-            style={styles.switchButton}
-            onPress={toggleMute}
-            disabled={isRecording}
-          >
-            {isMuted ? (
-              <MicOff size={22} color="#fff" strokeWidth={2} />
-            ) : (
-              <Mic size={22} color="#fff" strokeWidth={2} />
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.switchButton}
-            onPress={toggleCameraType}
-            disabled={isRecording}
-          >
-            <LucideSwitchCamera size={24} color="#fff" strokeWidth={2} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={toggleMute}
+          disabled={isRecording}
+          accessibilityRole="button"
+          accessibilityLabel={isMuted ? "Unmute microphone" : "Mute microphone"}
+        >
+          {isMuted ? (
+            <MicOff size={22} color={colors.white} strokeWidth={1.5} />
+          ) : (
+            <Mic size={22} color={colors.white} strokeWidth={1.5} />
+          )}
+        </TouchableOpacity>
       </Animated.View>
 
       {/* Scanning Frame */}
-      <View style={styles.scanFrameContainer}>
+      <View style={styles.scanFrameContainer} pointerEvents="none">
         <View style={[styles.scanFrame, isRecording && styles.scanFrameActive]}>
-          <View style={[styles.corner, styles.cornerTopLeft]} />
-          <View style={[styles.corner, styles.cornerTopRight]} />
-          <View style={[styles.corner, styles.cornerBottomLeft]} />
-          <View style={[styles.corner, styles.cornerBottomRight]} />
+          <View
+            style={[
+              styles.corner,
+              styles.cornerTopLeft,
+              isRecording && styles.cornerActive,
+            ]}
+          />
+          <View
+            style={[
+              styles.corner,
+              styles.cornerTopRight,
+              isRecording && styles.cornerActive,
+            ]}
+          />
+          <View
+            style={[
+              styles.corner,
+              styles.cornerBottomLeft,
+              isRecording && styles.cornerActive,
+            ]}
+          />
+          <View
+            style={[
+              styles.corner,
+              styles.cornerBottomRight,
+              isRecording && styles.cornerActive,
+            ]}
+          />
         </View>
       </View>
 
@@ -196,7 +222,10 @@ const VideoScanningScreen = () => {
       {isRecording && (
         <Animated.View
           entering={FadeInDown.duration(300)}
-          style={styles.recordingIndicator}
+          style={[
+            styles.recordingIndicator,
+            { top: insets.top + spacing.xl * 2 + TOP_CONTROL_SIZE },
+          ]}
         >
           <View style={styles.recordingDot} />
           <Text style={styles.recordingText}>Scanning...</Text>
@@ -206,11 +235,14 @@ const VideoScanningScreen = () => {
       {/* Bottom Controls */}
       <Animated.View
         entering={FadeInUp.duration(400)}
-        style={styles.bottomControls}
+        style={[
+          styles.bottomControls,
+          { paddingBottom: insets.bottom + spacing.xxxl },
+        ]}
       >
         {isRecording && (
           <View style={styles.timerContainer}>
-            <Timer size={18} color="#4CAF50" strokeWidth={1.5} />
+            <Timer size={18} color={colors.lime} strokeWidth={1.5} />
             <Text
               style={[
                 styles.timerText,
@@ -235,7 +267,7 @@ const VideoScanningScreen = () => {
               disabled={isProcessing}
             >
               {isProcessing ? (
-                <ActivityIndicator color="#fff" size="large" />
+                <ActivityIndicator color={colors.white} size="large" />
               ) : (
                 <View
                   style={[
@@ -261,7 +293,7 @@ const VideoScanningScreen = () => {
             {isPickingVideo ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <ImageIcon size={24} color="#fff" strokeWidth={2} />
+              <ImageIcon size={22} color={colors.white} strokeWidth={1.5} />
             )}
           </TouchableOpacity>
         </View>
@@ -272,47 +304,49 @@ const VideoScanningScreen = () => {
             : `Tap to start scanning (Max ${MAX_DURATION}s)`}
         </Text>
       </Animated.View>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: "#000000",
   },
   permissionContainer: {
     flex: 1,
-    backgroundColor: "#F5F5F0",
+    backgroundColor: "#000000",
     alignItems: "center",
     justifyContent: "center",
-    padding: 24,
+    padding: spacing.xxl,
   },
   permissionTitle: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#333",
-    marginTop: 16,
-    marginBottom: 8,
+    color: colors.white,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
   },
   permissionText: {
     fontSize: 14,
-    color: "#666",
+    color: "rgba(255, 255, 255, 0.7)",
     textAlign: "center",
-    marginBottom: 20,
-    marginTop: 12,
+    marginBottom: spacing.xl,
+    marginTop: spacing.md,
   },
   permissionButton: {
-    backgroundColor: "#4CAF50",
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: colors.lime,
+    paddingHorizontal: spacing.xxxl,
+    paddingVertical: spacing.md,
+    borderRadius: radii.pill,
   },
   permissionButtonText: {
-    color: "#fff",
+    color: colors.forest,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
   },
+
+  // Top overlay
   topOverlay: {
     position: "absolute",
     top: 0,
@@ -321,151 +355,148 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 20,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    padding: spacing.xl,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
     zIndex: 10,
   },
-  topRightControls: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(0,0,0,0.5)",
+  /** Round control with a thin outline only — no fill. */
+  iconButton: {
+    width: TOP_CONTROL_SIZE,
+    height: TOP_CONTROL_SIZE,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.45)",
     alignItems: "center",
     justifyContent: "center",
   },
   titleContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   titleText: {
-    color: "#fff",
+    color: colors.white,
     fontSize: 16,
     fontWeight: "600",
   },
-  switchButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+
+  // Scanning frame — minimalist: a faint hairline box plus thin corner brackets.
   scanFrameContainer: {
     ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.lg,
   },
   scanFrame: {
     width: width * 0.85,
     height: height * 0.6,
-    borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.6)",
-    borderRadius: 16,
-    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderRadius: radii.xl,
   },
   scanFrameActive: {
-    borderColor: "#4CAF50",
-    borderWidth: 3,
+    borderColor: "rgba(134, 198, 83, 0.55)",
   },
   corner: {
     position: "absolute",
-    width: 40,
-    height: 40,
-    borderColor: "#4CAF50",
+    width: 26,
+    height: 26,
+    borderColor: colors.white,
+  },
+  cornerActive: {
+    borderColor: colors.lime,
   },
   cornerTopLeft: {
-    top: -2,
-    left: -2,
-    borderTopWidth: 4,
-    borderLeftWidth: 4,
-    borderTopLeftRadius: 16,
+    top: 0,
+    left: 0,
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopLeftRadius: radii.xl,
   },
   cornerTopRight: {
-    top: -2,
-    right: -2,
-    borderTopWidth: 4,
-    borderRightWidth: 4,
-    borderTopRightRadius: 16,
+    top: 0,
+    right: 0,
+    borderTopWidth: 2,
+    borderRightWidth: 2,
+    borderTopRightRadius: radii.xl,
   },
   cornerBottomLeft: {
-    bottom: -2,
-    left: -2,
-    borderBottomWidth: 4,
-    borderLeftWidth: 4,
-    borderBottomLeftRadius: 16,
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 2,
+    borderLeftWidth: 2,
+    borderBottomLeftRadius: radii.xl,
   },
   cornerBottomRight: {
-    bottom: -2,
-    right: -2,
-    borderBottomWidth: 4,
-    borderRightWidth: 4,
-    borderBottomRightRadius: 16,
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomRightRadius: radii.xl,
   },
+
+  // Recording indicator
+  // `top` is supplied by the screen, since it depends on the status-bar inset.
   recordingIndicator: {
     position: "absolute",
-    top: 80,
     alignSelf: "center",
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.pill,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
     zIndex: 10,
   },
   recordingDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#4CAF50",
+    width: 8,
+    height: 8,
+    borderRadius: radii.pill,
+    backgroundColor: colors.lime,
   },
   recordingText: {
-    color: "#fff",
+    color: colors.white,
     fontSize: 14,
     fontWeight: "600",
   },
+
+  // Bottom controls
+  // `paddingBottom` is supplied by the screen, since it depends on the inset.
   bottomControls: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     alignItems: "center",
-    padding: 20,
-    paddingBottom: 30,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    padding: spacing.xl,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
     zIndex: 10,
   },
   timerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.pill,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   timerText: {
-    color: "#fff",
+    color: colors.white,
     fontSize: 16,
     fontWeight: "600",
     fontFamily: "monospace",
   },
   timerWarning: {
-    color: "#FF5252",
+    color: colors.danger,
   },
   controlsRow: {
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    marginBottom: spacing.md,
     height: 72,
   },
   galleryButtonPosition: {
@@ -473,15 +504,15 @@ const styles = StyleSheet.create({
     left: 40,
     top: 8,
   },
+  /** Secondary control: thin outline, no fill. */
   sideButton: {
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: "rgba(255,255,255,0.15)",
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.45)",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.5)",
   },
   sideButtonDisabled: {
     opacity: 0.35,
@@ -489,33 +520,33 @@ const styles = StyleSheet.create({
   recordButtonWrapper: {
     alignItems: "center",
   },
+  /** Primary action: a thin ring around a solid dot, no fill on the ring. */
   recordButton: {
     width: 72,
     height: 72,
-    borderRadius: 36,
-    backgroundColor: "rgba(255,255,255,0.3)",
+    borderRadius: radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 3,
-    borderColor: "#fff",
+    borderWidth: 2,
+    borderColor: colors.white,
   },
   recordButtonActive: {
-    borderColor: "#4CAF50",
+    borderColor: colors.lime,
   },
   recordButtonInner: {
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: "#fff",
+    borderRadius: radii.pill,
+    backgroundColor: colors.white,
   },
   recordButtonInnerActive: {
     width: 28,
     height: 28,
-    borderRadius: 6,
-    backgroundColor: "#4CAF50",
+    borderRadius: radii.sm,
+    backgroundColor: colors.lime,
   },
   helpText: {
-    color: "rgba(255,255,255,0.8)",
+    color: "rgba(255, 255, 255, 0.8)",
     fontSize: 14,
     textAlign: "center",
   },

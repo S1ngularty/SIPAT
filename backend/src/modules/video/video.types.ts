@@ -2,6 +2,12 @@
 // ENUMS / UNION TYPES
 // ==========================================
 
+import type { Types } from "mongoose";
+import type {
+  DiagnosisResult,
+  GroqAnalysis,
+} from "../diagnosis/diagnosis.types.js";
+
 export type VideoStatus =
   | "pending_upload"
   | "uploaded"
@@ -17,6 +23,12 @@ export interface Video {
   id: string;
   userId: string;
   storageKey: string;
+  /**
+   * Object-storage key of the preview image, or `null` when none was stored.
+   * The image is generated on-device and uploaded straight to R2; only the key
+   * is recorded here.
+   */
+  thumbnailStorageKey: string | null;
   originalFileName: string;
   contentType: string;
   fileSize: number;
@@ -54,6 +66,25 @@ export interface ICreateVideo {
   idempotencyKey: string;
   status?: VideoStatus;
   processedAt?: Date | null;
+  thumbnailStorageKey?: string | null;
+}
+
+/**
+ * Input for minting a presigned PUT for a video's preview image.
+ * The image is rendered on-device (`expo-video-thumbnails`) and uploaded
+ * directly to object storage, so only its content type is needed here.
+ */
+export interface CreateThumbnailUploadInput {
+  contentType: string;
+}
+
+/**
+ * Confirms that a thumbnail was written to object storage. The key is validated
+ * against the video's expected prefix so a client cannot point a video at an
+ * object belonging to somebody else.
+ */
+export interface AttachThumbnailInput {
+  thumbnailStorageKey: string;
 }
 
 // ==========================================
@@ -65,6 +96,7 @@ export interface IUpdateVideo {
   processedAt?: Date | null;
   storageKey?: string;
   originalFileName?: string;
+  thumbnailStorageKey?: string | null;
 }
 
 export interface UpdateVideoStatusInput {
@@ -97,6 +129,57 @@ export interface IVideoListOptions {
   sortOrder?: "asc" | "desc";
   filter?: IVideoFilter;
   projection?: IVideoProjection;
+}
+
+// ==========================================
+// VIDEO + DIAGNOSIS (LIST VIEW)
+// ==========================================
+
+/**
+ * The diagnosis fields joined onto a video for the video list. Only the pieces
+ * the list needs: the confidence comes from `results`, the display name from
+ * `diagnosisName`.
+ */
+export interface VideoDiagnosisSummary {
+  _id: Types.ObjectId;
+  diagnosisName?: string;
+  results: DiagnosisResult[];
+  analysis: GroqAnalysis | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * A video with its diagnosis embedded (or `null` while it is still being
+ * processed). Rows come out of the repository without presigned URLs.
+ */
+export interface VideoWithDiagnosis {
+  _id: Types.ObjectId;
+  userId: string;
+  storageKey: string;
+  originalFileName: string;
+  contentType: string;
+  fileSize: number;
+  status: VideoStatus;
+  processedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  thumbnailStorageKey: string | null;
+  diagnosis: VideoDiagnosisSummary | null;
+}
+
+/** Paginated result for the user's video list. */
+export interface VideoWithDiagnosisListResult {
+  data: VideoWithDiagnosis[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+/** A list row with the derived preview-image URL, ready to send to the client. */
+export interface VideoListRow extends VideoWithDiagnosis {
+  thumbnailUrl: string | null;
 }
 
 // ==========================================

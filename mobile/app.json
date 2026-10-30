@@ -31,7 +31,7 @@
     "plugins": [
       "@clerk/expo",
       "expo-secure-store",
-      "expo-status-bar",
+      ["expo-status-bar", { "style": "dark" }],
       "expo-camera",
       "expo-video",
       "expo-audio",

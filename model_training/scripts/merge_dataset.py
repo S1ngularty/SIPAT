@@ -28,7 +28,7 @@ import shutil
 #
 
 SOURCE_DATASET = Path(
-    "/home/singularity/Downloads/pest_disease_datasets/set2/converted_detection"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/filtered_dataset"
 )
 
 
@@ -103,20 +103,13 @@ AUTO_RENAME_DUPLICATES = False
 #
 
 SOURCE_CLASSES = {
-   0: "Early Blight",
-  1: "Healthy",
-  2: "Yellow Leaf Curl Virus",
-  3: "Downy Mildew",
-  4: "Powdery Mildew",
-  5: "Fruit Rot",
-  6: "Melon Thrips",
-  7: "Fruit Borer",
-  8: "Aphids",
-  9: "Flea Beetles",
-  10: "Bacterial Wilt",
-  11: "Cercospora Leaf Spot",
-  12: "Leaf Curl",
-  
+  0:  "Leaf Curl",
+# 1: "Spinach- Downy mildew",
+# 2: "anthracnose",
+# 3:"Powdery Mildew",
+# 4: "Melon_Thrips",
+# 5:"Wilt"
+
 }
 
 
@@ -138,16 +131,20 @@ MAIN_CLASSES = {
   7: "Spider Mites",
   8: "Yellow Leaf Curl Virus",
   9: "Alternaria",
-  10: "Cercospora",
-  11: "Downy Mildew",
-  12: "Powdery Mildew",
-  13: "Fruit Rot",
-  14:"Melon Thrips",
-  15: "Fruit Borer",
-  16: "Aphids",
-  17: "Flea Beetles",
-  18: "Bacterial Wilt",
-  19: "Leaf Curl",
+  10: "Downy Mildew",
+  11: "Powdery Mildew",
+  12: "Fruit Rot",
+  13: "Melon Thrips",
+  14: "Fruit Borer",
+  15: "Aphids",
+  16: "Flea Beetles",
+  17: "Leaf Curl",
+  18: "Anthracnose",
+  19: "Bacterial Spot",
+  20: "Cercospora Leaf Spot",
+  21: "Bacterial Wilt",
+  22: "Leaf Rust",
+  23: "Looper"
 }
 
 
@@ -183,19 +180,13 @@ MAIN_CLASSES = {
 #
 
 CLASS_MAPPING = {
-    0: 0,   # Early Blight
-    1: 1,   # Healthy
-    2: 8,   # Yellow Leaf Curl Virus
-    3: 11,  # Downy Mildew
-    4: 12,  # Powdery Mildew
-    5: 13,  # Fruit Rot
-    6: 14,  # Melon Thrips
-    7: 15,  # Fruit Borer
-    8: 16,  # Aphids
-    9: 17,  # Flea Beetles
-    10: 18, # Bacterial Wilt
-    11: 10, # Cercospora Leaf Spot -> Cercospora
-    12: 19, # Leaf Curl
+    0:17,
+    # 1:10,
+    # 2:18,
+    # 3:11,
+    # 4:13,
+    # 5:21
+ 
 }
 
 

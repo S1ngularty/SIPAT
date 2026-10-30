@@ -1,6 +1,8 @@
 import {
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   GetObjectCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
@@ -63,6 +65,48 @@ class R2Client {
     });
 
     await this.client.send(command);
+  }
+
+  /**
+   * Deletes every object stored under `prefix` (a "directory"), e.g. all files
+   * belonging to a single video: `videos/{userId}/{videoId}/`.
+   *
+   * Objects are removed in batches of up to 1000 per `DeleteObjects` call
+   * rather than one by one. A prefix with no matches is a harmless no-op.
+   */
+  async deletePrefix(prefix: string): Promise<void> {
+    let continuationToken: string | undefined;
+
+    do {
+      const listed = await this.client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucket,
+          Prefix: prefix,
+          ...(continuationToken
+            ? { ContinuationToken: continuationToken }
+            : {}),
+        }),
+      );
+
+      const keys = (listed.Contents ?? [])
+        .map((object) => object.Key)
+        .filter((key): key is string => Boolean(key));
+
+      if (keys.length > 0) {
+        await this.client.send(
+          new DeleteObjectsCommand({
+            Bucket: this.bucket,
+            Delete: {
+              Objects: keys.map((Key) => ({ Key })),
+            },
+          }),
+        );
+      }
+
+      continuationToken = listed.IsTruncated
+        ? listed.NextContinuationToken
+        : undefined;
+    } while (continuationToken);
   }
 }
 

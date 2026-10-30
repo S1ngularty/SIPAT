@@ -15,7 +15,6 @@ export default function useScanning() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [cameraType, setCameraType] = useState<"back" | "front">("back");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const navigation = useNavigation<NavigationProp>();
@@ -108,10 +107,6 @@ export default function useScanning() {
     }
   };
 
-  const toggleCameraType = () => {
-    setCameraType((current) => (current === "back" ? "front" : "back"));
-  };
-
   const toggleMute = () => {
     setIsMuted((current) => !current);
   };
@@ -120,7 +115,6 @@ export default function useScanning() {
     hasPermission,
     isRecording,
     recordingTime,
-    cameraType,
     isProcessing,
     isMuted,
     navigation,
@@ -129,7 +123,6 @@ export default function useScanning() {
 
     startRecording,
     stopRecording,
-    toggleCameraType,
     toggleMute,
   };
 }

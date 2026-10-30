@@ -22,3 +22,30 @@ export function validateVideoUpload(
     throw new Error("Video exceeds maximum allowed size");
   }
 }
+
+// ==========================================
+// THUMBNAIL / PREVIEW IMAGE
+// ==========================================
+
+const ALLOWED_THUMBNAIL_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+
+const THUMBNAIL_EXTENSIONS: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
+export function validateThumbnailUpload(contentType: string): void {
+  if (!ALLOWED_THUMBNAIL_TYPES.has(contentType)) {
+    throw new Error("Unsupported thumbnail type");
+  }
+}
+
+/** Storage-key extension for an allowed thumbnail content type. */
+export function thumbnailExtension(contentType: string): string {
+  return THUMBNAIL_EXTENSIONS[contentType] ?? "jpg";
+}

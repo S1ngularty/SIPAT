@@ -1,435 +1,244 @@
-import React, { useState, useCallback } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
+  Alert,
+  Pressable,
   RefreshControl,
-  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import {
-  Leaf,
-  ScanLine,
-  ChevronRight,
-  Sprout,
-  CloudSun,
-  MapPin,
-  Bell,
-  Upload,
-  BookOpen,
-  Bug,
-  CircleAlert,
-  Wifi,
-  WifiOff,
-  Video,
-  FileText,
-  Camera,
-  ShieldCheck,
-  FlaskConical,
-  Calendar,
-  ArrowRight,
-  Sun,
-  ThermometerSun,
-  Droplets,
-} from "lucide-react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { RouteProp, useNavigation } from "@react-navigation/native";
+  useBottomTabBarHeight,
+  type BottomTabNavigationProp,
+} from "@react-navigation/bottom-tabs";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useUser } from "@clerk/expo";
+import { ArrowRight, ScanLine, Sprout } from "lucide-react-native";
 
-const { width } = Dimensions.get("window");
+import { colors, radii, spacing } from "../../../theme";
+import { Skeleton } from "../../../components/ui/SkeletonComponent";
+import { HomeHeroSheet } from "../components/HomeHeroSheet";
+import { DiagnosisCard } from "../components/DiagnosisCard";
+import { AgriTipCard } from "../components/AgriTipCard";
+import { BrowseSymptoms, ExploreCropCareCard } from "../components/KnowledgeShortcuts";
+import { getWeatherState } from "../weather";
+import { useDiagnosisList } from "../../diagnosis/hooks/useDiagnosisList";
+import { getSessionTip } from "../utils/agriTips";
+import type { VideoAnalysis } from "../../diagnosis/diagnosisTypes";
+import type { TabParamList } from "../../../navigations/HomeTabNavigation";
+import type { UserStackParamList } from "../../../navigations/UserNavigation";
 
-interface CropArticle {
-  id: string;
+/** Home only previews the newest diagnoses; the rest live on the Diagnoses tab. */
+const MAX_HOME_DIAGNOSES = 3;
+
+type HomeNavigation = BottomTabNavigationProp<TabParamList, "Home">;
+type UserStackNavigation = NativeStackNavigationProp<UserStackParamList>;
+
+const SectionHeader: React.FC<{
   title: string;
-  category: string;
-  color: string;
-  icon: any;
-  articles: number;
-}
+  actionLabel?: string;
+  onPressAction?: () => void;
+}> = ({ title, actionLabel, onPressAction }) => (
+  <View style={styles.sectionHeader}>
+    <Text style={styles.sectionTitle}>{title}</Text>
+    {actionLabel && onPressAction ? (
+      <Pressable
+        onPress={onPressAction}
+        accessibilityRole="button"
+        accessibilityLabel={actionLabel}
+        hitSlop={8}
+        style={({ pressed }) => [styles.seeAll, pressed && styles.pressed]}
+      >
+        <Text style={styles.seeAllText}>{actionLabel}</Text>
+        <ArrowRight size={15} color={colors.green} strokeWidth={2} />
+      </Pressable>
+    ) : null}
+  </View>
+);
 
-interface ScanRecord {
-  id: string;
-  cropName: string;
-  date: string;
-  result: string;
-  confidence: number;
-  type: "disease" | "pest" | "healthy";
-  color: string;
-}
+const DiagnosisRowSkeleton: React.FC = () => (
+  <View style={styles.rowSkeleton}>
+    <Skeleton width={64} height={64} borderRadius={radii.md} />
+    <View style={styles.rowSkeletonBody}>
+      <Skeleton width="70%" height={14} borderRadius={4} />
+      <Skeleton width="50%" height={11} borderRadius={4} />
+      <Skeleton width="40%" height={10} borderRadius={4} />
+    </View>
+  </View>
+);
 
-interface UploadQueue {
-  id: string;
-  fileName: string;
-  size: string;
-  duration: string;
-  status: "pending" | "uploading" | "queued";
-  progress?: number;
-}
+const EmptyDiagnoses: React.FC<{ onRecord: () => void }> = ({ onRecord }) => (
+  <View style={styles.emptyCard}>
+    <View style={styles.emptyIcon}>
+      <Sprout size={26} color={colors.green} strokeWidth={1.8} />
+    </View>
+    <Text style={styles.emptyTitle}>No diagnoses yet</Text>
+    <Text style={styles.emptyBody}>
+      Record a short video of your crops and your results will appear here.
+    </Text>
+    <Pressable
+      onPress={onRecord}
+      accessibilityRole="button"
+      accessibilityLabel="Record a video"
+      style={({ pressed }) => [styles.emptyButton, pressed && styles.pressed]}
+    >
+      <ScanLine size={18} color={colors.forest} strokeWidth={2.2} />
+      <Text style={styles.emptyButtonText}>Record a video</Text>
+    </Pressable>
+  </View>
+);
 
 const HomeScreen: React.FC = () => {
-  const [refreshing, setRefreshing] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
-  const navigation = useNavigation();
+  const navigation = useNavigation<HomeNavigation>();
+  const tabBarHeight = useBottomTabBarHeight();
+  const { user } = useUser();
 
-  const onRefresh = useCallback(() => {
+  const { analyses, isLoading, reload } = useDiagnosisList();
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      reload();
+    }, [reload]),
+  );
+
+  const openVideoScan = useCallback(() => {
+    navigation.getParent<UserStackNavigation>()?.navigate("VideoScanning");
+  }, [navigation]);
+
+  const openDiagnoses = useCallback(() => {
+    navigation.navigate("Diagnoses");
+  }, [navigation]);
+
+  const openDiagnosis = useCallback(
+    (analysis: VideoAnalysis) => {
+      navigation
+        .getParent<UserStackNavigation>()
+        ?.navigate("DiagnosisDetail", { videoId: analysis._id });
+    },
+    [navigation],
+  );
+
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => {
+    try {
+      await reload();
+    } finally {
       setRefreshing(false);
-    }, 2000);
+    }
+  }, [reload]);
+
+  /**
+   * Temporary: the Crop Care guide and symptom browser have no screens yet,
+   * so the shortcuts acknowledge the tap instead of navigating nowhere.
+   */
+  const openCropCare = useCallback(() => {
+    Alert.alert(
+      "Explore Crop Care",
+      "Diseases and pests with symptoms, prevention and treatments — coming soon.",
+    );
   }, []);
 
-  const cropCategories: CropArticle[] = [
-    {
-      id: "1",
-      title: "Tomato",
-      category: "12 Articles",
-      color: "#F44336",
-      icon: Sprout,
-      articles: 12,
-    },
-    {
-      id: "2",
-      title: "Pepper",
-      category: "8 Articles",
-      color: "#4CAF50",
-      icon: Leaf,
-      articles: 8,
-    },
-    {
-      id: "3",
-      title: "Eggplant",
-      category: "10 Articles",
-      color: "#9C27B0",
-      icon: Sprout,
-      articles: 10,
-    },
-    {
-      id: "4",
-      title: "Potato",
-      category: "6 Articles",
-      color: "#FF9800",
-      icon: Leaf,
-      articles: 6,
-    },
-  ];
+  const openSymptom = useCallback((symptom: string) => {
+    Alert.alert(
+      "Browse Symptoms",
+      `Possible causes of "${symptom}" — coming soon.`,
+    );
+  }, []);
 
-  const recentScans: ScanRecord[] = [
-    {
-      id: "1",
-      cropName: "Tomato Leaf Sample",
-      date: "2 hours ago",
-      result: "Early Blight",
-      confidence: 87,
-      type: "disease",
-      color: "#F44336",
-    },
-    {
-      id: "2",
-      cropName: "Pepper Plant",
-      date: "5 hours ago",
-      result: "Aphids",
-      confidence: 92,
-      type: "pest",
-      color: "#FF9800",
-    },
-    {
-      id: "3",
-      cropName: "Eggplant Leaf",
-      date: "1 day ago",
-      result: "Healthy",
-      confidence: 95,
-      type: "healthy",
-      color: "#4CAF50",
-    },
-  ];
+  const openAllSymptoms = useCallback(() => {
+    Alert.alert(
+      "Browse Symptoms",
+      "The full symptom list is coming soon.",
+    );
+  }, []);
 
-  const uploadQueue: UploadQueue[] = [
-    {
-      id: "1",
-      fileName: "tomato_scan_001.mp4",
-      size: "24 MB",
-      duration: "0:45",
-      status: "pending",
-    },
-    {
-      id: "2",
-      fileName: "pepper_field_002.mp4",
-      size: "18 MB",
-      duration: "0:32",
-      status: "queued",
-    },
-  ];
+  const displayName =
+    user?.firstName || user?.fullName || user?.username || "Farmer";
 
-  const getScanIcon = (type: string) => {
-    switch (type) {
-      case "disease":
-        return ShieldCheck;
-      case "pest":
-        return Bug;
-      case "healthy":
-        return Leaf;
-      default:
-        return Leaf;
-    }
-  };
+  /** The newest diagnoses only, newest-first. */
+  const latestDiagnoses = useMemo(
+    () =>
+      [...analyses]
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt ?? 0).getTime() -
+            new Date(a.createdAt ?? 0).getTime(),
+        )
+        .slice(0, MAX_HOME_DIAGNOSES),
+    [analyses],
+  );
 
-  const getStatusIcon = () => {
-    return isOnline ? Wifi : WifiOff;
-  };
+  const hasMoreDiagnoses = analyses.length > MAX_HOME_DIAGNOSES;
 
-  const StatusIcon = getStatusIcon();
+  /** Picked once per app session (module-level), so it's stable while open. */
+  const tip = getSessionTip();
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: tabBarHeight + spacing.xxl }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#4CAF50"
-            colors={["#4CAF50"]}
+            tintColor={colors.green}
+            colors={[colors.green]}
           />
         }
       >
-        {/* Header */}
-        <Animated.View
-          entering={FadeInDown.duration(600)}
-          style={styles.header}
-        >
-          <View style={styles.headerLeft}>
-            <Text style={styles.greeting}>Good Morning</Text>
-            <View style={styles.locationContainer}>
-              <MapPin size={14} color="#666" strokeWidth={1.5} />
-              <Text style={styles.location}>Your Farm</Text>
-            </View>
+        <HomeHeroSheet
+          name={displayName}
+          avatarUrl={user?.imageUrl}
+          onPressAvatar={() => navigation.navigate("Profile")}
+          onPressNotifications={openDiagnoses}
+          weather={getWeatherState()}
+        />
+
+        <SectionHeader title="Agri Tips" />
+
+        {tip ? <AgriTipCard tip={tip} /> : null}
+
+        <SectionHeader
+          title="Recent Diagnoses"
+          actionLabel={hasMoreDiagnoses ? "See More" : undefined}
+          onPressAction={openDiagnoses}
+        />
+
+        {isLoading ? (
+          <View style={styles.list}>
+            <DiagnosisRowSkeleton />
+            <DiagnosisRowSkeleton />
+            <DiagnosisRowSkeleton />
           </View>
-          <View style={styles.headerActions}>
-            <View style={styles.statusIndicator}>
-              <StatusIcon
-                size={16}
-                color={isOnline ? "#4CAF50" : "#F44336"}
-                strokeWidth={1.5}
+        ) : latestDiagnoses.length === 0 ? (
+          <EmptyDiagnoses onRecord={openVideoScan} />
+        ) : (
+          <View style={styles.list}>
+            {latestDiagnoses.map((item) => (
+              <DiagnosisCard
+                key={item._id}
+                analysis={item}
+                variant="row"
+                onPress={openDiagnosis}
               />
-              <Text
-                style={[
-                  styles.statusText,
-                  { color: isOnline ? "#4CAF50" : "#F44336" },
-                ]}
-              >
-                {isOnline ? "Online" : "Offline"}
-              </Text>
-            </View>
-            <TouchableOpacity style={styles.notificationButton}>
-              <Bell size={22} color="#4CAF50" strokeWidth={1.5} />
-              <View style={styles.notificationBadge}>
-                <Text style={styles.notificationBadgeText}>3</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-
-        {/* Weather Card */}
-        <Animated.View
-          entering={FadeInUp.delay(100).duration(600)}
-          style={styles.weatherCard}
-        >
-          <LinearGradient
-            colors={["#4CAF50", "#2E7D32"]}
-            style={styles.weatherGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <View style={styles.weatherMain}>
-              <View>
-                <Text style={styles.weatherTemp}>28°C</Text>
-                <Text style={styles.weatherCondition}>Partly Cloudy</Text>
-              </View>
-              <CloudSun size={64} color="#fff" strokeWidth={1.5} />
-            </View>
-            <View style={styles.weatherDetails}>
-              <View style={styles.weatherDetail}>
-                <Droplets size={16} color="#fff" strokeWidth={1.5} />
-                <Text style={styles.weatherDetailText}>65% Humidity</Text>
-              </View>
-              <View style={styles.weatherDetail}>
-                <ThermometerSun size={16} color="#fff" strokeWidth={1.5} />
-                <Text style={styles.weatherDetailText}>Good for planting</Text>
-              </View>
-            </View>
-          </LinearGradient>
-        </Animated.View>
-
-        {/* Quick Action - Scan */}
-        <Animated.View
-          entering={FadeInUp.delay(200).duration(600)}
-          style={styles.scanSection}
-        >
-          <TouchableOpacity
-            style={styles.scanButton}
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate("VideoScanning" as never)}
-          >
-            <View style={styles.scanIconContainer}>
-              <ScanLine size={28} color="#4CAF50" strokeWidth={2} />
-            </View>
-            <View style={styles.scanContent}>
-              <Text style={styles.scanTitle}>Scan Crop</Text>
-              <Text style={styles.scanSubtitle}>
-                Detect diseases and pests instantly
-              </Text>
-            </View>
-            <ChevronRight size={20} color="#4CAF50" strokeWidth={1.5} />
-          </TouchableOpacity>
-        </Animated.View>
-
-        {/* Solanaceous Crops - 2x2 Grid */}
-        <Animated.View
-          entering={FadeInUp.delay(300).duration(600)}
-          style={styles.cropsSection}
-        >
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={styles.sectionTitle}>Solanaceous Crops</Text>
-              <Text style={styles.sectionSubtitle}>
-                Guides & information for your crops
-              </Text>
-            </View>
-            <TouchableOpacity style={styles.seeAllButton}>
-              <Text style={styles.seeAllText}>View All</Text>
-              <ArrowRight size={16} color="#4CAF50" strokeWidth={1.5} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.cropsGrid}>
-            {cropCategories.map((crop) => {
-              const CropIcon = crop.icon;
-              return (
-                <TouchableOpacity
-                  key={crop.id}
-                  style={styles.cropCard}
-                  activeOpacity={0.7}
-                >
-                  <View
-                    style={[
-                      styles.cropIconContainer,
-                      { backgroundColor: crop.color },
-                    ]}
-                  >
-                    <CropIcon size={32} color="#fff" strokeWidth={1.5} />
-                  </View>
-                  <Text style={styles.cropTitle}>{crop.title}</Text>
-                  <Text style={styles.cropCategory}>{crop.category}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </Animated.View>
-
-        {/* Recent Scans */}
-        <Animated.View
-          entering={FadeInUp.delay(400).duration(600)}
-          style={styles.scansSection}
-        >
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Scans</Text>
-            <TouchableOpacity style={styles.seeAllButton}>
-              <Text style={styles.seeAllText}>History</Text>
-              <ArrowRight size={16} color="#4CAF50" strokeWidth={1.5} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.scansList}>
-            {recentScans.map((scan) => {
-              const ScanIcon = getScanIcon(scan.type);
-              return (
-                <TouchableOpacity
-                  key={scan.id}
-                  style={styles.scanCard}
-                  activeOpacity={0.7}
-                >
-                  <View
-                    style={[
-                      styles.scanIconSmall,
-                      { backgroundColor: scan.color },
-                    ]}
-                  >
-                    <ScanIcon size={20} color="#fff" strokeWidth={1.5} />
-                  </View>
-                  <View style={styles.scanInfo}>
-                    <Text style={styles.scanCropName}>{scan.cropName}</Text>
-                    <Text style={styles.scanDate}>{scan.date}</Text>
-                  </View>
-                  <View style={styles.scanResult}>
-                    <Text
-                      style={[styles.scanResultText, { color: scan.color }]}
-                    >
-                      {scan.result}
-                    </Text>
-                    <Text style={styles.scanConfidence}>
-                      {scan.confidence}%
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </Animated.View>
-
-        {/* Upload Queue */}
-        <Animated.View
-          entering={FadeInUp.delay(500).duration(600)}
-          style={styles.uploadSection}
-        >
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={styles.sectionTitle}>Upload Queue</Text>
-              <Text style={styles.sectionSubtitle}>Videos pending upload</Text>
-            </View>
-            <View style={styles.queueBadge}>
-              <Text style={styles.queueBadgeText}>{uploadQueue.length}</Text>
-            </View>
-          </View>
-
-          <View style={styles.uploadList}>
-            {uploadQueue.map((item) => (
-              <View key={item.id} style={styles.uploadCard}>
-                <View style={styles.uploadIconContainer}>
-                  <Video size={20} color="#4CAF50" strokeWidth={1.5} />
-                </View>
-                <View style={styles.uploadInfo}>
-                  <Text style={styles.uploadFileName}>{item.fileName}</Text>
-                  <View style={styles.uploadMeta}>
-                    <Text style={styles.uploadMetaText}>{item.size}</Text>
-                    <View style={styles.dot} />
-                    <Text style={styles.uploadMetaText}>{item.duration}</Text>
-                  </View>
-                </View>
-                <View style={styles.uploadStatus}>
-                  {item.status === "pending" ? (
-                    <Upload size={16} color="#FF9800" strokeWidth={1.5} />
-                  ) : (
-                    <CircleAlert size={16} color="#4CAF50" strokeWidth={1.5} />
-                  )}
-                  <Text
-                    style={[
-                      styles.uploadStatusText,
-                      {
-                        color:
-                          item.status === "pending" ? "#FF9800" : "#4CAF50",
-                      },
-                    ]}
-                  >
-                    {item.status === "pending" ? "Pending" : "Queued"}
-                  </Text>
-                </View>
-              </View>
             ))}
           </View>
-        </Animated.View>
+        )}
+
+        <ExploreCropCareCard onPress={openCropCare} />
+
+        <SectionHeader title="Browse Symptoms" />
+
+        <BrowseSymptoms
+          onPressSymptom={openSymptom}
+          onPressSeeMore={openAllSymptoms}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -438,326 +247,114 @@ const HomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F0",
-  },
-  scrollContent: {
-    paddingBottom: 30,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 20,
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  greeting: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: "#2E7D32",
-  },
-  locationContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  location: {
-    fontSize: 14,
-    color: "#666",
-    marginLeft: 4,
-  },
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  statusIndicator: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  notificationButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-  },
-  notificationBadge: {
-    position: "absolute",
-    top: -2,
-    right: -2,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#F44336",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  notificationBadgeText: {
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "600",
-  },
-  weatherCard: {
-    marginHorizontal: 20,
-    borderRadius: 20,
-    overflow: "hidden",
-    marginBottom: 20,
-  },
-  weatherGradient: {
-    padding: 20,
-  },
-  weatherMain: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  weatherTemp: {
-    fontSize: 36,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  weatherCondition: {
-    fontSize: 16,
-    color: "#fff",
-    opacity: 0.9,
-    marginTop: 4,
-  },
-  weatherDetails: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  weatherDetail: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  weatherDetailText: {
-    color: "#fff",
-    fontSize: 12,
-    opacity: 0.9,
-  },
-  scanSection: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  scanButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    gap: 12,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-  },
-  scanIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#E8F5E9",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  scanContent: {
-    flex: 1,
-  },
-  scanTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-  },
-  scanSubtitle: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 2,
-  },
-  cropsSection: {
-    marginBottom: 24,
-    paddingHorizontal: 20,
+    backgroundColor: colors.white,
   },
   sectionHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.xl,
+    marginTop: spacing.xxl,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
+    fontSize: 19,
+    fontWeight: "700",
+    color: colors.text,
   },
-  sectionSubtitle: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 2,
-  },
-  seeAllButton: {
+  seeAll: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: spacing.xs,
   },
   seeAllText: {
-    fontSize: 14,
-    color: "#4CAF50",
-    fontWeight: "500",
-  },
-  cropsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  cropCard: {
-    width: "47%",
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 20,
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  cropIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 12,
-  },
-  cropTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
-  },
-  cropCategory: {
-    fontSize: 12,
-    color: "#666",
-  },
-  scansSection: {
-    marginBottom: 24,
-  },
-  scansList: {
-    paddingHorizontal: 20,
-    gap: 12,
-  },
-  scanCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    gap: 12,
-  },
-  scanIconSmall: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  scanInfo: {
-    flex: 1,
-  },
-  scanCropName: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-  },
-  scanDate: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 2,
-  },
-  scanResult: {
-    alignItems: "flex-end",
-  },
-  scanResultText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  scanConfidence: {
-    fontSize: 10,
-    color: "#999",
-    marginTop: 2,
-  },
-  uploadSection: {
-    paddingHorizontal: 20,
-  },
-  queueBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#FF9800",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  queueBadgeText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  uploadList: {
-    gap: 12,
-  },
-  uploadCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    gap: 12,
-  },
-  uploadIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#E8F5E9",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  uploadInfo: {
-    flex: 1,
-  },
-  uploadFileName: {
     fontSize: 13,
-    fontWeight: "500",
-    color: "#333",
+    fontWeight: "600",
+    color: colors.green,
   },
-  uploadMeta: {
+  list: {
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.xl,
+    gap: spacing.md,
+  },
+  rowSkeleton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginTop: 2,
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
   },
-  uploadMetaText: {
-    fontSize: 11,
-    color: "#999",
+  rowSkeletonBody: {
+    flex: 1,
+    gap: spacing.sm,
   },
-  uploadStatus: {
+  seeMore: {
+    flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    justifyContent: "center",
+    gap: spacing.sm,
+    alignSelf: "center",
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.xxl,
+    height: 44,
+    borderRadius: radii.pill,
+    backgroundColor: colors.lime,
   },
-  uploadStatusText: {
-    fontSize: 10,
-    fontWeight: "600",
+  seeMoreText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.forest,
   },
-  dot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: "#999",
+  emptyCard: {
+    marginHorizontal: spacing.xl,
+    backgroundColor: colors.white,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    padding: spacing.xl,
+    alignItems: "center",
+  },
+  emptyIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: radii.pill,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.md,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.text,
+  },
+  emptyBody: {
+    fontSize: 13,
+    color: colors.textMuted,
+    textAlign: "center",
+    marginTop: spacing.xs,
+    marginBottom: spacing.lg,
+    lineHeight: 19,
+    maxWidth: 280,
+  },
+  emptyButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.lime,
+    paddingHorizontal: spacing.xxl,
+    height: 46,
+    borderRadius: radii.pill,
+  },
+  emptyButtonText: {
+    color: colors.forest,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  pressed: {
+    opacity: 0.7,
   },
 });
 

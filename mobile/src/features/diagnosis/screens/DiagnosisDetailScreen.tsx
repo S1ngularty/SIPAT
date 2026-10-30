@@ -8,25 +8,28 @@ import {
   RefreshControl,
   StyleSheet,
   Image,
+  Modal,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
-import { VideoView, useVideoPlayer, VideoSource } from "expo-video";
-import { useEvent } from "expo";
 import Svg, { Path, Circle, Rect } from "react-native-svg";
 import Animated, {
   FadeInDown,
-  Layout,
   useSharedValue,
   useAnimatedStyle,
-  withTiming,
-  withSpring,
   withRepeat,
   withSequence,
+  withTiming,
   Easing,
 } from "react-native-reanimated";
 
 import { useDiagnosisDetail } from "../hooks/useDiagnosisDetail";
+import { useGlossary } from "../hooks/useGlossary";
+import { TermGlossaryModal } from "../components/TermGlossaryModal";
+import { TermHighlightText } from "../components/TermHighlightText";
 import type { TrackResult } from "../diagnosisTypes";
 
 // ============================================================
@@ -34,31 +37,24 @@ import type { TrackResult } from "../diagnosisTypes";
 // ============================================================
 
 const COLORS = {
-  background: "#ffffff",
-  surface: "#ffffff",
-  softSurface: "#f9fafb",
-
-  text: "#111827",
-  textSecondary: "#374151",
-  textMuted: "#6b7280",
-  textLight: "#9ca3af",
-
-  border: "#f3f4f6",
-  borderStrong: "#e5e7eb",
-
-  green: "#16a34a",
-  greenDark: "#166534",
-  greenSoft: "#f0fdf4",
-  greenBorder: "#dcfce7",
-
-  black: "#111827",
-  white: "#ffffff",
-
-  danger: "#dc2626",
-
-  skeleton: "#e8eaed",
-  skeletonSoft: "#f1f3f5",
+  background: "#FFFFFF",
+  text: "#171717",
+  textSecondary: "#737373",
+  divider: "#E5E7EB",
+  mutedGreen: "#E7EFE8",
+  statusText: "#365B40",
+  surfaceMuted: "#F3F4F6",
+  skeleton: "#E8EAED",
+  black: "#171717",
+  white: "#FFFFFF",
+  danger: "#B4433A",
+  backdrop: "rgba(23, 23, 23, 0.35)",
 };
+
+/** Horizontal page margin, per spec (20–24 px). */
+const MARGIN = 22;
+
+const ENTER = FadeInDown.duration(360).easing(Easing.out(Easing.quad));
 
 // ============================================================
 // ICONS
@@ -69,7 +65,7 @@ interface IconProps {
   color?: string;
 }
 
-const BackIcon: React.FC<IconProps> = ({ size = 20, color = COLORS.text }) => (
+const BackIcon: React.FC<IconProps> = ({ size = 22, color = COLORS.text }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M15 6L9 12L15 18"
@@ -81,45 +77,17 @@ const BackIcon: React.FC<IconProps> = ({ size = 20, color = COLORS.text }) => (
   </Svg>
 );
 
-const VideoIcon: React.FC<IconProps> = ({
-  size = 20,
-  color = COLORS.textMuted,
-}) => (
+const MoreIcon: React.FC<IconProps> = ({ size = 20, color = COLORS.text }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Rect
-      x="3"
-      y="6"
-      width="13"
-      height="12"
-      rx="2"
-      stroke={color}
-      strokeWidth="1.5"
-    />
-    <Path
-      d="M16 10L21 7.5V16.5L16 14"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const PlayIcon: React.FC<IconProps> = ({ size = 22, color = COLORS.white }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M8 5.5V18.5L19 12L8 5.5Z"
-      stroke={color}
-      strokeWidth="1.8"
-      strokeLinejoin="round"
-      fill="none"
-    />
+    <Circle cx="5" cy="12" r="1.6" fill={color} />
+    <Circle cx="12" cy="12" r="1.6" fill={color} />
+    <Circle cx="19" cy="12" r="1.6" fill={color} />
   </Svg>
 );
 
 const ChevronRightIcon: React.FC<IconProps> = ({
-  size = 16,
-  color = COLORS.textLight,
+  size = 18,
+  color = COLORS.textSecondary,
 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -132,265 +100,217 @@ const ChevronRightIcon: React.FC<IconProps> = ({
   </Svg>
 );
 
-const ChevronDownIcon: React.FC<IconProps> = ({
-  size = 15,
-  color = COLORS.green,
+const ArrowUpRightIcon: React.FC<IconProps> = ({
+  size = 16,
+  color = COLORS.statusText,
 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
-      d="M6 9L12 15L18 9"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const SparkleIcon: React.FC<IconProps> = ({
-  size = 15,
-  color = COLORS.green,
-}) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 3L13.6 9.4L20 11L13.6 12.6L12 19L10.4 12.6L4 11L10.4 9.4L12 3Z"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const BulbIcon: React.FC<IconProps> = ({ size = 15, color = COLORS.green }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path d="M9 20H15" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    <Path
-      d="M10 22H14"
+      d="M7 17L17 7"
       stroke={color}
       strokeWidth="1.8"
       strokeLinecap="round"
+      strokeLinejoin="round"
     />
     <Path
-      d="M12 3C8.5 3 6 5.6 6 8.8C6 11.2 7.4 12.9 8.7 14C9.4 14.6 9.8 15.2 9.9 16H14.1C14.2 15.2 14.6 14.6 15.3 14C16.6 12.9 18 11.2 18 8.8C18 5.6 15.5 3 12 3Z"
+      d="M9 7H17V15"
       stroke={color}
       strokeWidth="1.8"
+      strokeLinecap="round"
       strokeLinejoin="round"
     />
   </Svg>
 );
 
-const AlertIcon: React.FC<IconProps> = ({
-  size = 20,
-  color = COLORS.danger,
+const ImageIcon: React.FC<IconProps> = ({
+  size = 22,
+  color = COLORS.textSecondary,
 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 3L22 20H2L12 3Z"
+    <Rect
+      x="3"
+      y="4"
+      width="18"
+      height="16"
+      rx="2.5"
       stroke={color}
       strokeWidth="1.5"
-      strokeLinejoin="round"
     />
+    <Circle cx="8.5" cy="9.5" r="1.6" stroke={color} strokeWidth="1.5" />
     <Path
-      d="M12 10V14"
+      d="M4.5 17L9 12.5L12.5 16L15.5 13L19.5 17"
       stroke={color}
       strokeWidth="1.5"
       strokeLinecap="round"
+      strokeLinejoin="round"
     />
-    <Circle cx="12" cy="17" r="0.9" fill={color} />
   </Svg>
 );
 
-// ============================================================
-// SKELETON PRIMITIVES
-// ============================================================
-
-interface SkeletonBlockProps {
-  width?: number | string;
-  height?: number;
-  radius?: number;
-  style?: any;
-  pulse: any;
-}
-
-const SkeletonBlock: React.FC<SkeletonBlockProps> = ({
-  width = "100%",
-  height = 12,
-  radius = 6,
-  style,
-  pulse,
-}) => {
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: pulse.value,
-  }));
-
-  return (
-    <Animated.View
-      style={[
-        {
-          width: width as any,
-          height,
-          borderRadius: radius,
-          backgroundColor: COLORS.skeleton,
-        },
-        animatedStyle,
-        style,
-      ]}
+const RefreshIcon: React.FC<IconProps> = ({
+  size = 18,
+  color = COLORS.text,
+}) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M4.5 12a7.5 7.5 0 0 1 12.9-5.2L19.5 8.5"
+      stroke={color}
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
-  );
-};
-
-// ============================================================
-// SKELETON SCREEN
-// ============================================================
-
-const SkeletonScreen: React.FC = () => {
-  const pulse = useSharedValue(0.5);
-
-  React.useEffect(() => {
-    pulse.value = withRepeat(
-      withSequence(
-        withTiming(1, {
-          duration: 800,
-          easing: Easing.inOut(Easing.quad),
-        }),
-        withTiming(0.5, {
-          duration: 800,
-          easing: Easing.inOut(Easing.quad),
-        }),
-      ),
-      -1,
-      false,
-    );
-  }, [pulse]);
-
-  return (
-    <View style={styles.skeletonRoot}>
-      {/* Video skeleton */}
-      <View style={styles.videoWrapper}>
-        <SkeletonBlock height={200} radius={12} pulse={pulse} />
-      </View>
-
-      {/* AI section skeleton */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <SkeletonBlock width={90} height={10} pulse={pulse} />
-          <SkeletonBlock width={28} height={18} radius={9} pulse={pulse} />
-        </View>
-
-        {/* Analysis card skeleton */}
-        <View style={styles.skeletonCard}>
-          <View style={styles.skeletonCardHeader}>
-            <SkeletonBlock width={22} height={22} radius={11} pulse={pulse} />
-            <SkeletonBlock width={70} height={10} pulse={pulse} />
-          </View>
-          <View style={styles.skeletonLines}>
-            <SkeletonBlock width="94%" height={10} pulse={pulse} />
-            <SkeletonBlock width="86%" height={10} pulse={pulse} />
-            <SkeletonBlock width="72%" height={10} pulse={pulse} />
-          </View>
-        </View>
-
-        {/* Recommendations card skeleton */}
-        <View style={[styles.skeletonCard, { marginTop: 8 }]}>
-          <View style={styles.skeletonCardHeader}>
-            <SkeletonBlock width={22} height={22} radius={11} pulse={pulse} />
-            <SkeletonBlock width={110} height={10} pulse={pulse} />
-          </View>
-          <View style={styles.skeletonLines}>
-            <View style={styles.skeletonBulletRow}>
-              <SkeletonBlock width={5} height={5} radius={3} pulse={pulse} />
-              <SkeletonBlock
-                width="88%"
-                height={10}
-                pulse={pulse}
-                style={{ marginLeft: 9 }}
-              />
-            </View>
-            <View style={styles.skeletonBulletRow}>
-              <SkeletonBlock width={5} height={5} radius={3} pulse={pulse} />
-              <SkeletonBlock
-                width="76%"
-                height={10}
-                pulse={pulse}
-                style={{ marginLeft: 9 }}
-              />
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* Problems found skeleton */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <SkeletonBlock width={110} height={10} pulse={pulse} />
-          <SkeletonBlock width={20} height={18} radius={9} pulse={pulse} />
-        </View>
-
-        {[0, 1].map((i) => (
-          <View key={i} style={styles.skeletonEvidenceCard}>
-            <SkeletonBlock width={60} height={60} radius={10} pulse={pulse} />
-            <View style={styles.skeletonEvidenceContent}>
-              <SkeletonBlock width="70%" height={12} pulse={pulse} />
-              <SkeletonBlock width="50%" height={10} pulse={pulse} />
-              <SkeletonBlock width="40%" height={9} pulse={pulse} />
-            </View>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-};
-
-// ============================================================
-// ANIMATED CHEVRON
-// ============================================================
-
-const AnimatedChevron: React.FC<{ expanded: boolean }> = ({ expanded }) => {
-  const rotation = useSharedValue(0);
-
-  React.useEffect(() => {
-    rotation.value = withTiming(expanded ? 1 : 0, {
-      duration: 220,
-      easing: Easing.out(Easing.quad),
-    });
-  }, [expanded, rotation]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value * 180}deg` }],
-  }));
-
-  return (
-    <Animated.View style={animatedStyle}>
-      <ChevronDownIcon size={14} />
-    </Animated.View>
-  );
-};
-
-// ============================================================
-// ROUTE TYPE
-// ============================================================
-
-type DiagnosisDetailRoute = RouteProp<
-  { DiagnosisDetail: { videoId: string } },
-  "DiagnosisDetail"
->;
+    <Path
+      d="M20 4.5v4h-4"
+      stroke={color}
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M19.5 12a7.5 7.5 0 0 1-12.9 5.2L4.5 15.5"
+      stroke={color}
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M4 19.5v-4h4"
+      stroke={color}
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
 
 // ============================================================
 // HELPERS
 // ============================================================
 
-const prettifyLabel = (raw: string): string =>
-  raw.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+/** Turn a raw YOLO label (`Tomato___Late_blight`) into readable text. */
+const prettifyLabel = (raw?: string): string => {
+  const value = (raw ?? "").split("___").pop() ?? "";
+  const cleaned = value.replace(/_/g, " ").replace(/\s+/g, " ").trim();
 
-const describeConfidence = (value: number): string => {
-  const pct = Math.round(value * 100);
+  if (!cleaned) return "";
 
-  if (pct >= 85) return "Very sure";
-  if (pct >= 70) return "Fairly sure";
-  if (pct >= 55) return "Likely";
-
-  return "Possible";
+  return cleaned.replace(/\b\w/g, (c) => c.toUpperCase());
 };
+
+/**
+ * Diagnostic certainty — deliberately worded differently from the raw model
+ * confidence, which is surfaced separately as secondary metadata.
+ */
+const buildStatusLabel = (
+  condition: string | undefined,
+  confidence: number,
+): string => {
+  if (condition && /health/i.test(condition)) return "Healthy";
+
+  if (confidence >= 0.85) return "Probable disease";
+  if (confidence >= 0.7) return "Likely disease";
+  if (confidence >= 0.55) return "Possible disease";
+
+  return "Uncertain finding";
+};
+
+/** Stable, human-readable reference such as `001` for the report eyebrow. */
+const buildReference = (id: string): string => {
+  let sum = 0;
+
+  for (let i = 0; i < id.length; i += 1) {
+    sum = (sum * 31 + id.charCodeAt(i)) % 1000;
+  }
+
+  return String(sum).padStart(3, "0");
+};
+
+/** Title line for the report: user name first, otherwise `<Crop> leaf condition`. */
+const buildHeading = (
+  diagnosisName: string | undefined,
+  crop: string | undefined,
+  condition: string | undefined,
+): string => {
+  const custom = diagnosisName?.trim();
+  if (custom) return custom;
+
+  const cropLabel = prettifyLabel(crop);
+  if (cropLabel) return `${cropLabel} leaf condition`;
+
+  return prettifyLabel(condition) || "Diagnosis";
+};
+
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const buildObservedSummary = (
+  primary: EvidenceGroup | null,
+  summary: string | null,
+): string => {
+  const clean = summary?.trim();
+  if (clean) return clean;
+
+  if (!primary) {
+    return "No visible symptoms were detected in this clip. If the plant still looks affected, try recording a closer, steadier video.";
+  }
+
+  const regions = primary.detections.length;
+  const seconds = Math.max(Math.round(primary.totalDuration), 1);
+  const crop = prettifyLabel(primary.crop).toLowerCase() || "plant";
+
+  return `${regions} region${regions === 1 ? "" : "s"} of interest ${
+    regions === 1 ? "was" : "were"
+  } tracked across roughly ${seconds} second${
+    seconds === 1 ? "" : "s"
+  } of footage on the ${crop}. Review the evidence image to judge how far it has spread.`;
+};
+
+interface ParsedAction {
+  title: string;
+  explanation: string;
+}
+
+/**
+ * Recommendations arrive as free-form sentences. Split them into a scannable
+ * action title and the supporting detail without losing any content.
+ */
+const parseAction = (raw: string): ParsedAction => {
+  const text = (raw ?? "").trim();
+  if (!text) return { title: "", explanation: "" };
+
+  const colon = text.indexOf(":");
+  if (colon > 0 && colon <= 60) {
+    return {
+      title: text.slice(0, colon).trim(),
+      explanation: text.slice(colon + 1).trim(),
+    };
+  }
+
+  const sentenceEnd = text.search(/[.!?]/);
+  if (sentenceEnd > 0 && sentenceEnd <= 46 && sentenceEnd < text.length - 1) {
+    return {
+      title: text.slice(0, sentenceEnd).trim(),
+      explanation: text.slice(sentenceEnd + 1).trim(),
+    };
+  }
+
+  return { title: text, explanation: "" };
+};
+
+// ============================================================
+// GROUPING
+// ============================================================
 
 interface EvidenceGroup {
   key: string;
@@ -403,6 +323,7 @@ interface EvidenceGroup {
   imageUrls: string[];
 }
 
+/** Consolidate repeated video-frame detections into one finding per crop+condition. */
 const groupIntoEvidence = (results: TrackResult[]): EvidenceGroup[] => {
   const map = new Map<string, EvidenceGroup>();
 
@@ -441,495 +362,345 @@ const groupIntoEvidence = (results: TrackResult[]): EvidenceGroup[] => {
   );
 };
 
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
+// ============================================================
+// SKELETON
+// ============================================================
 
-  return date.toLocaleString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+interface SkeletonBlockProps {
+  width?: number | string;
+  height?: number;
+  radius?: number;
+  style?: any;
+  pulse: any;
+}
+
+const SkeletonBlock: React.FC<SkeletonBlockProps> = ({
+  width = "100%",
+  height = 12,
+  radius = 6,
+  style,
+  pulse,
+}) => {
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: pulse.value,
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        {
+          width: width as any,
+          height,
+          borderRadius: radius,
+          backgroundColor: COLORS.skeleton,
+        },
+        animatedStyle,
+        style,
+      ]}
+    />
+  );
+};
+
+const SkeletonScreen: React.FC = () => {
+  const pulse = useSharedValue(0.5);
+
+  React.useEffect(() => {
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 800, easing: Easing.inOut(Easing.quad) }),
+        withTiming(0.5, { duration: 800, easing: Easing.inOut(Easing.quad) }),
+      ),
+      -1,
+      false,
+    );
+  }, [pulse]);
+
+  return (
+    <View>
+      {/* Heading */}
+      <View style={styles.headingBlock}>
+        <SkeletonBlock width={128} height={10} pulse={pulse} />
+        <SkeletonBlock
+          width="76%"
+          height={26}
+          radius={7}
+          pulse={pulse}
+          style={{ marginTop: 14 }}
+        />
+        <SkeletonBlock
+          width={156}
+          height={11}
+          pulse={pulse}
+          style={{ marginTop: 12 }}
+        />
+      </View>
+
+      {/* Evidence image */}
+      <View style={styles.imageWrapper}>
+        <SkeletonBlock height={236} radius={10} pulse={pulse} />
+      </View>
+
+      {/* Summary */}
+      <View style={styles.summaryBlock}>
+        <SkeletonBlock width={132} height={22} radius={11} pulse={pulse} />
+        <SkeletonBlock
+          width="62%"
+          height={24}
+          radius={7}
+          pulse={pulse}
+          style={{ marginTop: 16 }}
+        />
+        <SkeletonBlock
+          width="40%"
+          height={12}
+          pulse={pulse}
+          style={{ marginTop: 12 }}
+        />
+      </View>
+
+      {/* Observed symptoms */}
+      <View style={styles.section}>
+        <SkeletonBlock width={150} height={15} radius={7} pulse={pulse} />
+        <SkeletonBlock
+          width="94%"
+          height={11}
+          pulse={pulse}
+          style={{ marginTop: 14 }}
+        />
+        <SkeletonBlock
+          width="86%"
+          height={11}
+          pulse={pulse}
+          style={{ marginTop: 8 }}
+        />
+        <SkeletonBlock
+          width="70%"
+          height={11}
+          pulse={pulse}
+          style={{ marginTop: 8 }}
+        />
+      </View>
+
+      {/* Recommended actions */}
+      <View style={styles.section}>
+        <SkeletonBlock width={160} height={15} radius={7} pulse={pulse} />
+        {[0, 1].map((i) => (
+          <View key={i} style={styles.skeletonActionRow}>
+            <SkeletonBlock width={22} height={12} pulse={pulse} />
+            <SkeletonBlock width="80%" height={11} pulse={pulse} />
+          </View>
+        ))}
+      </View>
+
+      {/* Other findings */}
+      <View style={styles.section}>
+        <SkeletonBlock width={110} height={15} radius={7} pulse={pulse} />
+        {[0, 1].map((i) => (
+          <View key={i} style={styles.skeletonFindingRow}>
+            <SkeletonBlock width={56} height={56} radius={8} pulse={pulse} />
+            <View style={styles.skeletonFindingContent}>
+              <SkeletonBlock width="68%" height={12} pulse={pulse} />
+              <SkeletonBlock width="44%" height={10} pulse={pulse} />
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
 };
 
 // ============================================================
-// VIDEO PLAYER
+// NAV BAR
 // ============================================================
-interface VideoPlayerProps {
+
+interface NavBarProps {
+  onBack: () => void;
+  onMenu?: () => void;
+}
+
+const NavBar: React.FC<NavBarProps> = ({ onBack, onMenu }) => (
+  <View style={styles.navBar}>
+    <TouchableOpacity
+      onPress={onBack}
+      style={styles.navButton}
+      activeOpacity={0.6}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      accessibilityRole="button"
+      accessibilityLabel="Go back"
+    >
+      <BackIcon size={22} color={COLORS.text} />
+    </TouchableOpacity>
+
+    <Text style={styles.navTitle}>Diagnosis details</Text>
+
+    {onMenu ? (
+      <TouchableOpacity
+        onPress={onMenu}
+        style={styles.navButton}
+        activeOpacity={0.6}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        accessibilityRole="button"
+        accessibilityLabel="More options"
+      >
+        <MoreIcon size={20} color={COLORS.text} />
+      </TouchableOpacity>
+    ) : (
+      <View style={styles.navButton} />
+    )}
+  </View>
+);
+
+// ============================================================
+// OVERFLOW MENU
+// ============================================================
+
+interface OverflowMenuProps {
+  visible: boolean;
+  canOpenEvidence: boolean;
+  onClose: () => void;
+  onOpenEvidence: () => void;
+  onRefresh: () => void;
+}
+
+const OverflowMenu: React.FC<OverflowMenuProps> = ({
+  visible,
+  canOpenEvidence,
+  onClose,
+  onOpenEvidence,
+  onRefresh,
+}) => (
+  <Modal
+    visible={visible}
+    transparent
+    animationType="fade"
+    onRequestClose={onClose}
+  >
+    <Pressable style={styles.sheetBackdrop} onPress={onClose}>
+      <Pressable style={styles.sheet} onPress={() => {}}>
+        <View style={styles.sheetHandle} />
+
+        <TouchableOpacity
+          style={[
+            styles.sheetAction,
+            !canOpenEvidence && styles.sheetActionDisabled,
+          ]}
+          disabled={!canOpenEvidence}
+          onPress={onOpenEvidence}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="View original evidence"
+        >
+          <ImageIcon size={18} color={COLORS.text} />
+          <Text style={styles.sheetActionText}>View original evidence</Text>
+        </TouchableOpacity>
+
+        <View style={styles.sheetDivider} />
+
+        <TouchableOpacity
+          style={styles.sheetAction}
+          onPress={onRefresh}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Refresh analysis"
+        >
+          <RefreshIcon size={18} color={COLORS.text} />
+          <Text style={styles.sheetActionText}>Refresh analysis</Text>
+        </TouchableOpacity>
+      </Pressable>
+    </Pressable>
+  </Modal>
+);
+
+// ============================================================
+// EVIDENCE IMAGE
+// ============================================================
+
+interface EvidenceImageProps {
   uri: string | null;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ uri }) => {
-  const player = useVideoPlayer(uri as VideoSource, (p) => {
-    p.loop = false;
-    p.timeUpdateEventInterval = 0;
-  });
-
-  const { isPlaying } = useEvent(player, "playingChange", {
-    isPlaying: player.playing,
-  });
-
-  const { status } = useEvent(player, "statusChange", {
-    status: player.status,
-  });
-
-  // ✅ Always called unconditionally, in the same order every render
-  const loadingPulse = useSharedValue(1);
-
-  const isLoading = status === "loading";
-  const hasError = status === "error";
-
-  const togglePlay = useCallback(() => {
-    if (player.playing) {
-      player.pause();
-    } else {
-      player.play();
-    }
-  }, [player]);
-
-  if (!uri || hasError) {
+const EvidenceImage: React.FC<EvidenceImageProps> = ({ uri }) => {
+  if (!uri) {
     return (
-      <View style={styles.videoPlaceholder}>
-        <VideoIcon size={26} color={COLORS.textMuted} />
-        <Text style={styles.videoPlaceholderText}>
-          {hasError ? "Couldn't load video" : "Video unavailable"}
-        </Text>
+      <View style={[styles.evidenceImage, styles.evidencePlaceholder]}>
+        <ImageIcon size={26} color={COLORS.textSecondary} />
+        <Text style={styles.evidencePlaceholderText}>No evidence image</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.videoBox}>
-      <VideoView
-        player={player}
-        style={styles.video}
-        nativeControls={false}
-        contentFit="contain"
-      />
-
-      {isLoading && (
-        <View style={styles.videoOverlay}>
-          {/* ✅ Use the hoisted shared value */}
-          <SkeletonBlock height={200} radius={12} pulse={loadingPulse} />
-        </View>
-      )}
-
-      {!isLoading && !isPlaying && (
-        <TouchableOpacity
-          style={styles.videoPlayOverlay}
-          onPress={togglePlay}
-          activeOpacity={0.7}
-        >
-          <View style={styles.videoPlayButton}>
-            <PlayIcon size={22} color={COLORS.white} />
-          </View>
-        </TouchableOpacity>
-      )}
-
-      {!isLoading && isPlaying && (
-        <TouchableOpacity
-          style={styles.videoTouchOverlay}
-          onPress={togglePlay}
-          activeOpacity={1}
-        />
-      )}
-    </View>
-  );
-};
-// ============================================================
-// STACKED THUMBNAILS
-// ============================================================
-
-interface StackedThumbnailsProps {
-  urls: string[];
-  size?: number;
-}
-
-const MAX_VISIBLE = 3;
-
-const StackedThumbnails: React.FC<StackedThumbnailsProps> = ({
-  urls,
-  size = 60,
-}) => {
-  const STACK_OFFSET = Math.round(size * 0.28);
-
-  const visible = urls.slice(0, MAX_VISIBLE);
-  const hasMore = urls.length > MAX_VISIBLE;
-
-  const containerWidth =
-    visible.length > 0 ? size + (visible.length - 1) * STACK_OFFSET : size;
-
-  if (visible.length === 0) {
-    return (
-      <View
-        style={[
-          styles.stackContainer,
-          {
-            width: size,
-            height: size,
-          },
-        ]}
-      >
-        <View
-          style={[
-            styles.stackItem,
-            {
-              width: size,
-              height: size,
-              left: 0,
-            },
-          ]}
-        >
-          <AlertIcon size={22} color={COLORS.danger} />
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View
-      style={[
-        styles.stackContainer,
-        {
-          width: containerWidth,
-          height: size,
-        },
-      ]}
-    >
-      {visible.map((url, idx) => {
-        const zIndex = visible.length - idx;
-        const left = idx * STACK_OFFSET;
-        const isLastVisible = idx === visible.length - 1;
-
-        return (
-          <View
-            key={`${url}-${idx}`}
-            style={[
-              styles.stackItem,
-              {
-                width: size,
-                height: size,
-                left,
-                zIndex,
-              },
-            ]}
-          >
-            <Image
-              source={{ uri: url }}
-              style={styles.stackImage}
-              resizeMode="cover"
-            />
-
-            {hasMore && isLastVisible && (
-              <View style={styles.stackMoreOverlay}>
-                <Text style={styles.stackMoreText}>
-                  +{urls.length - MAX_VISIBLE + 1}
-                </Text>
-              </View>
-            )}
-          </View>
-        );
-      })}
-    </View>
+    <Image
+      source={{ uri }}
+      style={styles.evidenceImage}
+      resizeMode="cover"
+      accessibilityIgnoresInvertColors
+    />
   );
 };
 
 // ============================================================
-// COLLAPSIBLE AI CARD
+// FINDING ROW
 // ============================================================
 
-interface AICardProps {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
-  expandable?: boolean;
-  expanded?: boolean;
-  onToggle?: () => void;
-}
-
-const AICard: React.FC<AICardProps> = ({
-  icon,
-  title,
-  children,
-  expandable = false,
-  expanded = false,
-  onToggle,
-}) => {
-  return (
-    <Animated.View
-      layout={Layout.duration(240).easing(Easing.out(Easing.quad))}
-      style={styles.aiCard}
-    >
-      <View style={styles.aiHeader}>
-        <View style={styles.aiIconWrap}>{icon}</View>
-
-        <Text style={styles.aiTitle}>{title}</Text>
-      </View>
-
-      <Animated.View
-        layout={Layout.duration(240).easing(Easing.out(Easing.quad))}
-      >
-        {children}
-      </Animated.View>
-
-      {expandable && (
-        <TouchableOpacity
-          onPress={onToggle}
-          style={styles.aiToggle}
-          activeOpacity={0.6}
-          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-        >
-          <Text style={styles.aiToggleText}>
-            {expanded ? "Show less" : "Read more"}
-          </Text>
-
-          <AnimatedChevron expanded={expanded} />
-        </TouchableOpacity>
-      )}
-    </Animated.View>
-  );
-};
-
-// ============================================================
-// AI ANALYSIS SECTION
-// ============================================================
-
-interface AIAnalysisSectionProps {
-  summary: string | null;
-  recommendations: string[];
-  isLoading: boolean;
-}
-
-const COLLAPSED_RECOMMENDATION_COUNT = 2;
-
-const AIAnalysisSection: React.FC<AIAnalysisSectionProps> = ({
-  summary,
-  recommendations,
-  isLoading,
-}) => {
-  const [summaryExpanded, setSummaryExpanded] = useState(false);
-  const [recommendationsExpanded, setRecommendationsExpanded] = useState(false);
-
-  const hasSummary = !!summary && summary.trim().length > 0;
-  const hasRecommendations = recommendations.length > 0;
-
-  const summaryIsLong =
-    hasSummary && (summary!.length > 180 || summary!.split("\n").length > 4);
-
-  const recommendationsAreLong =
-    recommendations.length > COLLAPSED_RECOMMENDATION_COUNT;
-
-  const visibleRecommendations = recommendationsExpanded
-    ? recommendations
-    : recommendations.slice(0, COLLAPSED_RECOMMENDATION_COUNT);
-
-  const hiddenCount = Math.max(
-    recommendations.length - COLLAPSED_RECOMMENDATION_COUNT,
-    0,
-  );
-
-  return (
-    <View style={styles.aiSection}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>AI assessment</Text>
-
-        <View style={styles.aiBadge}>
-          <SparkleIcon size={11} color={COLORS.green} />
-          <Text style={styles.aiBadgeText}>AI</Text>
-        </View>
-      </View>
-
-      {/* SUMMARY */}
-
-      <AICard
-        icon={<SparkleIcon size={14} color={COLORS.green} />}
-        title="Analysis"
-        expandable={summaryIsLong}
-        expanded={summaryExpanded}
-        onToggle={() => setSummaryExpanded((value) => !value)}
-      >
-        {isLoading && !hasSummary ? (
-          <View style={styles.skeleton}>
-            <View style={[styles.skeletonLine, { width: "94%" }]} />
-            <View style={[styles.skeletonLine, { width: "82%" }]} />
-            <View style={[styles.skeletonLine, { width: "61%" }]} />
-          </View>
-        ) : !hasSummary ? (
-          <Text style={styles.emptyText}>
-            AI analysis is not available yet.
-          </Text>
-        ) : (
-          <Animated.Text
-            layout={Layout.duration(240).easing(Easing.out(Easing.quad))}
-            style={styles.aiText}
-            numberOfLines={summaryExpanded ? undefined : 4}
-          >
-            {summary}
-          </Animated.Text>
-        )}
-      </AICard>
-
-      {/* RECOMMENDATIONS */}
-
-      <View style={styles.aiCardSpacing}>
-        <AICard
-          icon={<BulbIcon size={14} color={COLORS.green} />}
-          title="Recommendations"
-          expandable={recommendationsAreLong}
-          expanded={recommendationsExpanded}
-          onToggle={() => setRecommendationsExpanded((value) => !value)}
-        >
-          {isLoading && !hasRecommendations ? (
-            <View style={styles.skeleton}>
-              <View style={[styles.skeletonLine, { width: "90%" }]} />
-              <View style={[styles.skeletonLine, { width: "78%" }]} />
-              <View style={[styles.skeletonLine, { width: "65%" }]} />
-            </View>
-          ) : !hasRecommendations ? (
-            <Text style={styles.emptyText}>
-              No recommendations are available yet.
-            </Text>
-          ) : (
-            <Animated.View
-              layout={Layout.duration(240).easing(Easing.out(Easing.quad))}
-              style={styles.recommendationList}
-            >
-              {visibleRecommendations.map((recommendation, index) => (
-                <Animated.View
-                  key={`${recommendation}-${index}`}
-                  entering={FadeInDown.duration(240)
-                    .delay(index * 40)
-                    .easing(Easing.out(Easing.quad))}
-                  layout={Layout.duration(240).easing(Easing.out(Easing.quad))}
-                  style={styles.recommendationRow}
-                >
-                  <View style={styles.recommendationBullet} />
-
-                  <Text style={styles.recommendationText}>
-                    {recommendation}
-                  </Text>
-                </Animated.View>
-              ))}
-
-              {!recommendationsExpanded && hiddenCount > 0 && (
-                <Animated.View
-                  entering={FadeInDown.duration(240).easing(
-                    Easing.out(Easing.quad),
-                  )}
-                  layout={Layout.duration(240).easing(Easing.out(Easing.quad))}
-                >
-                  <Text style={styles.recommendationMore}>
-                    +{hiddenCount} more
-                  </Text>
-                </Animated.View>
-              )}
-            </Animated.View>
-          )}
-        </AICard>
-      </View>
-    </View>
-  );
-};
-
-// ============================================================
-// EVIDENCE CARD
-// ============================================================
-
-interface EvidenceCardProps {
+interface FindingRowProps {
   group: EvidenceGroup;
+  isLast: boolean;
   onPress: (group: EvidenceGroup) => void;
 }
 
-const EvidenceCard: React.FC<EvidenceCardProps> = ({ group, onPress }) => {
-  const count = group.detections.length;
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const handlePressIn = useCallback(() => {
-    scale.value = withSpring(0.98, {
-      damping: 20,
-      stiffness: 350,
-    });
-  }, [scale]);
-
-  const handlePressOut = useCallback(() => {
-    scale.value = withSpring(1, {
-      damping: 20,
-      stiffness: 350,
-    });
-  }, [scale]);
+const FindingRow: React.FC<FindingRowProps> = ({
+  group,
+  isLast,
+  onPress,
+}) => {
+  const thumbnail = group.imageUrls[0] ?? null;
+  const disease = prettifyLabel(group.condition) || "Unknown condition";
+  const crop = prettifyLabel(group.crop) || "Crop not identified";
 
   return (
-    <Animated.View style={animatedStyle}>
-      <Pressable
-        onPress={() => onPress(group)}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        style={styles.evidenceCard}
-      >
-        <StackedThumbnails urls={group.imageUrls} size={60} />
-
-        <View style={styles.evidenceContent}>
-          <Text style={styles.evidenceTitle} numberOfLines={1}>
-            {group.condition}
-          </Text>
-
-          <Text style={styles.evidenceCrop} numberOfLines={1}>
-            Found on {prettifyLabel(group.crop).toLowerCase()}
-          </Text>
-
-          <View style={styles.evidenceMetaRow}>
-            <Text style={styles.evidenceMeta}>
-              {count} spot{count !== 1 ? "s" : ""}
-            </Text>
-
-            <View style={styles.evidenceDot} />
-
-            <Text style={styles.evidenceConfidence}>
-              {describeConfidence(group.topConfidence)}
-            </Text>
-          </View>
+    <TouchableOpacity
+      style={[styles.findingRow, !isLast && styles.findingRowDivider]}
+      onPress={() => onPress(group)}
+      activeOpacity={0.6}
+      accessibilityRole="button"
+      accessibilityLabel={`${disease}, found on ${crop}`}
+    >
+      {thumbnail ? (
+        <Image
+          source={{ uri: thumbnail }}
+          style={styles.findingThumb}
+          resizeMode="cover"
+          accessibilityIgnoresInvertColors
+        />
+      ) : (
+        <View style={[styles.findingThumb, styles.findingThumbEmpty]}>
+          <ImageIcon size={20} color={COLORS.textSecondary} />
         </View>
+      )}
 
-        <ChevronRightIcon size={16} color={COLORS.textMuted} />
-      </Pressable>
-    </Animated.View>
+      <View style={styles.findingContent}>
+        <Text style={styles.findingTitle} numberOfLines={1}>
+          {disease}
+        </Text>
+        <Text style={styles.findingCrop} numberOfLines={1}>
+          {crop}
+        </Text>
+      </View>
+
+      <ChevronRightIcon size={18} color={COLORS.textSecondary} />
+    </TouchableOpacity>
   );
 };
 
 // ============================================================
-// HEADER
+// ROUTE TYPE
 // ============================================================
 
-interface HeaderProps {
-  onBack: () => void;
-}
-
-const Header: React.FC<HeaderProps> = ({ onBack }) => (
-  <View style={styles.header}>
-    <TouchableOpacity
-      onPress={onBack}
-      style={styles.headerBackButton}
-      activeOpacity={0.6}
-      hitSlop={{
-        top: 8,
-        bottom: 8,
-        left: 8,
-        right: 8,
-      }}
-    >
-      <BackIcon size={20} color={COLORS.text} />
-    </TouchableOpacity>
-
-    <Text style={styles.headerTitle}>Result</Text>
-
-    <View style={styles.headerSpacer} />
-  </View>
-);
+type DiagnosisDetailRoute = RouteProp<
+  { DiagnosisDetail: { videoId: string } },
+  "DiagnosisDetail"
+>;
 
 // ============================================================
 // SCREEN
@@ -937,26 +708,80 @@ const Header: React.FC<HeaderProps> = ({ onBack }) => (
 
 export const DiagnosisDetailScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-
   const route = useRoute<DiagnosisDetailRoute>();
-
   const { videoId } = route.params;
+  const insets = useSafeAreaInsets();
 
-  const { analysis, isLoading, isRefreshing, error, refresh } =
+  const { analysis, terms, isLoading, isRefreshing, error, refresh } =
     useDiagnosisDetail(videoId);
 
-  const evidenceGroups = useMemo(() => {
-    if (!analysis?.results?.length) {
-      return [];
-    }
+  const { activeTerm, segmentsFor, openTerm, closeTerm } = useGlossary(terms);
 
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleBack = useCallback(() => {
+    navigation.goBack();
+  }, [navigation]);
+
+  const evidenceGroups = useMemo(() => {
+    if (!analysis?.results?.length) return [];
     return groupIntoEvidence(analysis.results);
   }, [analysis?.results]);
 
-  const videoUrl = analysis?.video?.evidenceVideoUrl ?? null;
+  const primary = evidenceGroups[0] ?? null;
+  const otherFindings = evidenceGroups.slice(1);
 
-  const handleEvidencePress = useCallback(
-    (group: EvidenceGroup) => {
+  const heroImageUrl =
+    primary?.imageUrls[0] ?? analysis?.video?.thumbnailUrl ?? null;
+
+  const heading = buildHeading(
+    analysis?.diagnosisName,
+    primary?.crop,
+    primary?.condition,
+  );
+
+  const reference = buildReference(analysis?._id ?? videoId);
+
+  const statusLabel = primary
+    ? buildStatusLabel(primary.condition, primary.topConfidence)
+    : "No findings";
+
+  const diseaseName = primary
+    ? prettifyLabel(primary.condition) || "Unidentified condition"
+    : "No conditions detected";
+
+  const cropName = primary
+    ? prettifyLabel(primary.crop) || "Crop not identified"
+    : "Crop not identified";
+
+  const observedText = useMemo(
+    () => buildObservedSummary(primary, analysis?.analysis?.summary ?? null),
+    [primary, analysis?.analysis?.summary],
+  );
+
+  const observedSegments = useMemo(
+    () => segmentsFor(observedText),
+    [observedText, segmentsFor],
+  );
+
+  const actions = useMemo(
+    () =>
+      (analysis?.analysis?.recommendations ?? []).map((recommendation) => {
+        const action = parseAction(recommendation);
+
+        return {
+          ...action,
+          titleSegments: segmentsFor(action.title),
+          explanationSegments: segmentsFor(action.explanation),
+        };
+      }),
+    [analysis?.analysis?.recommendations, segmentsFor],
+  );
+
+  const openEvidence = useCallback(
+    (group: EvidenceGroup | null) => {
+      if (!group) return;
+
       navigation.navigate("EvidencePreview", {
         crop: group.crop,
         condition: group.condition,
@@ -966,14 +791,28 @@ export const DiagnosisDetailScreen: React.FC = () => {
     [navigation],
   );
 
-  const handleBack = useCallback(() => {
-    navigation.goBack();
+  const handleOpenEvidence = useCallback(() => {
+    setMenuOpen(false);
+    openEvidence(primary);
+  }, [openEvidence, primary]);
+
+  const handleRefreshFromMenu = useCallback(() => {
+    setMenuOpen(false);
+    refresh();
+  }, [refresh]);
+
+  const handleBackToHistory = useCallback(() => {
+    try {
+      navigation.navigate("HomeTabs", { screen: "Diagnoses" });
+    } catch {
+      navigation.goBack();
+    }
   }, [navigation]);
 
   if (isLoading && !analysis) {
     return (
       <SafeAreaView style={styles.safe} edges={["top"]}>
-        <Header onBack={handleBack} />
+        <NavBar onBack={handleBack} />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -989,97 +828,237 @@ export const DiagnosisDetailScreen: React.FC = () => {
   if (error && !analysis) {
     return (
       <SafeAreaView style={styles.safe} edges={["top"]}>
-        <Header onBack={handleBack} />
+        <NavBar onBack={handleBack} />
 
         <View style={styles.center}>
           <Text style={styles.errorText}>{error}</Text>
+
+          <TouchableOpacity
+            style={styles.errorRetry}
+            onPress={() => refresh()}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Try again"
+          >
+            <Text style={styles.errorRetryText}>Try again</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <Header onBack={handleBack} />
+    <SafeAreaView style={styles.safe} edges={["top"]}>
+      <NavBar onBack={handleBack} onMenu={() => setMenuOpen(true)} />
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + 28 },
+        ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={refresh}
-            tintColor={COLORS.textMuted}
+            tintColor={COLORS.textSecondary}
+            colors={[COLORS.textSecondary]}
           />
         }
       >
         {/* ==================================================
-            VIDEO
+            HEADING
         ================================================== */}
 
-        <Animated.View
-          entering={FadeInDown.duration(380).easing(Easing.out(Easing.quad))}
-          style={styles.videoWrapper}
-        >
-          <VideoPlayer uri={videoUrl} />
+        <Animated.View entering={ENTER} style={styles.headingBlock}>
+          <Text style={styles.eyebrow}>Video diagnosis / {reference}</Text>
+
+          <Text style={styles.heading}>{heading}</Text>
+
+          {analysis?.createdAt ? (
+            <Text style={styles.headingDate}>
+              {formatDate(analysis.createdAt)}
+            </Text>
+          ) : null}
         </Animated.View>
 
         {/* ==================================================
-            AI ANALYSIS + RECOMMENDATIONS
+            EVIDENCE IMAGE
         ================================================== */}
 
         <Animated.View
-          entering={FadeInDown.duration(380)
-            .delay(80)
-            .easing(Easing.out(Easing.quad))}
-          style={styles.section}
+          entering={ENTER.delay(60)}
+          style={styles.imageWrapper}
         >
-          <AIAnalysisSection
-            summary={analysis?.analysis?.summary ?? null}
-            recommendations={analysis?.analysis?.recommendations ?? []}
-            isLoading={isLoading}
-          />
+          <EvidenceImage uri={heroImageUrl} />
         </Animated.View>
 
         {/* ==================================================
-            PROBLEMS FOUND
+            DIAGNOSIS SUMMARY
         ================================================== */}
 
         <Animated.View
-          entering={FadeInDown.duration(380)
-            .delay(160)
-            .easing(Easing.out(Easing.quad))}
-          style={styles.section}
+          entering={ENTER.delay(100)}
+          style={styles.summaryBlock}
         >
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Problems found</Text>
-
-            <View style={styles.sectionCountContainer}>
-              <Text style={styles.sectionCount}>{evidenceGroups.length}</Text>
+          <View style={styles.summaryMetaRow}>
+            <View style={styles.statusPill}>
+              <Text style={styles.statusPillText}>{statusLabel}</Text>
             </View>
+
+            {primary ? (
+              <Text style={styles.confidenceText}>
+                {`Model confidence ${Math.round(
+                  primary.topConfidence * 100,
+                )}%`}
+              </Text>
+            ) : null}
           </View>
 
-          {evidenceGroups.length === 0 ? (
-            <View style={styles.evidenceEmpty}>
-              <Text style={styles.evidenceEmptyText}>
-                No problems found in this video.
-              </Text>
-            </View>
+          <Text style={styles.diseaseName}>{diseaseName}</Text>
+
+          <Text style={styles.cropName}>{cropName}</Text>
+        </Animated.View>
+
+        {/* ==================================================
+            OBSERVED SYMPTOMS
+        ================================================== */}
+
+        <Animated.View
+          entering={ENTER.delay(140)}
+          style={styles.section}
+        >
+          <Text style={styles.sectionTitle}>Observed symptoms</Text>
+
+          <TermHighlightText
+            text={observedText}
+            segments={observedSegments}
+            onPressTerm={openTerm}
+            style={styles.bodyText}
+          />
+
+          <TouchableOpacity
+            style={styles.linkRow}
+            onPress={() => openEvidence(primary)}
+            disabled={!primary}
+            activeOpacity={0.6}
+            accessibilityRole="button"
+            accessibilityLabel="View original evidence"
+          >
+            <ArrowUpRightIcon size={16} color={COLORS.statusText} />
+
+            <Text
+              style={[
+                styles.linkText,
+                !primary && styles.linkTextDisabled,
+              ]}
+            >
+              View original evidence
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* ==================================================
+            RECOMMENDED ACTIONS
+        ================================================== */}
+
+        <Animated.View
+          entering={ENTER.delay(180)}
+          style={styles.section}
+        >
+          <Text style={styles.sectionTitle}>Recommended actions</Text>
+
+          {actions.length === 0 ? (
+            <Text style={styles.bodyText}>
+              No specific actions were suggested for this clip.
+            </Text>
           ) : (
-            evidenceGroups.map((group, index) => (
-              <Animated.View
-                key={group.key}
-                entering={FadeInDown.duration(320)
-                  .delay(200 + index * 60)
-                  .easing(Easing.out(Easing.quad))}
-                layout={Layout.duration(240).easing(Easing.out(Easing.quad))}
+            actions.map((action, index) => (
+              <View
+                key={`${action.title}-${index}`}
+                style={styles.actionRow}
               >
-                <EvidenceCard group={group} onPress={handleEvidencePress} />
-              </Animated.View>
+                <Text style={styles.actionNumber}>
+                  {String(index + 1).padStart(2, "0")}
+                </Text>
+
+                <View style={styles.actionContent}>
+                  <TermHighlightText
+                    text={action.title}
+                    segments={action.titleSegments}
+                    onPressTerm={openTerm}
+                    style={styles.actionTitle}
+                  />
+
+                  {action.explanation ? (
+                    <TermHighlightText
+                      text={action.explanation}
+                      segments={action.explanationSegments}
+                      onPressTerm={openTerm}
+                      style={styles.actionExplanation}
+                    />
+                  ) : null}
+                </View>
+              </View>
             ))
           )}
         </Animated.View>
+
+        {/* ==================================================
+            OTHER FINDINGS
+        ================================================== */}
+
+        {otherFindings.length > 0 && (
+          <Animated.View
+            entering={ENTER.delay(220)}
+            style={styles.section}
+          >
+            <Text style={styles.sectionTitle}>Other findings</Text>
+
+            <View style={styles.findingsList}>
+              {otherFindings.map((group, index) => (
+                <FindingRow
+                  key={group.key}
+                  group={group}
+                  isLast={index === otherFindings.length - 1}
+                  onPress={openEvidence}
+                />
+              ))}
+            </View>
+          </Animated.View>
+        )}
+
+        {/* ==================================================
+            BOTTOM ACTION
+        ================================================== */}
+
+        <Animated.View
+          entering={ENTER.delay(260)}
+          style={styles.bottomActionWrapper}
+        >
+          <TouchableOpacity
+            style={styles.bottomButton}
+            onPress={handleBackToHistory}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Back to diagnosis history"
+          >
+            <Text style={styles.bottomButtonText}>
+              Back to diagnosis history
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
       </ScrollView>
+
+      <OverflowMenu
+        visible={menuOpen}
+        canOpenEvidence={!!primary}
+        onClose={() => setMenuOpen(false)}
+        onOpenEvidence={handleOpenEvidence}
+        onRefresh={handleRefreshFromMenu}
+      />
+
+      <TermGlossaryModal term={activeTerm} onClose={closeTerm} />
     </SafeAreaView>
   );
 };
@@ -1098,48 +1077,54 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: MARGIN,
+    gap: 18,
   },
 
   errorText: {
     fontSize: 14,
     color: COLORS.danger,
+    textAlign: "center",
+  },
+
+  errorRetry: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: COLORS.mutedGreen,
+  },
+
+  errorRetryText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.statusText,
   },
 
   // ==========================================================
-  // HEADER
+  // NAV BAR
   // ==========================================================
 
-  header: {
+  navBar: {
+    height: 52,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-
-    paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: 10,
-
+    paddingHorizontal: MARGIN - 8,
     backgroundColor: COLORS.background,
   },
 
-  headerBackButton: {
+  navButton: {
     width: 36,
     height: 36,
-
-    borderRadius: 18,
-
     justifyContent: "center",
     alignItems: "center",
   },
 
-  headerTitle: {
+  navTitle: {
     fontSize: 15,
     fontWeight: "600",
     color: COLORS.text,
-  },
-
-  headerSpacer: {
-    width: 36,
-    height: 36,
+    letterSpacing: 0.1,
   },
 
   // ==========================================================
@@ -1147,509 +1132,349 @@ const styles = StyleSheet.create({
   // ==========================================================
 
   scrollContent: {
-    paddingBottom: 36,
-  },
-
-  // ==========================================================
-  // SKELETON
-  // ==========================================================
-
-  skeletonRoot: {
-    width: "100%",
-  },
-
-  skeletonCard: {
-    padding: 12,
-
-    borderRadius: 12,
-
-    backgroundColor: COLORS.softSurface,
-
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-
-  skeletonCardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    marginBottom: 10,
-  },
-
-  skeletonLines: {
-    gap: 8,
-  },
-
-  skeletonBulletRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  skeletonEvidenceCard: {
-    flexDirection: "row",
-    alignItems: "center",
-
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-
-    marginBottom: 8,
-
-    borderRadius: 12,
-
-    borderWidth: 1,
-    borderColor: COLORS.border,
-
-    backgroundColor: COLORS.surface,
-
-    gap: 14,
-  },
-
-  skeletonEvidenceContent: {
-    flex: 1,
-    minWidth: 0,
-    gap: 7,
-  },
-
-  // ==========================================================
-  // VIDEO
-  // ==========================================================
-
-  videoWrapper: {
-    paddingHorizontal: 18,
     paddingTop: 4,
   },
 
-  videoBox: {
-    width: "100%",
-    aspectRatio: 16 / 9,
-
-    borderRadius: 12,
-    overflow: "hidden",
-
-    backgroundColor: "#000000",
-
-    position: "relative",
-  },
-
-  video: {
-    width: "100%",
-    height: "100%",
-  },
-
-  videoOverlay: {
-    ...StyleSheet.absoluteFill,
-
-    justifyContent: "center",
-    alignItems: "center",
-
-    backgroundColor: "rgba(0, 0, 0, 0.25)",
-  },
-
-  videoPlayOverlay: {
-    ...StyleSheet.absoluteFill,
-
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  videoTouchOverlay: {
-    ...StyleSheet.absoluteFill,
-  },
-
-  videoPlayButton: {
-    width: 52,
-    height: 52,
-
-    borderRadius: 26,
-
-    backgroundColor: "rgba(17, 24, 39, 0.78)",
-
-    justifyContent: "center",
-    alignItems: "center",
-
-    paddingLeft: 3,
-  },
-
-  videoPlaceholder: {
-    width: "100%",
-    aspectRatio: 16 / 9,
-
-    borderRadius: 12,
-
-    backgroundColor: COLORS.softSurface,
-
-    justifyContent: "center",
-    alignItems: "center",
-
-    gap: 6,
-  },
-
-  videoPlaceholderText: {
-    fontSize: 12,
-    color: COLORS.textLight,
-  },
-
   // ==========================================================
-  // SECTION
+  // HEADING
   // ==========================================================
 
-  section: {
-    paddingHorizontal: 18,
-    paddingTop: 20,
+  headingBlock: {
+    paddingHorizontal: MARGIN,
+    paddingTop: 12,
   },
 
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-
-    gap: 8,
-
-    marginBottom: 10,
-  },
-
-  sectionTitle: {
+  eyebrow: {
     fontSize: 11,
     fontWeight: "700",
-
-    color: COLORS.textMuted,
-
-    letterSpacing: 0.7,
-
+    letterSpacing: 1,
+    color: COLORS.textSecondary,
     textTransform: "uppercase",
   },
 
-  sectionCountContainer: {
-    minWidth: 20,
-    height: 20,
-
-    paddingHorizontal: 6,
-
-    borderRadius: 10,
-
-    backgroundColor: "#f3f4f6",
-
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  sectionCount: {
-    fontSize: 10,
+  heading: {
+    fontSize: 28,
     fontWeight: "600",
-
-    color: COLORS.textMuted,
+    color: COLORS.text,
+    letterSpacing: -0.5,
+    lineHeight: 34,
+    marginTop: 10,
   },
 
-  // ==========================================================
-  // AI SECTION
-  // ==========================================================
-
-  aiSection: {
-    width: "100%",
-  },
-
-  aiBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-
-    gap: 4,
-
-    paddingHorizontal: 7,
-    height: 20,
-
-    borderRadius: 10,
-
-    backgroundColor: COLORS.greenSoft,
-  },
-
-  aiBadgeText: {
-    fontSize: 9,
-    fontWeight: "700",
-
-    color: COLORS.green,
-
-    letterSpacing: 0.5,
-  },
-
-  aiCard: {
-    padding: 12,
-
-    borderRadius: 12,
-
-    backgroundColor: COLORS.softSurface,
-
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-
-  aiCardSpacing: {
+  headingDate: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
     marginTop: 8,
   },
 
-  aiHeader: {
-    flexDirection: "row",
-    alignItems: "center",
+  // ==========================================================
+  // EVIDENCE IMAGE
+  // ==========================================================
 
-    gap: 7,
-
-    marginBottom: 7,
+  imageWrapper: {
+    paddingHorizontal: MARGIN,
+    paddingTop: 20,
   },
 
-  aiIconWrap: {
-    width: 22,
-    height: 22,
+  evidenceImage: {
+    width: "100%",
+    aspectRatio: 4 / 3,
+    borderRadius: 10,
+    backgroundColor: COLORS.surfaceMuted,
+  },
 
-    borderRadius: 11,
+  evidencePlaceholder: {
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
 
-    backgroundColor: COLORS.greenSoft,
+  evidencePlaceholderText: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+  },
 
+  // ==========================================================
+  // SUMMARY
+  // ==========================================================
+
+  summaryBlock: {
+    paddingHorizontal: MARGIN,
+    paddingTop: 24,
+  },
+
+  summaryMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+
+  statusPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: COLORS.mutedGreen,
+  },
+
+  statusPillText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: COLORS.statusText,
+    letterSpacing: 0.2,
+  },
+
+  confidenceText: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    fontVariant: ["tabular-nums"],
+  },
+
+  diseaseName: {
+    fontSize: 24,
+    fontWeight: "600",
+    color: COLORS.text,
+    letterSpacing: -0.4,
+    lineHeight: 30,
+    marginTop: 16,
+  },
+
+  cropName: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginTop: 4,
+  },
+
+  // ==========================================================
+  // SECTIONS
+  // ==========================================================
+
+  section: {
+    paddingHorizontal: MARGIN,
+    paddingTop: 30,
+  },
+
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: "600",
+    color: COLORS.text,
+    letterSpacing: -0.2,
+    marginBottom: 12,
+  },
+
+  bodyText: {
+    fontSize: 15,
+    color: COLORS.textSecondary,
+    lineHeight: 23,
+  },
+
+  // ==========================================================
+  // LINK ROW
+  // ==========================================================
+
+  linkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 16,
+  },
+
+  linkText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.statusText,
+  },
+
+  linkTextDisabled: {
+    color: COLORS.textSecondary,
+    opacity: 0.6,
+  },
+
+  // ==========================================================
+  // RECOMMENDED ACTIONS
+  // ==========================================================
+
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 14,
+    marginBottom: 18,
+  },
+
+  actionNumber: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: COLORS.statusText,
+    fontVariant: ["tabular-nums"],
+    minWidth: 24,
+    marginTop: 1,
+  },
+
+  actionContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  actionTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: COLORS.text,
+    lineHeight: 21,
+  },
+
+  actionExplanation: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    lineHeight: 21,
+    marginTop: 4,
+  },
+
+  // ==========================================================
+  // OTHER FINDINGS
+  // ==========================================================
+
+  findingsList: {
+    marginTop: 2,
+  },
+
+  findingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingVertical: 14,
+  },
+
+  findingRowDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.divider,
+  },
+
+  findingThumb: {
+    width: 56,
+    height: 56,
+    borderRadius: 8,
+    backgroundColor: COLORS.surfaceMuted,
+  },
+
+  findingThumbEmpty: {
     justifyContent: "center",
     alignItems: "center",
   },
 
-  aiTitle: {
-    fontSize: 12,
+  findingContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  findingTitle: {
+    fontSize: 15,
     fontWeight: "600",
-
     color: COLORS.text,
+  },
 
+  findingCrop: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginTop: 3,
+  },
+
+  // ==========================================================
+  // BOTTOM ACTION
+  // ==========================================================
+
+  bottomActionWrapper: {
+    paddingHorizontal: MARGIN,
+    paddingTop: 36,
+  },
+
+  bottomButton: {
+    height: 52,
+    borderRadius: 8,
+    backgroundColor: COLORS.black,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  bottomButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: COLORS.white,
     letterSpacing: 0.1,
   },
 
-  aiText: {
-    fontSize: 13,
-
-    color: COLORS.textSecondary,
-
-    lineHeight: 19,
-  },
-
-  aiToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-
-    alignSelf: "flex-start",
-
-    gap: 4,
-
-    marginTop: 8,
-  },
-
-  aiToggleText: {
-    fontSize: 12,
-    fontWeight: "600",
-
-    color: COLORS.green,
-  },
-
   // ==========================================================
-  // SKELETON LINES (inline card skeletons)
+  // OVERFLOW SHEET
   // ==========================================================
 
-  skeleton: {
-    gap: 6,
-    paddingTop: 2,
-  },
-
-  skeletonLine: {
-    height: 10,
-
-    borderRadius: 5,
-
-    backgroundColor: COLORS.skeletonSoft,
-  },
-
-  emptyText: {
-    fontSize: 13,
-
-    color: COLORS.textLight,
-
-    fontStyle: "italic",
-  },
-
-  // ==========================================================
-  // RECOMMENDATIONS
-  // ==========================================================
-
-  recommendationList: {
-    gap: 7,
-  },
-
-  recommendationRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-
-    gap: 9,
-  },
-
-  recommendationBullet: {
-    width: 5,
-    height: 5,
-
-    borderRadius: 2.5,
-
-    backgroundColor: COLORS.green,
-
-    marginTop: 8,
-  },
-
-  recommendationText: {
+  sheetBackdrop: {
     flex: 1,
-
-    fontSize: 13,
-
-    color: COLORS.textSecondary,
-
-    lineHeight: 19,
+    backgroundColor: COLORS.backdrop,
+    justifyContent: "flex-end",
   },
 
-  recommendationMore: {
-    fontSize: 12,
-    fontWeight: "600",
-
-    color: COLORS.green,
-
-    marginLeft: 14,
-    marginTop: 2,
-
-    opacity: 0.9,
+  sheet: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 24,
   },
 
-  // ==========================================================
-  // EVIDENCE
-  // ==========================================================
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: COLORS.divider,
+    alignSelf: "center",
+    marginBottom: 10,
+  },
 
-  evidenceCard: {
+  sheetAction: {
     flexDirection: "row",
     alignItems: "center",
-
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-
-    marginBottom: 8,
-
-    borderRadius: 12,
-
-    borderWidth: 1,
-    borderColor: COLORS.border,
-
-    backgroundColor: COLORS.surface,
-
     gap: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
   },
 
-  evidenceContent: {
-    flex: 1,
-
-    minWidth: 0,
-
-    gap: 3,
+  sheetActionDisabled: {
+    opacity: 0.4,
   },
 
-  evidenceTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-
+  sheetActionText: {
+    fontSize: 15,
+    fontWeight: "500",
     color: COLORS.text,
   },
 
-  evidenceCrop: {
-    fontSize: 12,
-
-    color: COLORS.textMuted,
+  sheetDivider: {
+    height: 1,
+    backgroundColor: COLORS.divider,
+    marginHorizontal: 16,
   },
 
-  evidenceMetaRow: {
+  // ==========================================================
+  // SKELETON DETAILS
+  // ==========================================================
+
+  skeletonActionRow: {
     flexDirection: "row",
     alignItems: "center",
-
-    gap: 6,
-
-    marginTop: 2,
+    gap: 14,
+    marginTop: 14,
   },
 
-  evidenceMeta: {
-    fontSize: 11,
-
-    color: COLORS.textMuted,
-  },
-
-  evidenceDot: {
-    width: 3,
-    height: 3,
-
-    borderRadius: 1.5,
-
-    backgroundColor: "#d1d5db",
-  },
-
-  evidenceConfidence: {
-    fontSize: 11,
-
-    color: COLORS.green,
-
-    fontWeight: "600",
-  },
-
-  // ==========================================================
-  // THUMBNAILS
-  // ==========================================================
-
-  stackContainer: {
-    position: "relative",
-
-    flexShrink: 0,
-  },
-
-  stackItem: {
-    position: "absolute",
-
-    borderRadius: 10,
-
-    overflow: "hidden",
-
-    backgroundColor: "#f3f4f6",
-
-    borderWidth: 2,
-    borderColor: COLORS.white,
-
-    justifyContent: "center",
+  skeletonFindingRow: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 14,
+    paddingVertical: 14,
   },
 
-  stackImage: {
-    width: "100%",
-    height: "100%",
-  },
-
-  stackMoreOverlay: {
-    ...StyleSheet.absoluteFill,
-
-    backgroundColor: "rgba(17, 24, 39, 0.55)",
-
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  stackMoreText: {
-    color: COLORS.white,
-
-    fontSize: 12,
-    fontWeight: "700",
-  },
-
-  // ==========================================================
-  // EMPTY
-  // ==========================================================
-
-  evidenceEmpty: {
-    paddingVertical: 24,
-
-    alignItems: "center",
-  },
-
-  evidenceEmptyText: {
-    fontSize: 13,
-
-    color: COLORS.textLight,
+  skeletonFindingContent: {
+    flex: 1,
+    minWidth: 0,
+    gap: 8,
   },
 });

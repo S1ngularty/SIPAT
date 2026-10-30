@@ -62,9 +62,20 @@ export const useDiagnosisList = () => {
 
   const refresh = useCallback(async () => {
     setIsRefreshing(true);
+    setIsLoading(true)
     setPage(1);
     await fetchAnalyses(1, true);
     setIsRefreshing(false);
+    setIsLoading(false)
+  }, [fetchAnalyses]);
+
+  /**
+   * Re-fetch the first page without toggling the loading state. Useful when a
+   * screen wants to quietly refresh on focus while keeping existing content.
+   */
+  const reload = useCallback(async () => {
+    setPage(1);
+    await fetchAnalyses(1, true);
   }, [fetchAnalyses]);
 
   const loadMore = useCallback(async () => {
@@ -131,6 +142,7 @@ export const useDiagnosisList = () => {
     isLoading,
     isRefreshing,
     refresh,
+    reload,
     loadMore,
     hasMore,
     renameAnalysis,

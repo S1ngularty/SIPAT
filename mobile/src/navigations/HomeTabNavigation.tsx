@@ -1,43 +1,35 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import {
-  View,
-  Text,
-  StyleSheet,
-  Platform,
-  TouchableOpacity,
-  ViewStyle,
-  TextStyle,
-} from "react-native";
-import {
-  Home,
   History,
   ScanLine,
   BookOpen,
   User,
-  Leaf,
   LucideIcon,
   Microscope,
 } from "lucide-react-native";
-import Animated, {
-  useAnimatedStyle,
-  withSpring,
-} from "react-native-reanimated";
+import {
+  useBottomTabBarHeight,
+  type BottomTabBarProps,
+} from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 //Screens
 import HomeScreen from "../features/home/screens/Home";
 import { DiagnosisListScreen } from "../features/diagnosis/screens/DiagnosisListScreen";
+import { BottomTabBar } from "./components/BottomTabBar";
 import { UserStackParamList } from "./UserNavigation"; // Import your stack param list
+import { colors, spacing } from "../theme";
 import AccountSettingsScreen from "../features/profile/screen/AccountSettingsScreen";
 
 // Define types for navigation
 export type TabParamList = {
   Home: undefined;
-  History: undefined;
-  Scan: undefined;
   Diagnoses: undefined;
+  Scan: undefined;
+  History: undefined;
   Profile: undefined;
 };
 
@@ -53,25 +45,13 @@ interface PlaceholderScreenProps {
   };
 }
 
-interface CustomTabIconProps {
-  route: {
-    name: keyof TabParamList;
-  };
-  focused: boolean;
-  color: string;
-  size: number;
-}
-
-interface AnimatedIconProps {
-  focused: boolean;
-  children: React.ReactNode;
-}
-
 // Placeholder Screens
 const PlaceholderScreen: React.FC<PlaceholderScreenProps> = ({ route }) => {
+  const tabBarHeight = useBottomTabBarHeight();
+
   const screenContent: Record<keyof TabParamList, ScreenContent> = {
     Home: {
-      icon: Home,
+      icon: BookOpen,
       title: "Home",
       subtitle: "Welcome to your agricultural dashboard",
     },
@@ -102,9 +82,9 @@ const PlaceholderScreen: React.FC<PlaceholderScreenProps> = ({ route }) => {
   const IconComponent: LucideIcon = content.icon;
 
   return (
-    <View style={styles.placeholderContainer}>
+    <View style={[styles.placeholderContainer, { paddingBottom: tabBarHeight }]}>
       <View style={styles.placeholderIconContainer}>
-        <IconComponent size={48} color="#4CAF50" strokeWidth={1.5} />
+        <IconComponent size={48} color={colors.green} strokeWidth={1.5} />
       </View>
       <Text style={styles.placeholderTitle}>{content.title}</Text>
       <Text style={styles.placeholderSubtitle}>{content.subtitle}</Text>
@@ -119,11 +99,12 @@ const PlaceholderScreen: React.FC<PlaceholderScreenProps> = ({ route }) => {
 const ScanPlaceholderScreen: React.FC = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<UserStackParamList>>();
+  const tabBarHeight = useBottomTabBarHeight();
 
   return (
-    <View style={styles.placeholderContainer}>
+    <View style={[styles.placeholderContainer, { paddingBottom: tabBarHeight }]}>
       <View style={styles.placeholderIconContainer}>
-        <ScanLine size={48} color="#4CAF50" strokeWidth={1.5} />
+        <ScanLine size={48} color={colors.green} strokeWidth={1.5} />
       </View>
       <Text style={styles.placeholderTitle}>Scan</Text>
       <Text style={styles.placeholderSubtitle}>
@@ -132,8 +113,10 @@ const ScanPlaceholderScreen: React.FC = () => {
       <TouchableOpacity
         style={styles.scanActionButton}
         onPress={() => navigation.navigate("VideoScanning")}
+        accessibilityRole="button"
+        accessibilityLabel="Start scanning"
       >
-        <ScanLine size={20} color="#fff" strokeWidth={2} />
+        <ScanLine size={20} color={colors.forest} strokeWidth={2} />
         <Text style={styles.scanActionButtonText}>Start Scanning</Text>
       </TouchableOpacity>
     </View>
@@ -142,71 +125,15 @@ const ScanPlaceholderScreen: React.FC = () => {
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
-const AnimatedIcon: React.FC<AnimatedIconProps> = ({ focused, children }) => {
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          scale: withSpring(focused ? 1.1 : 1, {
-            damping: 10,
-            stiffness: 150,
-          }),
-        },
-      ],
-    };
-  });
-
-  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
-};
-
-const CustomTabIcon: React.FC<CustomTabIconProps> = ({
-  route,
-  focused,
-  color,
-  size,
-}) => {
-  const icons: Record<keyof TabParamList, LucideIcon> = {
-    Home: Home,
-    History: History,
-    Scan: ScanLine,
-    Diagnoses: Microscope,
-    Profile: User,
-  };
-
-  const IconComponent: LucideIcon = icons[route.name] || Home;
-
-  return (
-    <AnimatedIcon focused={focused}>
-      <IconComponent
-        size={size}
-        color={color}
-        strokeWidth={focused ? 2.5 : 1.5}
-      />
-    </AnimatedIcon>
-  );
-};
+const renderTabBar = (props: BottomTabBarProps) => <BottomTabBar {...props} />;
 
 const HomeTabNavigator: React.FC = () => {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<UserStackParamList>>();
-
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      tabBar={renderTabBar}
+      screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#4CAF50",
-        tabBarInactiveTintColor: "#999",
-        tabBarStyle: styles.tabBar,
-        tabBarLabelStyle: styles.tabBarLabel,
-        tabBarIcon: ({ focused, color, size }) => (
-          <CustomTabIcon
-            route={route}
-            focused={focused}
-            color={color}
-            size={22}
-          />
-        ),
-      })}
+      }}
     >
       <Tab.Screen
         name="Home"
@@ -214,38 +141,19 @@ const HomeTabNavigator: React.FC = () => {
         options={{ tabBarLabel: "Home" }}
       />
       <Tab.Screen
-        name="History"
-        component={PlaceholderScreen}
-        options={{ tabBarLabel: "History" }}
+        name="Diagnoses"
+        component={DiagnosisListScreen}
+        options={{ tabBarLabel: "Diagnosis" }}
       />
       <Tab.Screen
         name="Scan"
         component={ScanPlaceholderScreen}
-        options={{
-          tabBarLabel: "Scan",
-          tabBarIcon: ({ focused }) => (
-            <AnimatedIcon focused={focused}>
-              <View
-                style={[styles.scanButton, focused && styles.scanButtonFocused]}
-              >
-                <ScanLine size={28} color="#fff" strokeWidth={2} />
-              </View>
-            </AnimatedIcon>
-          ),
-        }}
-        listeners={{
-          tabPress: (e) => {
-            // Prevent default tab navigation
-            e.preventDefault();
-            // Navigate to stack screen instead
-            navigation.navigate("VideoScanning");
-          },
-        }}
+        options={{ tabBarLabel: "Scan" }}
       />
       <Tab.Screen
-        name="Diagnoses"
-        component={DiagnosisListScreen}
-        options={{ tabBarLabel: "Diagnosis" }}
+        name="History"
+        component={PlaceholderScreen}
+        options={{ tabBarLabel: "History" }}
       />
       <Tab.Screen
         name="Profile"
@@ -256,116 +164,61 @@ const HomeTabNavigator: React.FC = () => {
   );
 };
 
-interface Styles {
-  tabBar: ViewStyle;
-  tabBarLabel: TextStyle;
-  scanButton: ViewStyle;
-  scanButtonFocused: ViewStyle;
-  placeholderContainer: ViewStyle;
-  placeholderIconContainer: ViewStyle;
-  placeholderTitle: TextStyle;
-  placeholderSubtitle: TextStyle;
-  placeholderBadge: ViewStyle;
-  placeholderBadgeText: TextStyle;
-  scanActionButton: ViewStyle;
-  scanActionButtonText: TextStyle;
-}
-
-const styles = StyleSheet.create<Styles>({
-  tabBar: {
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderTopColor: "#E0E0E0",
-    paddingTop: 8,
-    paddingBottom: Platform.OS === "ios" ? 25 : 12,
-    height: Platform.OS === "ios" ? 85 : 70,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 8,
-  },
-  tabBarLabel: {
-    fontSize: 11,
-    fontWeight: "500",
-    marginTop: 2,
-  },
-  scanButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#4CAF50",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: -25,
-    borderWidth: 4,
-    borderColor: "#F5F5F0",
-    shadowColor: "#4CAF50",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  scanButtonFocused: {
-    backgroundColor: "#2E7D32",
-    shadowOpacity: 0.5,
-  },
+const styles = StyleSheet.create({
   placeholderContainer: {
     flex: 1,
-    backgroundColor: "#F5F5F0",
+    backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",
-    padding: 20,
+    padding: spacing.xl,
   },
   placeholderIconContainer: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: "#E8F5E9",
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   placeholderTitle: {
     fontSize: 28,
     fontWeight: "600",
-    color: "#2E7D32",
-    marginBottom: 8,
+    color: colors.text,
+    marginBottom: spacing.sm,
   },
   placeholderSubtitle: {
     fontSize: 16,
-    color: "#666",
+    color: colors.textMuted,
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   placeholderBadge: {
-    backgroundColor: "#FFF3E0",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
     borderRadius: 20,
   },
   placeholderBadgeText: {
-    color: "#FF9800",
+    color: colors.textMuted,
     fontSize: 14,
     fontWeight: "500",
   },
   scanActionButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#4CAF50",
-    paddingHorizontal: 24,
+    backgroundColor: colors.lime,
+    paddingHorizontal: spacing.xxl,
     paddingVertical: 14,
     borderRadius: 25,
-    gap: 8,
+    gap: spacing.sm,
   },
   scanActionButtonText: {
-    color: "#fff",
+    color: colors.forest,
     fontSize: 16,
     fontWeight: "600",
   },
