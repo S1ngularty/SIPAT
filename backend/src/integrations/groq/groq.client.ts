@@ -668,7 +668,76 @@ IMPORTANT RULES
 `;
 
 
+const chatbotSystemPrompt = `
+Ikaw si Sipat, isang agricultural assistant ng SIPAT para sa mga magsasaka
+sa Pilipinas.
+
+Ang trabaho mo ay sumagot sa mga tanong ng user tungkol sa mga pananim,
+sakit, peste, sintomas, pag-iwas, at basic na pag-aalaga ng halaman. Puwede
+mo ring ipaliwanag ang resulta ng AI detection kapag may ibinigay na
+context tungkol sa kasalukuyang diagnosis.
+
+======================
+MGA RULES
+======================
+
+- Sumagot sa natural na Taglish na madaling maintindihan ng ordinaryong
+  magsasaka. Tagalog ang pangunahing wika, pero gamitin ang English kapag
+  mas malinaw o mas natural ito.
+- Huwag gumamit ng Markdown, bullet symbols, numbered lists, o emojis.
+  Plain text na usapan lang ang ibalik.
+- Huwag mag-imbento ng sakit, peste, sintomas, sanhi, gamot, o agricultural
+  information na hindi mo sigurado.
+- Ang AI detection results ay hindi kumpirmasyon ng diagnosis. Maging
+  malinaw tungkol sa uncertainty sa halip na manghula.
+- Kapag kulang ang information, magtanong ng isang malinaw na follow-up
+  question sa halip na magbigay ng maling sagot.
+- Huwag magbigay ng eksaktong dosage o ratio ng pesticide o chemicals.
+  Payuhan ang user na kumonsulta sa local agricultural technician para sa
+  tamang produkto at dosage.
+- Huwag banggitin na ikaw ay isang AI o language model. Huwag magpakilala
+  sa bawat sagot.
+- Panatilihing simple, direkta, at madaling basahin. Iwasan ang mahahabang
+  paliwanag kung may mas simpleng paraan.
+- Kung may ibinigay na diagnosis context, gamitin ito bilang reference pero
+  huwag baguhin ang pangalan ng detected condition.
+`;
+
+/** A single turn in a chatbot conversation. */
+export type ChatbotRole = "user" | "assistant";
+
+export interface ChatbotMessage {
+  role: ChatbotRole;
+  content: string;
+}
+
+/** Optional diagnosis snapshot the chatbot can reference in its answer. */
+export interface ChatbotContext {
+  crop?: string;
+  condition?: string;
+  summary?: string;
+  recommendations?: string[];
+}
+
+export interface ChatbotRequest {
+  /** Conversation history, oldest first. Only the latest turns are sent. */
+  messages: ChatbotMessage[];
+
+  /** Diagnosis / video context for "explain this result" style questions. */
+  context?: ChatbotContext;
+
+  temperature?: number;
+  maxCompletionTokens?: number;
+}
+
 const MAX_ATTEMPTS = 3;
+const MAX_CHATBOT_MESSAGES = 20;
+const CHATBOT_MODEL = "openai/gpt-oss-120b";
+const DEFAULT_CHATBOT_TEMPERATURE = 0.6;
+
+const EMPTY_CHATBOT_RESPONSE_PROMPT =
+  "Walang laman ang nauna mong sagot. Pakisagot muli ang huling tanong " +
+  "nang kumpleto, sa plain text, at walang Markdown.";
 
 type ChatMessage = Groq.Chat.ChatCompletionMessageParam;
 
@@ -768,6 +837,39 @@ const EMPTY_RESPONSE_PROMPT = `Walang laman ang nauna mong sagot.
 Ibalik muli ang analysis bilang VALID JSON lamang na may "summary" (string),
 "recommendations" (array ng strings), at "terms" (array ng { id, term, definition }).`;
 
+const buildChatbotSystemPrompt = (context?: ChatbotContext): string => {
+  if (!context) return chatbotSystemPrompt;
+
+  const lines: string[] = [];
+
+  if (context.crop?.trim()) lines.push(`Crop: ${context.crop.trim()}`);
+  if (context.condition?.trim())
+    lines.push(`Detected condition: ${context.condition.trim()}`);
+  if (context.summary?.trim()) lines.push(`Summary: ${context.summary.trim()}`);
+  if (context.recommendations?.length) {
+    lines.push(
+      `Recommendations: ${context.recommendations
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .join("; ")}`,
+    );
+  }
+
+  if (lines.length === 0) return chatbotSystemPrompt;
+
+  return `${chatbotSystemPrompt}
+
+======================
+CURRENT DIAGNOSIS CONTEXT
+======================
+
+Ang sumusunod ay galing sa AI detection para sa kasalukuyang video.
+Gamitin ito bilang reference kapag may tanong ang user tungkol dito.
+Huwag itong ituring na kumpirmadong diagnosis.
+
+${lines.join("\n")}`;
+};
+
 class GroqClient {
   private groq: Groq;
 
@@ -842,6 +944,70 @@ class GroqClient {
 
     console.log(
       `Groq failed to return a valid analysis after ${MAX_ATTEMPTS} attempts`,
+    );
+
+    return null;
+  };
+
+  /**
+   * Free-form, multi-turn chat completion for the chatbot feature.
+   *
+   * Unlike `getGroqChatCompletion`, this returns plain conversational text
+   * (no JSON response format) and keeps the recent conversation history so
+   * follow-up questions make sense. Returns `null` when Groq never produces
+   * a non-empty answer.
+   */
+  getChatbotCompletion = async ({
+    messages,
+    context,
+    temperature = DEFAULT_CHATBOT_TEMPERATURE,
+    maxCompletionTokens,
+  }: ChatbotRequest): Promise<string | null> => {
+    const history = messages
+      .filter((message) => message.content?.trim())
+      .slice(-MAX_CHATBOT_MESSAGES);
+
+    if (history.length === 0) {
+      console.log("Groq chatbot request has no messages to answer");
+      return null;
+    }
+
+    const chatMessages: ChatMessage[] = [
+      { role: "system", content: buildChatbotSystemPrompt(context) },
+      ...history.map((message) => ({
+        role: message.role,
+        content: message.content,
+      })),
+    ];
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      const completion = await this.groq.chat.completions.create({
+        messages: chatMessages,
+        model: CHATBOT_MODEL,
+        temperature,
+        ...(maxCompletionTokens
+          ? { max_completion_tokens: maxCompletionTokens }
+          : {}),
+      });
+
+      const responseContent = completion.choices[0]?.message.content?.trim();
+
+      if (responseContent) return responseContent;
+
+      console.log(
+        `Groq chatbot returned an empty response (attempt ${attempt}/${MAX_ATTEMPTS})`,
+      );
+
+      if (attempt < MAX_ATTEMPTS) {
+        chatMessages.push({
+          role: "user",
+          content: EMPTY_CHATBOT_RESPONSE_PROMPT,
+        });
+      }
+    }
+
+    console.log(
+      `Groq chatbot failed to return a response after ${MAX_ATTEMPTS} attempts`,
     );
 
     return null;

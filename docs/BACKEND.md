@@ -220,10 +220,16 @@ singleton.
   storage_key })` → `POST {FASTAPI_URL}/api/v1/detection/process`. Returns
   `{ success, results[] }` (raw detections) or `null` on error.
 - **`groq/groq.client.ts`** — `GroqClient.getGroqChatCompletion(detections)`
-  sends the detections to model `openai/gpt-oss-20b` with a detailed Tagalog
+  sends the detections to model `openai/gpt-oss-120b` with a detailed Tagalog
   system prompt and JSON response format, returning `{ summary,
-  recommendations[] }`. The LLM only interprets detection output; it does not
-  detect.
+  recommendations[], terms[] }`. The LLM only interprets detection output; it
+  does not detect.
+  - `getChatbotCompletion({ messages, context?, temperature?,
+    maxCompletionTokens? })` — multi-turn, free-form chat for the chatbot
+    feature. Returns plain conversational text (no JSON format), keeps the last
+    20 turns, optionally accepts a diagnosis snapshot (`crop`, `condition`,
+    `summary`, `recommendations`) as reference context, and returns `null` if
+    no non-empty answer is produced.
 
 ---
 
