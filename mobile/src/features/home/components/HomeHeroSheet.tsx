@@ -30,6 +30,7 @@ type Props = {
   avatarUrl?: string | null;
   onPressAvatar: () => void;
   onPressNotifications: () => void;
+  onPressChat: () => void;
   weather: WeatherState;
 };
 
@@ -42,6 +43,7 @@ export const HomeHeroSheet: React.FC<Props> = ({
   avatarUrl,
   onPressAvatar,
   onPressNotifications,
+  onPressChat,
   weather,
 }) => {
   return (
@@ -63,6 +65,7 @@ export const HomeHeroSheet: React.FC<Props> = ({
           avatarUrl={avatarUrl}
           onPressAvatar={onPressAvatar}
           onPressNotifications={onPressNotifications}
+          onPressChat={onPressChat}
           tone="light"
         />
 

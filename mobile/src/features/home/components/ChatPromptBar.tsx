@@ -173,7 +173,6 @@ export const ChatPromptBar: React.FC<Props> = ({
             onFocus={() => animateFocus(1)}
             onBlur={() => animateFocus(0)}
             editable={!isSending}
-            selectionColor={colors.green}
             autoCapitalize="sentences"
             accessibilityLabel="Ask the AI assistant"
           />

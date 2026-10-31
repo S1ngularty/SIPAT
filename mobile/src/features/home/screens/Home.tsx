@@ -27,6 +27,7 @@ import { AgriTipCard } from "../components/AgriTipCard";
 import { BrowseSymptoms, ExploreCropCareCard } from "../components/KnowledgeShortcuts";
 import { getWeatherState } from "../weather";
 import { useDiagnosisList } from "../../diagnosis/hooks/useDiagnosisList";
+import { useChatbot } from "../../chat/ChatProvider";
 import { getSessionTip } from "../utils/agriTips";
 import type { VideoAnalysis } from "../../diagnosis/diagnosisTypes";
 import type { TabParamList } from "../../../navigations/HomeTabNavigation";
@@ -99,6 +100,11 @@ const HomeScreen: React.FC = () => {
 
   const { analyses, isLoading, reload } = useDiagnosisList();
 
+  const {
+    isSending: isChatSending,
+    send: sendChatMessage,
+  } = useChatbot();
+
   const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
@@ -109,6 +115,10 @@ const HomeScreen: React.FC = () => {
 
   const openVideoScan = useCallback(() => {
     navigation.getParent<UserStackNavigation>()?.navigate("VideoScanning");
+  }, [navigation]);
+
+  const openChat = useCallback(() => {
+    navigation.getParent<UserStackNavigation>()?.navigate("Chat");
   }, [navigation]);
 
   const openDiagnoses = useCallback(() => {
@@ -152,15 +162,16 @@ const HomeScreen: React.FC = () => {
   }, []);
 
   /**
-   * Temporary: the assistant has a backend endpoint but no conversation screen
-   * yet, so submitting the prompt acknowledges it instead of dropping the text.
+   * Sends the prompt, then opens the conversation screen. The message is added
+   * to the shared history synchronously, so the chat screen already shows it.
    */
-  const handleChatSend = useCallback((message: string) => {
-    Alert.alert(
-      "Flora",
-      `The assistant is still being connected. You asked: "${message}"`,
-    );
-  }, []);
+  const handleChatSend = useCallback(
+    (message: string) => {
+      void sendChatMessage(message);
+      openChat();
+    },
+    [openChat, sendChatMessage],
+  );
 
   const handleChatMic = useCallback(() => {
     Alert.alert("Flora", "Voice questions are coming soon.");
@@ -213,14 +224,19 @@ const HomeScreen: React.FC = () => {
           avatarUrl={user?.imageUrl}
           onPressAvatar={() => navigation.navigate("Profile")}
           onPressNotifications={openDiagnoses}
+          onPressChat={openChat}
           weather={getWeatherState()}
         />
 
-        <ChatPromptBar onSend={handleChatSend} onPressMic={handleChatMic} />
+        <ChatPromptBar
+          onSend={handleChatSend}
+          onPressMic={handleChatMic}
+          isSending={isChatSending}
+        />
 
-        <SectionHeader title="Agri Tips" />
+        {/* <SectionHeader title="Agri Tips" />
 
-        {tip ? <AgriTipCard tip={tip} /> : null}
+        {tip ? <AgriTipCard tip={tip} /> : null} */}
 
         <SectionHeader
           title="Recent Diagnoses"
