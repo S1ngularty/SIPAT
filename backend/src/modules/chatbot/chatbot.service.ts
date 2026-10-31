@@ -50,6 +50,11 @@ export class ChatbotService {
       throw new Error("Chatbot failed to generate a response");
     }
 
-    return { role: "assistant", content };
+    return {
+      role: "assistant",
+      content: content.message,
+      highlightTerms: content.highlightTerms,
+      boldTexts: content.boldTexts,
+    };
   }
 }

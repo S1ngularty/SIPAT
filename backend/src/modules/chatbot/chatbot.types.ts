@@ -24,5 +24,10 @@ export interface SendChatbotMessageInput {
 /** A single assistant turn returned to the client. */
 export interface ChatbotReply {
   role: "assistant";
+  /** Plain conversational text, safe for the client to render. */
   content: string;
+  /** Agricultural terms the client should visually highlight. */
+  highlightTerms: string[];
+  /** Section titles / important sentences the client should bold. */
+  boldTexts: string[];
 }

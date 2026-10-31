@@ -216,9 +216,16 @@ route → controller → service → repository → model
   `groqClient.getChatbotCompletion(...)`. Throws when Groq returns no answer.
 - **Controller** — validates `messages[]` (role `user` | `assistant`, non-empty
   content), the optional diagnosis `context`, `temperature` (0–2), and
-  `maxCompletionTokens`. Responds with `{ role: "assistant", content }`.
+  `maxCompletionTokens`. Responds with
+  `{ role: "assistant", content, highlightTerms[], boldTexts[] }`.
 - **Route** — `POST /chatbot/message`, session-protected via
   `AuthMiddleware.requireSession`.
+- **Structured replies** — Groq is asked for JSON only
+  (`{ message, highlightTerms, boldTexts }`). The client parses and validates
+  it, retries up to 3 times on malformed output, and drops metadata entries
+  that do not appear verbatim in `message` before returning. Formatting
+  metadata stays client-side; the API's `messages[]` accepts only
+  `{ role, content }`.
 
 ---
 
@@ -240,11 +247,14 @@ singleton.
   recommendations[], terms[] }`. The LLM only interprets detection output; it
   does not detect.
   - `getChatbotCompletion({ messages, context?, temperature?,
-    maxCompletionTokens? })` — multi-turn, free-form chat for the chatbot
-    feature. Returns plain conversational text (no JSON format), keeps the last
-    20 turns, optionally accepts a diagnosis snapshot (`crop`, `condition`,
-    `summary`, `recommendations`) as reference context, and returns `null` if
-    no non-empty answer is produced.
+    maxCompletionTokens? })` — multi-turn chat for the chatbot feature. Uses
+    JSON response format and returns a validated
+    `{ message, highlightTerms[], boldTexts[] }`: the message must be a
+    non-empty string, metadata arrays are trimmed/de-duplicated and filtered to
+    entries that appear verbatim in the message, and malformed answers are
+    retried up to 3 times. Keeps the last 20 turns, optionally accepts a
+    diagnosis snapshot (`crop`, `condition`, `summary`, `recommendations`) as
+    reference context, and returns `null` when no valid answer is produced.
 
 ---
 

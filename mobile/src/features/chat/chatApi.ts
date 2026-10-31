@@ -19,7 +19,8 @@ class ChatbotAPI {
       {
         method: "POST",
         body: JSON.stringify({
-          messages,
+          // Formatting metadata is client-side only; the API expects turns.
+          messages: messages.map(({ role, content }) => ({ role, content })),
           ...(context ? { context } : {}),
         }),
       },

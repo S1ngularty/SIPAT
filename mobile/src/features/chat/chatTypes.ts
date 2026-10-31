@@ -4,6 +4,10 @@ export type ChatRole = "user" | "assistant";
 export interface ChatMessage {
   role: ChatRole;
   content: string;
+  /** Assistant turns only: agricultural terms to visually highlight. */
+  highlightTerms?: string[];
+  /** Assistant turns only: section titles / sentences to render bold. */
+  boldTexts?: string[];
 }
 
 /** Optional diagnosis snapshot the assistant can reference. */
@@ -18,4 +22,6 @@ export interface ChatbotContext {
 export interface ChatbotReply {
   role: "assistant";
   content: string;
+  highlightTerms: string[];
+  boldTexts: string[];
 }

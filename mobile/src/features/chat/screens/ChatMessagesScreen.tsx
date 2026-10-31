@@ -19,6 +19,7 @@ import chatQuestions from "../../../data/chat-questions.json";
 import { useRotatingQuestions } from "../../home/hooks/useRotatingQuestions";
 import { useChatbot } from "../ChatProvider";
 import { ChatComposer } from "../components/ChatComposer";
+import { RichMessageText } from "../components/RichMessageText";
 import type { ChatMessage } from "../chatTypes";
 import type { UserStackParamList } from "../../../navigations/UserNavigation";
 import { Wave } from "react-native-animated-spinkit";
@@ -30,20 +31,55 @@ type Props = NativeStackScreenProps<UserStackParamList, "Chat">;
 
 const MessageBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
   const isUser = message.role === "user";
+  const entrance = useRef(new Animated.Value(isUser ? 1 : 0)).current;
+
+  /** Assistant replies fade/slide in as they are appended to the list. */
+  useEffect(() => {
+    if (isUser) return;
+
+    Animated.timing(entrance, {
+      toValue: 1,
+      duration: 340,
+      useNativeDriver: true,
+    }).start();
+  }, [entrance, isUser]);
 
   return (
-    <View style={[styles.row, isUser ? styles.rowUser : styles.rowAssistant]}>
+    <Animated.View
+      style={[
+        styles.row,
+        isUser ? styles.rowUser : styles.rowAssistant,
+        !isUser && {
+          opacity: entrance,
+          transform: [
+            {
+              translateY: entrance.interpolate({
+                inputRange: [0, 1],
+                outputRange: [12, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
       <View
         style={[
           styles.bubble,
           isUser ? styles.userBubble : styles.assistantBubble,
         ]}
       >
-        <Text style={[styles.messageText, isUser && styles.userMessageText]}>
-          {message.content}
-        </Text>
+        <RichMessageText
+          text={message.content}
+          highlightTerms={isUser ? undefined : message.highlightTerms}
+          boldTexts={isUser ? undefined : message.boldTexts}
+          style={
+            isUser
+              ? [styles.messageText, styles.userMessageText]
+              : styles.messageText
+          }
+        />
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
