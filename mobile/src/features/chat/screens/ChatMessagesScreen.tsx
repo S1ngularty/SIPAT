@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import {
-  ActivityIndicator,
   Alert,
+  Animated,
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
@@ -15,6 +15,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Sparkles } from "lucide-react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radii, spacing } from "../../../theme";
+import chatQuestions from "../../../data/chat-questions.json";
+import { useRotatingQuestions } from "../../home/hooks/useRotatingQuestions";
 import { useChatbot } from "../ChatProvider";
 import { ChatComposer } from "../components/ChatComposer";
 import type { ChatMessage } from "../chatTypes";
@@ -22,6 +24,7 @@ import type { UserStackParamList } from "../../../navigations/UserNavigation";
 import { Wave } from "react-native-animated-spinkit";
 
 const BORDER = "#E3E8E0";
+const SUGGESTION_FILL = "#F6FAF1";
 
 type Props = NativeStackScreenProps<UserStackParamList, "Chat">;
 
@@ -73,6 +76,28 @@ const EmptyChat: React.FC = () => (
 export const ChatMessagesScreen: React.FC<Props> = ({ navigation }) => {
   const { messages, isSending, error, send, retry } = useChatbot();
   const listRef = useRef<FlatList<ChatMessage>>(null);
+  const suggestionsFade = useRef(new Animated.Value(1)).current;
+
+  /**
+   * Quick prompts docked above the composer — same rotating pool as the Home
+   * bar: a shuffled 2–4 questions, replaced every 15 s.
+   */
+  const questions = useRotatingQuestions(chatQuestions, {
+    intervalMs: 15_000,
+    minCount: 2,
+    maxCount: 4,
+  });
+
+  /** Soft swap whenever the rotating question set changes. */
+  useEffect(() => {
+    suggestionsFade.setValue(0);
+
+    Animated.timing(suggestionsFade, {
+      toValue: 1,
+      duration: 260,
+      useNativeDriver: true,
+    }).start();
+  }, [questions, suggestionsFade]);
 
   const scrollToEnd = useCallback(() => {
     listRef.current?.scrollToEnd({ animated: true });
@@ -110,7 +135,10 @@ export const ChatMessagesScreen: React.FC<Props> = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
           hitSlop={8}
-          style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.backButton,
+            pressed && styles.pressed,
+          ]}
         >
           <ArrowLeft size={22} color={colors.text} strokeWidth={2} />
         </Pressable>
@@ -167,6 +195,29 @@ export const ChatMessagesScreen: React.FC<Props> = ({ navigation }) => {
             ) : null
           }
         />
+
+        {messages.length <= 0 && (
+          <Animated.View
+            style={[styles.suggestions, { opacity: suggestionsFade }]}
+          >
+            {questions.map((question) => (
+              <Pressable
+                key={question}
+                onPress={() => handleSend(question)}
+                disabled={isSending}
+                accessibilityRole="button"
+                accessibilityLabel={question}
+                accessibilityState={{ disabled: isSending }}
+                style={({ pressed }) => [
+                  styles.suggestion,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={styles.suggestionText}>{question}</Text>
+              </Pressable>
+            ))}
+          </Animated.View>
+        )}
 
         <ChatComposer
           onSend={handleSend}
@@ -321,6 +372,31 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: colors.textMuted,
     maxWidth: 280,
+  },
+  /** Wrapping chip cloud docked above the composer. */
+  suggestions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
+  },
+  suggestion: {
+    maxWidth: "100%",
+    minHeight: 34,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: BORDER,
+    backgroundColor: SUGGESTION_FILL,
+    justifyContent: "center",
+  },
+  suggestionText: {
+    flexShrink: 1,
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.green,
   },
   pressed: {
     opacity: 0.7,

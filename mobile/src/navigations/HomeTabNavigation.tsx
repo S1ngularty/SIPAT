@@ -82,7 +82,9 @@ const PlaceholderScreen: React.FC<PlaceholderScreenProps> = ({ route }) => {
   const IconComponent: LucideIcon = content.icon;
 
   return (
-    <View style={[styles.placeholderContainer, { paddingBottom: tabBarHeight }]}>
+    <View
+      style={[styles.placeholderContainer, { paddingBottom: tabBarHeight }]}
+    >
       <View style={styles.placeholderIconContainer}>
         <IconComponent size={48} color={colors.green} strokeWidth={1.5} />
       </View>
@@ -102,7 +104,9 @@ const ScanPlaceholderScreen: React.FC = () => {
   const tabBarHeight = useBottomTabBarHeight();
 
   return (
-    <View style={[styles.placeholderContainer, { paddingBottom: tabBarHeight }]}>
+    <View
+      style={[styles.placeholderContainer, { paddingBottom: tabBarHeight }]}
+    >
       <View style={styles.placeholderIconContainer}>
         <ScanLine size={48} color={colors.green} strokeWidth={1.5} />
       </View>
@@ -138,27 +142,27 @@ const HomeTabNavigator: React.FC = () => {
       <Tab.Screen
         name="Home"
         component={HomeScreen}
-        options={{ tabBarLabel: "Home" }}
+        options={{ tabBarLabel: "Home", animation: "shift" }}
       />
       <Tab.Screen
         name="Diagnoses"
         component={DiagnosisListScreen}
-        options={{ tabBarLabel: "Diagnosis" }}
+        options={{ tabBarLabel: "Diagnosis", animation: "shift" }}
       />
       <Tab.Screen
         name="Scan"
         component={ScanPlaceholderScreen}
-        options={{ tabBarLabel: "Scan" }}
+        options={{ tabBarLabel: "Scan", animation: "shift" }}
       />
       <Tab.Screen
         name="History"
         component={PlaceholderScreen}
-        options={{ tabBarLabel: "History" }}
+        options={{ tabBarLabel: "History", animation: "shift" }}
       />
       <Tab.Screen
         name="Profile"
         component={AccountSettingsScreen}
-        options={{ tabBarLabel: "Profile" }}
+        options={{ tabBarLabel: "Profile", animation: "shift" }}
       />
     </Tab.Navigator>
   );
