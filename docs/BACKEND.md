@@ -67,6 +67,7 @@ GET  /api/v1/health          → inline health check (status, timestamp)
      /api/v1/videos          → video routes
      /api/v1/diagnosis       → diagnosis routes
      /api/v1/crop-problems   → crop problem reference routes
+     /api/v1/chatbot         → chatbot routes
 ```
 
 Each module owns its own `Router` in `<module>.route.ts`. Middleware is applied
@@ -100,6 +101,7 @@ at the router level (see §4 for auth details).
 | POST     | `/crop-problems/bulk`                 | admin       | `bulkUpsert`                         |
 | PATCH    | `/crop-problems/:identifier`          | admin       | `update`                             |
 | DELETE   | `/crop-problems/:identifier`          | admin       | `delete`                             |
+| POST     | `/chatbot/message`                    | session     | `sendMessage`                        |
 
 ---
 
@@ -205,6 +207,26 @@ route → controller → service → repository → model
   `--dry-run`, `--drop`. The admin `POST /crop-problems/bulk` endpoint runs the
   same validation path.
 
+### `modules/chatbot`
+
+- **No model/repository yet** — conversations are client-owned and sent back on
+  every request, so nothing is persisted server-side.
+- **Service** — normalizes history (trims, drops empty turns, keeps the latest
+  20), enforces a 4000-character limit per message, then calls
+  `groqClient.getChatbotCompletion(...)`. Throws when Groq returns no answer.
+- **Controller** — validates `messages[]` (role `user` | `assistant`, non-empty
+  content), the optional diagnosis `context`, `temperature` (0–2), and
+  `maxCompletionTokens`. Responds with
+  `{ role: "assistant", content, highlightTerms[], boldTexts[] }`.
+- **Route** — `POST /chatbot/message`, session-protected via
+  `AuthMiddleware.requireSession`.
+- **Structured replies** — Groq is asked for JSON only
+  (`{ message, highlightTerms, boldTexts }`). The client parses and validates
+  it, retries up to 3 times on malformed output, and drops metadata entries
+  that do not appear verbatim in `message` before returning. Formatting
+  metadata stays client-side; the API's `messages[]` accepts only
+  `{ role, content }`.
+
 ---
 
 ## 6. Integrations
@@ -220,10 +242,19 @@ singleton.
   storage_key })` → `POST {FASTAPI_URL}/api/v1/detection/process`. Returns
   `{ success, results[] }` (raw detections) or `null` on error.
 - **`groq/groq.client.ts`** — `GroqClient.getGroqChatCompletion(detections)`
-  sends the detections to model `openai/gpt-oss-20b` with a detailed Tagalog
+  sends the detections to model `openai/gpt-oss-120b` with a detailed Tagalog
   system prompt and JSON response format, returning `{ summary,
-  recommendations[] }`. The LLM only interprets detection output; it does not
-  detect.
+  recommendations[], terms[] }`. The LLM only interprets detection output; it
+  does not detect.
+  - `getChatbotCompletion({ messages, context?, temperature?,
+    maxCompletionTokens? })` — multi-turn chat for the chatbot feature. Uses
+    JSON response format and returns a validated
+    `{ message, highlightTerms[], boldTexts[] }`: the message must be a
+    non-empty string, metadata arrays are trimmed/de-duplicated and filtered to
+    entries that appear verbatim in the message, and malformed answers are
+    retried up to 3 times. Keeps the last 20 turns, optionally accepts a
+    diagnosis snapshot (`crop`, `condition`, `summary`, `recommendations`) as
+    reference context, and returns `null` when no valid answer is produced.
 
 ---
 

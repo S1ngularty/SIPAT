@@ -7,7 +7,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { Bell } from "lucide-react-native";
+import { Bell, MessageCircle } from "lucide-react-native";
 import { ProfileAvatar } from "../../../components/common/ProfileAvatar";
 import { CircularIconButton } from "../../../components/ui/CircularIconButton";
 import { colors, spacing } from "../../../theme";
@@ -17,6 +17,8 @@ type Props = {
   avatarUrl?: string | null;
   onPressAvatar: () => void;
   onPressNotifications: () => void;
+  /** Opens the Flora chat screen. Hidden when omitted. */
+  onPressChat?: () => void;
   /** "light" when placed over photography/dark surfaces, "dark" on light surfaces. */
   tone?: "light" | "dark";
   style?: StyleProp<ViewStyle>;
@@ -39,6 +41,7 @@ export const GreetingHeader: React.FC<Props> = ({
   avatarUrl,
   onPressAvatar,
   onPressNotifications,
+  onPressChat,
   tone = "dark",
   style,
 }) => {
@@ -73,13 +76,29 @@ export const GreetingHeader: React.FC<Props> = ({
         </View>
       </Pressable>
 
-      <CircularIconButton
-        onPress={onPressNotifications}
-        accessibilityLabel="View recent activity"
-        variant={onDark ? "outline" : "solid"}
-      >
-        <Bell size={20} color={colors.textOnDark} strokeWidth={1.8} />
-      </CircularIconButton>
+      <View style={styles.actions}>
+        {onPressChat ? (
+          <CircularIconButton
+            onPress={onPressChat}
+            accessibilityLabel="Open the Flora chat"
+            variant={onDark ? "outline" : "solid"}
+          >
+            <MessageCircle
+              size={20}
+              color={colors.textOnDark}
+              strokeWidth={1.8}
+            />
+          </CircularIconButton>
+        ) : null}
+
+        <CircularIconButton
+          onPress={onPressNotifications}
+          accessibilityLabel="View recent activity"
+          variant={onDark ? "outline" : "solid"}
+        >
+          <Bell size={20} color={colors.textOnDark} strokeWidth={1.8} />
+        </CircularIconButton>
+      </View>
     </View>
   );
 };
@@ -90,6 +109,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.md,
+  },
+  actions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    flexShrink: 0,
   },
   identity: {
     flexDirection: "row",

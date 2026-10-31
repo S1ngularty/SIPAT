@@ -21,11 +21,13 @@ import { ArrowRight, ScanLine, Sprout } from "lucide-react-native";
 import { colors, radii, spacing } from "../../../theme";
 import { Skeleton } from "../../../components/ui/SkeletonComponent";
 import { HomeHeroSheet } from "../components/HomeHeroSheet";
+import { ChatPromptBar } from "../components/ChatPromptBar";
 import { DiagnosisCard } from "../components/DiagnosisCard";
 import { AgriTipCard } from "../components/AgriTipCard";
 import { BrowseSymptoms, ExploreCropCareCard } from "../components/KnowledgeShortcuts";
 import { getWeatherState } from "../weather";
 import { useDiagnosisList } from "../../diagnosis/hooks/useDiagnosisList";
+import { useChatbot } from "../../chat/ChatProvider";
 import { getSessionTip } from "../utils/agriTips";
 import type { VideoAnalysis } from "../../diagnosis/diagnosisTypes";
 import type { TabParamList } from "../../../navigations/HomeTabNavigation";
@@ -98,6 +100,11 @@ const HomeScreen: React.FC = () => {
 
   const { analyses, isLoading, reload } = useDiagnosisList();
 
+  const {
+    isSending: isChatSending,
+    send: sendChatMessage,
+  } = useChatbot();
+
   const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
@@ -108,6 +115,10 @@ const HomeScreen: React.FC = () => {
 
   const openVideoScan = useCallback(() => {
     navigation.getParent<UserStackNavigation>()?.navigate("VideoScanning");
+  }, [navigation]);
+
+  const openChat = useCallback(() => {
+    navigation.getParent<UserStackNavigation>()?.navigate("Chat");
   }, [navigation]);
 
   const openDiagnoses = useCallback(() => {
@@ -148,6 +159,22 @@ const HomeScreen: React.FC = () => {
       "Browse Symptoms",
       `Possible causes of "${symptom}" — coming soon.`,
     );
+  }, []);
+
+  /**
+   * Sends the prompt, then opens the conversation screen. The message is added
+   * to the shared history synchronously, so the chat screen already shows it.
+   */
+  const handleChatSend = useCallback(
+    (message: string) => {
+      void sendChatMessage(message);
+      openChat();
+    },
+    [openChat, sendChatMessage],
+  );
+
+  const handleChatMic = useCallback(() => {
+    Alert.alert("Flora", "Voice questions are coming soon.");
   }, []);
 
   const openAllSymptoms = useCallback(() => {
@@ -197,12 +224,19 @@ const HomeScreen: React.FC = () => {
           avatarUrl={user?.imageUrl}
           onPressAvatar={() => navigation.navigate("Profile")}
           onPressNotifications={openDiagnoses}
+          onPressChat={openChat}
           weather={getWeatherState()}
         />
 
-        <SectionHeader title="Agri Tips" />
+        <ChatPromptBar
+          onSend={handleChatSend}
+          onPressMic={handleChatMic}
+          isSending={isChatSending}
+        />
 
-        {tip ? <AgriTipCard tip={tip} /> : null}
+        {/* <SectionHeader title="Agri Tips" />
+
+        {tip ? <AgriTipCard tip={tip} /> : null} */}
 
         <SectionHeader
           title="Recent Diagnoses"
