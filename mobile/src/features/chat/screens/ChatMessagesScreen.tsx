@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
@@ -14,11 +14,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Sparkles } from "lucide-react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import * as Clipboard from "expo-clipboard";
 import { colors, radii, spacing } from "../../../theme";
 import chatQuestions from "../../../data/chat-questions.json";
 import { useRotatingQuestions } from "../../home/hooks/useRotatingQuestions";
+import showToast from "../../../helper/toast";
 import { useChatbot } from "../ChatProvider";
 import { ChatComposer } from "../components/ChatComposer";
+import { HighlightActionSheet } from "../components/HighlightActionSheet";
 import { RichMessageText } from "../components/RichMessageText";
 import type { ChatMessage } from "../chatTypes";
 import type { UserStackParamList } from "../../../navigations/UserNavigation";
@@ -29,7 +32,15 @@ const SUGGESTION_FILL = "#F6FAF1";
 
 type Props = NativeStackScreenProps<UserStackParamList, "Chat">;
 
-const MessageBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
+type MessageBubbleProps = {
+  message: ChatMessage;
+  onPressHighlight: (term: string) => void;
+};
+
+const MessageBubble: React.FC<MessageBubbleProps> = ({
+  message,
+  onPressHighlight,
+}) => {
   const isUser = message.role === "user";
   const entrance = useRef(new Animated.Value(isUser ? 1 : 0)).current;
 
@@ -72,6 +83,7 @@ const MessageBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
           text={message.content}
           highlightTerms={isUser ? undefined : message.highlightTerms}
           boldTexts={isUser ? undefined : message.boldTexts}
+          onPressHighlight={isUser ? undefined : onPressHighlight}
           style={
             isUser
               ? [styles.messageText, styles.userMessageText]
@@ -113,6 +125,7 @@ export const ChatMessagesScreen: React.FC<Props> = ({ navigation }) => {
   const { messages, isSending, error, send, retry } = useChatbot();
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const suggestionsFade = useRef(new Animated.Value(1)).current;
+  const [highlightTerm, setHighlightTerm] = useState<string | null>(null);
 
   /**
    * Quick prompts docked above the composer — same rotating pool as the Home
@@ -153,6 +166,41 @@ export const ChatMessagesScreen: React.FC<Props> = ({ navigation }) => {
   const handleMicPress = useCallback(() => {
     Alert.alert("Flora", "Voice questions are coming soon.");
   }, []);
+
+  const copyTerm = useCallback(async (term: string) => {
+    try {
+      await Clipboard.setStringAsync(term);
+      showToast("success", "Copied", term);
+    } catch (error) {
+      console.error("Copy highlighted term failed:", error);
+      showToast("error", "Copy failed", "Hindi nakopya ang text.");
+    }
+  }, []);
+
+  /** Opens the custom sheet for a tapped highlighted term. */
+  const handleHighlightPress = useCallback((term: string) => {
+    setHighlightTerm(term);
+  }, []);
+
+  const closeHighlightSheet = useCallback(() => {
+    setHighlightTerm(null);
+  }, []);
+
+  const handleCopyHighlight = useCallback(
+    (term: string) => {
+      setHighlightTerm(null);
+      void copyTerm(term);
+    },
+    [copyTerm],
+  );
+
+  const handleAskHighlight = useCallback(
+    (term: string) => {
+      setHighlightTerm(null);
+      void send(`Ano ang ${term}?`);
+    },
+    [send],
+  );
 
   /** Keep the latest message visible when the keyboard opens. */
   useEffect(() => {
@@ -196,7 +244,12 @@ export const ChatMessagesScreen: React.FC<Props> = ({ navigation }) => {
           ref={listRef}
           data={messages}
           keyExtractor={(item, index) => `${item.role}-${index}`}
-          renderItem={({ item }) => <MessageBubble message={item} />}
+          renderItem={({ item }) => (
+            <MessageBubble
+              message={item}
+              onPressHighlight={handleHighlightPress}
+            />
+          )}
           contentContainerStyle={styles.messages}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -261,6 +314,14 @@ export const ChatMessagesScreen: React.FC<Props> = ({ navigation }) => {
           isSending={isSending}
         />
       </KeyboardAvoidingView>
+
+      <HighlightActionSheet
+        visible={highlightTerm !== null}
+        term={highlightTerm}
+        onClose={closeHighlightSheet}
+        onCopy={handleCopyHighlight}
+        onAsk={handleAskHighlight}
+      />
     </SafeAreaView>
   );
 };

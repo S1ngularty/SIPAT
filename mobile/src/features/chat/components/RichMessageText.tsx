@@ -8,6 +8,8 @@ type Props = {
   highlightTerms?: string[];
   /** Section titles or important sentences to render bold. */
   boldTexts?: string[];
+  /** Called when a highlighted term is tapped (Copy / Ask Flora menu). */
+  onPressHighlight?: (term: string) => void;
   style?: StyleProp<TextStyle>;
 };
 
@@ -17,12 +19,15 @@ type Mark = {
   start: number;
   end: number;
   kind: MarkKind;
+  term: string;
 };
 
 type Span = {
   text: string;
   bold: boolean;
   highlight: boolean;
+  /** Set when this slice belongs to a tappable highlight term. */
+  highlightTerm?: string;
 };
 
 /** Finds every literal occurrence of each entry inside the message. */
@@ -43,7 +48,7 @@ const collectMarks = (
     let index = text.indexOf(entry);
 
     while (index !== -1) {
-      marks.push({ start: index, end: index + entry.length, kind });
+      marks.push({ start: index, end: index + entry.length, kind, term: entry });
       index = text.indexOf(entry, index + entry.length);
     }
   }
@@ -86,15 +91,23 @@ const buildSpans = (
 
     if (end <= start) continue;
 
+    const covers = (mark: Mark) => mark.start <= start && mark.end >= end;
+    const highlights = marks.filter(
+      (mark) => mark.kind === "highlight" && covers(mark),
+    );
+    const longestHighlight = highlights.reduce<Mark | undefined>(
+      (longest, mark) =>
+        !longest || mark.end - mark.start > longest.end - longest.start
+          ? mark
+          : longest,
+      undefined,
+    );
+
     spans.push({
       text: text.slice(start, end),
-      bold: marks.some(
-        (mark) => mark.kind === "bold" && mark.start <= start && mark.end >= end,
-      ),
-      highlight: marks.some(
-        (mark) =>
-          mark.kind === "highlight" && mark.start <= start && mark.end >= end,
-      ),
+      bold: marks.some((mark) => mark.kind === "bold" && covers(mark)),
+      highlight: highlights.length > 0,
+      ...(longestHighlight ? { highlightTerm: longestHighlight.term } : {}),
     });
   }
 
@@ -110,6 +123,7 @@ export const RichMessageText: React.FC<Props> = ({
   text,
   highlightTerms,
   boldTexts,
+  onPressHighlight,
   style,
 }) => {
   const spans = useMemo(
@@ -119,14 +133,29 @@ export const RichMessageText: React.FC<Props> = ({
 
   return (
     <Text style={style}>
-      {spans.map((span, index) => (
-        <Text
-          key={index}
-          style={[span.bold && styles.bold, span.highlight && styles.highlight]}
-        >
-          {span.text}
-        </Text>
-      ))}
+      {spans.map((span, index) => {
+        const term = span.highlightTerm;
+        const handlePress =
+          term && onPressHighlight ? () => onPressHighlight(term) : undefined;
+
+        return (
+          <Text
+            key={index}
+            style={[
+              span.bold && styles.bold,
+              span.highlight && styles.highlight,
+            ]}
+            onPress={handlePress}
+            accessibilityRole={handlePress ? "button" : undefined}
+            accessibilityLabel={handlePress ? term : undefined}
+            accessibilityHint={
+              handlePress ? "Choose to copy or ask Flora about it" : undefined
+            }
+          >
+            {span.text}
+          </Text>
+        );
+      })}
     </Text>
   );
 };
@@ -140,5 +169,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: colors.green,
     backgroundColor: "#EAF3DF",
+    textDecorationLine: "underline",
+    textDecorationColor: colors.green,
   },
 });
