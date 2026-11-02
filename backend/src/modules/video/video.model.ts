@@ -47,7 +47,14 @@ const videoSchema = new Schema<Video>(
     },
     status: {
       type: String,
-      enum: ["pending_upload", "uploaded", "processing", "completed", "failed"],
+      enum: [
+        "pending_upload",
+        "uploaded",
+        "processing",
+        "completed",
+        "failed",
+        "cancelled",
+      ],
       default: "pending_upload",
       index: true,
     },

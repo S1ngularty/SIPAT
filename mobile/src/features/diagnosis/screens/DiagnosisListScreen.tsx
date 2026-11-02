@@ -30,6 +30,7 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import {
   Leaf,
   Pencil,
+  RotateCcw,
   ScanLine,
   Search,
   Trash2,
@@ -239,20 +240,28 @@ const Ripple: React.FC<RippleProps> = ({ x, y, onDone }) => {
 // ==========================================
 
 const ACTION_WIDTH = 76;
-const TOTAL_ACTIONS_WIDTH = ACTION_WIDTH * 2;
+
+/** One action revealed by swiping a row left (edit / retry / delete). */
+interface SwipeAction {
+  key: string;
+  label: string;
+  icon: React.ReactNode;
+  /** Background of the action tile; delete uses the stronger border token. */
+  backgroundColor: string;
+  onPress: () => void;
+}
 
 interface SwipeableProps {
   children: React.ReactNode;
-  onRename: () => void;
-  onDelete: () => void;
+  actions: SwipeAction[];
   onLongPress: () => void;
-  onPress: () => void;
+  /** Omitted for rows that have no detail screen (e.g. failed videos). */
+  onPress?: () => void;
 }
 
 const SwipeableRow: React.FC<SwipeableProps> = ({
   children,
-  onRename,
-  onDelete,
+  actions,
   onLongPress,
   onPress,
 }) => {
@@ -264,6 +273,10 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
     y: number;
     key: number;
   } | null>(null);
+
+  // Rows carry a different number of actions (failed/cancelled rows swap
+  // "rename" for "retry"), so the reveal distance follows the action count.
+  const actionsWidth = actions.length * ACTION_WIDTH;
 
   const springConfig = {
     damping: 30,
@@ -297,18 +310,18 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
 
       if (next > 0) {
         translateX.value = 0;
-      } else if (next < -TOTAL_ACTIONS_WIDTH - 30) {
-        translateX.value = -TOTAL_ACTIONS_WIDTH - 30;
+      } else if (next < -actionsWidth - 30) {
+        translateX.value = -actionsWidth - 30;
       } else {
         translateX.value = next;
       }
     })
     .onEnd((e) => {
       const shouldOpen =
-        translateX.value < -TOTAL_ACTIONS_WIDTH / 2 || e.velocityX < -500;
+        translateX.value < -actionsWidth / 2 || e.velocityX < -500;
 
       if (shouldOpen) {
-        translateX.value = withSpring(-TOTAL_ACTIONS_WIDTH, springConfig);
+        translateX.value = withSpring(-actionsWidth, springConfig);
         scheduleOnRN(showActions, true);
       } else {
         translateX.value = withSpring(0, springConfig);
@@ -319,7 +332,7 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
   const tapGesture = Gesture.Tap()
     .maxDuration(250)
     .onEnd((e, success) => {
-      if (!success) return;
+      if (!success || !onPress) return;
       scheduleOnRN(triggerRipple, e.x, e.y);
       scheduleOnRN(onPress);
     });
@@ -343,31 +356,24 @@ const SwipeableRow: React.FC<SwipeableProps> = ({
     <View style={styles.swipeWrapper}>
       {isRevealed && (
         <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={[styles.action, styles.actionRename]}
-            onPress={() => {
-              close();
-              onRename();
-            }}
-            activeOpacity={0.8}
-          >
-            <Pencil size={22} color={colors.text} strokeWidth={ICON_STROKE} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.action, styles.actionDelete]}
-            onPress={() => {
-              close();
-              onDelete();
-            }}
-            activeOpacity={0.8}
-          >
-            <Trash2
-              size={22}
-              color={colors.danger}
-              strokeWidth={ICON_STROKE}
-            />
-          </TouchableOpacity>
+          {actions.map((action) => (
+            <TouchableOpacity
+              key={action.key}
+              style={[
+                styles.action,
+                { backgroundColor: action.backgroundColor },
+              ]}
+              onPress={() => {
+                close();
+                action.onPress();
+              }}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={action.label}
+            >
+              {action.icon}
+            </TouchableOpacity>
+          ))}
         </View>
       )}
 
@@ -398,6 +404,7 @@ interface DiagnosisItemProps {
   onPress: (item: VideoListItem) => void;
   onRename: (item: VideoListItem) => void;
   onDelete: (item: VideoListItem) => void;
+  onRetry: (item: VideoListItem) => void;
   onOpenMenu: (item: VideoListItem) => void;
 }
 
@@ -406,6 +413,7 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
   onPress,
   onRename,
   onDelete,
+  onRetry,
   onOpenMenu,
 }) => {
   const rotation = useSharedValue(0);
@@ -414,6 +422,11 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
   const hasDiagnosis = !!diagnosis;
   const topFinding = getTopFinding(item);
   const status = item.status;
+
+  // A failed or cancelled analysis cannot make progress on its own: offer a
+  // retry plus a delete right on the row. This is also the only way to get rid
+  // of a video that never produced a diagnosis.
+  const needsRetry = status === "failed" || status === "cancelled";
 
   // A video without a diagnosis is still moving through the pipeline and gets
   // a spinner; once it has a diagnosis the card shows its confidence instead.
@@ -465,6 +478,8 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
         return "Analysis complete";
       case "failed":
         return "Analysis failed";
+      case "cancelled":
+        return "Analysis cancelled";
       default:
         return "Unknown status";
     }
@@ -476,6 +491,8 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
     switch (status) {
       case "failed":
         return colors.danger;
+      case "cancelled":
+        return colors.warning;
       default:
         return colors.textMuted;
     }
@@ -529,12 +546,6 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
           </View>
         )}
 
-        {!hasDiagnosis && status === "failed" && (
-          <View style={styles.failedCircle}>
-            <Text style={styles.failed}>!</Text>
-          </View>
-        )}
-
         {isProcessing && (
          <Swing size={28} color={colors.lime}/>
         )}
@@ -542,17 +553,55 @@ const DiagnosisItem: React.FC<DiagnosisItemProps> = ({
     </View>
   );
 
-  // Videos without a diagnosis are informational only: nothing to rename or
-  // delete yet, and tapping does nothing.
-  if (!hasDiagnosis) {
+  // Failed / cancelled rows swap the "rename" action for a "retry": they have
+  // no diagnosis to rename, and retrying is the only useful action there.
+  const actions: SwipeAction[] = [];
+
+  if (hasDiagnosis) {
+    actions.push({
+      key: "rename",
+      label: "Rename diagnosis",
+      backgroundColor: colors.surfaceMuted,
+      icon: <Pencil size={22} color={colors.text} strokeWidth={ICON_STROKE} />,
+      onPress: () => onRename(item),
+    });
+  }
+
+  if (needsRetry) {
+    actions.push({
+      key: "retry",
+      label: "Retry analysis",
+      backgroundColor: colors.surfaceMuted,
+      icon: (
+        <RotateCcw size={22} color={colors.green} strokeWidth={ICON_STROKE} />
+      ),
+      onPress: () => onRetry(item),
+    });
+  }
+
+  if (actions.length > 0) {
+    actions.push({
+      key: "delete",
+      label: "Delete video",
+      backgroundColor: colors.borderStrong,
+      icon: (
+        <Trash2 size={22} color={colors.danger} strokeWidth={ICON_STROKE} />
+      ),
+      onPress: () => onDelete(item),
+    });
+  }
+
+  // Rows still in the pipeline stay non-actionable: deleting them mid-analysis
+  // would race the worker. Only finished / failed rows can be swiped.
+  if (actions.length === 0) {
     return <View style={styles.staticWrapper}>{content}</View>;
   }
 
   return (
     <SwipeableRow
-      onPress={() => onPress(item)}
-      onRename={() => onRename(item)}
-      onDelete={() => onDelete(item)}
+      actions={actions}
+      // Only videos that already have a diagnosis have a detail screen.
+      onPress={hasDiagnosis ? () => onPress(item) : undefined}
       onLongPress={() => onOpenMenu(item)}
     >
       {content}
@@ -655,6 +704,7 @@ interface ActionSheetProps {
   onClose: () => void;
   onRename: (item: VideoListItem) => void;
   onDelete: (item: VideoListItem) => void;
+  onRetry: (item: VideoListItem) => void;
 }
 
 const ActionSheet: React.FC<ActionSheetProps> = ({
@@ -662,8 +712,11 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
   onClose,
   onRename,
   onDelete,
+  onRetry,
 }) => {
   if (!item) return null;
+
+  const needsRetry = item.status === "failed" || item.status === "cancelled";
 
   return (
     <Modal
@@ -678,17 +731,35 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
             {getDisplayName(item)}
           </Text>
 
-          <TouchableOpacity
-            style={styles.sheetAction}
-            onPress={() => {
-              onClose();
-              onRename(item);
-            }}
-            activeOpacity={0.7}
-          >
-            <Pencil size={18} color={colors.text} strokeWidth={ICON_STROKE} />
-            <Text style={styles.sheetActionText}>Rename</Text>
-          </TouchableOpacity>
+          {needsRetry ? (
+            <TouchableOpacity
+              style={styles.sheetAction}
+              onPress={() => {
+                onClose();
+                onRetry(item);
+              }}
+              activeOpacity={0.7}
+            >
+              <RotateCcw
+                size={18}
+                color={colors.green}
+                strokeWidth={ICON_STROKE}
+              />
+              <Text style={styles.sheetActionText}>Retry analysis</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.sheetAction}
+              onPress={() => {
+                onClose();
+                onRename(item);
+              }}
+              activeOpacity={0.7}
+            >
+              <Pencil size={18} color={colors.text} strokeWidth={ICON_STROKE} />
+              <Text style={styles.sheetActionText}>Rename</Text>
+            </TouchableOpacity>
+          )}
 
           <View style={styles.sheetDivider} />
 
@@ -788,6 +859,7 @@ export const DiagnosisListScreen: React.FC = () => {
     hasMore,
     renameVideo,
     deleteVideo,
+    retryVideo,
   } = useVideoList();
 
   const [activeFilter, setActiveFilter] = useState<FilterValue>("all");
@@ -848,6 +920,21 @@ export const DiagnosisListScreen: React.FC = () => {
         },
       ],
     );
+  };
+
+  /**
+   * Re-queues a failed / cancelled analysis. The row flips back to "Queued for
+   * analysis" immediately, so the poller takes over from there.
+   */
+  const handleRetry = async (item: VideoListItem) => {
+    const ok = await retryVideo(item._id);
+
+    if (!ok) {
+      Alert.alert(
+        "Couldn't retry",
+        "This video could not be queued for analysis. Please try again.",
+      );
+    }
   };
 
   const sections = useMemo(() => {
@@ -921,6 +1008,7 @@ export const DiagnosisListScreen: React.FC = () => {
             onPress={handleItemPress}
             onRename={handleOpenRename}
             onDelete={handleDelete}
+            onRetry={handleRetry}
             onOpenMenu={handleOpenMenu}
           />
         )}
@@ -963,6 +1051,7 @@ export const DiagnosisListScreen: React.FC = () => {
         onClose={() => setMenuTarget(null)}
         onRename={handleOpenRename}
         onDelete={handleDelete}
+        onRetry={handleRetry}
       />
 
       <RenameModal
@@ -1067,7 +1156,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: colors.white,
   },
-  // Non-actionable rows (videos without a diagnosis yet).
+  // Rows still in the pipeline: no swipe actions.
   staticWrapper: {
     marginHorizontal: spacing.xl,
     marginVertical: spacing.xs,
@@ -1089,12 +1178,6 @@ const styles = StyleSheet.create({
     width: ACTION_WIDTH,
     justifyContent: "center",
     alignItems: "center",
-  },
-  actionRename: {
-    backgroundColor: colors.surfaceMuted,
-  },
-  actionDelete: {
-    backgroundColor: colors.borderStrong,
   },
 
   // Item
@@ -1178,19 +1261,6 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: colors.textMuted,
     marginTop: 1,
-  },
-  failedCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: radii.pill,
-    backgroundColor: colors.surfaceMuted,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  failed: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: colors.danger,
   },
 
   // Empty

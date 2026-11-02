@@ -12,6 +12,11 @@ router.use(AuthMiddleware.requireSession);
 router.route("/").get(videoController.getVideoList);
 
 router.route("/upload").post(videoController.createVideoUpload);
+
+// Video collection: delete (any status) + retry a failed/cancelled analysis.
+router.route("/:videoId").delete(videoController.deleteVideo);
+router.route("/:videoId/retry").post(videoController.retryVideo);
+
 router
   .route("/:videoId/uploaded")
   .patch(videoController.updateVideoUploadStatus);

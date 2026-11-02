@@ -15,7 +15,8 @@ export type VideoStatus =
   | "uploaded"
   | "processing"
   | "completed"
-  | "failed";
+  | "failed"
+  | "cancelled";
 
 export interface AnalysisVideo {
   _id: string;

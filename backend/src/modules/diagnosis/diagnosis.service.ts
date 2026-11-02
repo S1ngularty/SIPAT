@@ -152,15 +152,19 @@ export class DiagnosisService {
     return { diagnosisName: name, diagnosisId: result._id };
   }
 
-  async deleteDiagnosisByVideoId(videoId: string): Promise<Diagnosis> {
-    const [diagnosisDoc, videoDoc] = await Promise.all([
-      this.diagnosisRepository.deleteByVideoId(videoId),
-      videoService.deleteVideo(String(videoId)),
-    ]);
+  /**
+   * Legacy cascade used by `DELETE /diagnosis/video/:videoId`: removes the
+   * diagnosis and the video it belongs to.
+   *
+   * Returns `null` when the video had no diagnosis (failed / cancelled videos
+   * never produce one); the video is still deleted in that case, so the call
+   * stays idempotent instead of reporting a failure after already removing it.
+   */
+  async deleteDiagnosisByVideoId(videoId: string): Promise<Diagnosis | null> {
+    const diagnosisDoc =
+      await this.diagnosisRepository.deleteByVideoId(videoId);
 
-    if (!diagnosisDoc) {
-      throw new Error("Diagnosis not found");
-    }
+    await videoService.deleteVideo(String(videoId));
 
     return diagnosisDoc;
   }

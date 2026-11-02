@@ -63,7 +63,8 @@ export interface DiagnosisVideo {
     | "uploaded"
     | "processing"
     | "completed"
-    | "failed";
+    | "failed"
+    | "cancelled";
 
   processedAt?: Date | null;
 }

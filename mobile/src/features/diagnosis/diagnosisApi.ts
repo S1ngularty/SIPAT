@@ -249,6 +249,32 @@ class DiagnosisAPI {
       method: "DELETE",
     });
   }
+
+  /**
+   * Deletes a video from the `videos` collection (any status), together with
+   * its diagnosis and its stored objects. Unlike `deleteDiagnosis` this also
+   * works for failed / cancelled videos that never produced a diagnosis.
+   * Requires a Clerk token because it hits session-guarded `DELETE /videos/:id`.
+   */
+  async deleteVideo(videoId: string, token?: string | null): Promise<void> {
+    await client.request(
+      `/api/v1/videos/${videoId}`,
+      { method: "DELETE" },
+      { token },
+    );
+  }
+
+  /**
+   * Re-queues a failed or cancelled video for AI processing. The video comes
+   * back reset to `uploaded`, so the list starts polling it again.
+   */
+  async retryVideo(videoId: string, token?: string | null): Promise<void> {
+    await client.request(
+      `/api/v1/videos/${videoId}/retry`,
+      { method: "POST" },
+      { token },
+    );
+  }
 }
 
 export const diagnosisApi = new DiagnosisAPI();
