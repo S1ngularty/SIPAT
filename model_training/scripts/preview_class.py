@@ -14,7 +14,7 @@ from PIL import Image
 # ============================================================
 
 DATASET_PATH = Path(
-    "/home/singularity/Downloads/pest_disease_datasets/set2/mainv4.5"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/main"
 )
 
 IMAGE_EXTENSIONS = {
