@@ -37,6 +37,8 @@ export interface Diagnosis {
   results: DiagnosisResult[];
   analysis: GroqAnalysis | null;
 
+  isSaved?:boolean
+
   createdAt: Date;
   updatedAt: Date;
 }

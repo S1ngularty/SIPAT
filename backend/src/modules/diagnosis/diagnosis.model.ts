@@ -103,6 +103,10 @@ const diagnosisSchema = new Schema<Diagnosis>(
         default: [],
       },
     },
+    isSaved: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
