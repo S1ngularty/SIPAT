@@ -12,6 +12,8 @@ router
   .get(diagnosisController.getByVideoId)
   .delete(diagnosisController.deleteByVideoId);
 
+router.patch("/:diagnosisId/save", diagnosisController.saveDiagnosis);
+
 router
   .route("/:diagnosisId")
   .get(diagnosisController.getById)
