@@ -93,6 +93,10 @@ export class DiagnosisService {
 
     return {
       _id: diagnosis._id,
+      ...(diagnosis.diagnosisName
+        ? { diagnosisName: diagnosis.diagnosisName }
+        : {}),
+      isSaved: diagnosis.isSaved ?? false,
       video,
       results,
       analysis: diagnosis.analysis,

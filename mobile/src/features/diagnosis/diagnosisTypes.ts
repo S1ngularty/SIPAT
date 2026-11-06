@@ -77,6 +77,8 @@ export interface VideoAnalysis {
   _id: string;
   videoId: string;
   diagnosisName?: string;
+  /** Whether the user bookmarked this diagnosis. */
+  isSaved?: boolean;
   video: AnalysisVideo;
   results: TrackResult[];
   analysis: GroqAnalysis | null;

@@ -128,25 +128,26 @@ export class DiagnosisController {
   };
 
   saveDiagnosis = async (
-    req: Request<{}, {}, {}, { diagnosisId: string; save: boolean }>,
+    req: Request<{ diagnosisId: string }, {}, { saved?: boolean }>,
     res: Response<ApiResponse<{ diagnosisId: string; saved: boolean }>>,
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const { diagnosisId, save } = req.query;
+      const { diagnosisId } = req.params;
+      const { saved } = req.body;
 
-      if (!diagnosisId || !save) {
-        throw new Error("diagsisId and save status is required");
+      if (!diagnosisId || typeof saved !== "boolean") {
+        throw new Error("diagnosisId and a boolean saved value are required");
       }
 
       const result = await this.diagnosisService.saveDiagnosis(
         diagnosisId,
-        save,
+        saved,
       );
 
       return wrapResponse("OK", 200, res, result);
     } catch (error) {
-      console.log("diagnosis renaming Error:", error);
+      console.log("diagnosis saving Error:", error);
       next(error);
     }
   };

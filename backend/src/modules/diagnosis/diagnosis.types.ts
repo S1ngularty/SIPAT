@@ -85,6 +85,9 @@ export interface DiagnosisWIthDownloadUrls {
 
   diagnosisName?: string;
 
+  /** Whether the user bookmarked this diagnosis. */
+  isSaved?: boolean;
+
   video: DiagnosisVideoWithUrls;
 
   results: (DiagnosisResult & { evidenceUrl: string })[];
