@@ -7,6 +7,7 @@ import type {
 } from "../../core/types/api.type.js";
 import { wrapResponse } from "../../core/utils/response.util.js";
 import type { DiagnosisResult, GroqAnalysis } from "./diagnosis.types.js";
+import { meta } from "zod/v4/core";
 
 export class DiagnosisController {
   constructor(private readonly diagnosisService: DiagnosisService) {}
@@ -126,6 +127,30 @@ export class DiagnosisController {
     res.status(200).json(response);
   };
 
+  saveDiagnosis = async (
+    req: Request<{}, {}, {}, { diagnosisId: string; save: boolean }>,
+    res: Response<ApiResponse<{ diagnosisId: string; saved: boolean }>>,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const { diagnosisId, save } = req.query;
+
+      if (!diagnosisId || !save) {
+        throw new Error("diagsisId and save status is required");
+      }
+
+      const result = await this.diagnosisService.saveDiagnosis(
+        diagnosisId,
+        save,
+      );
+
+      return wrapResponse("OK", 200, res, result);
+    } catch (error) {
+      console.log("diagnosis renaming Error:", error);
+      next(error);
+    }
+  };
+
   renameDiagnosis = async (
     req: Request<{ diagnosisId: string }, {}, { diagnosisName: string }>,
     res: Response<
@@ -157,9 +182,7 @@ export class DiagnosisController {
 
     if (!videoId) throw new Error("video is required");
 
-    await this.diagnosisService.deleteDiagnosisByVideoId(
-      videoId,
-    );
+    await this.diagnosisService.deleteDiagnosisByVideoId(videoId);
 
     const response: ApiResponse<null> = {
       message: "Diagnosis deleted successfully",
