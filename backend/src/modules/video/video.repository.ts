@@ -201,6 +201,27 @@ export class VideoRepository {
     ).exec();
   }
 
+  /**
+   * Status update scoped to the owner, so a retry can never reset another
+   * user's video.
+   */
+  async updateStatusByIdAndUser(
+    videoId: string,
+    userId: string,
+    { status, processedAt }: UpdateVideoStatusInput,
+  ): Promise<VideoDocument | null> {
+    return VideoModel.findOneAndUpdate(
+      { _id: videoId, userId },
+      {
+        $set: {
+          status,
+          processedAt: processedAt ?? null,
+        },
+      },
+      { returnDocument: "after", runValidators: true },
+    ).exec();
+  }
+
   async markAsProcessing(videoId: string): Promise<VideoDocument | null> {
     return VideoModel.findByIdAndUpdate(
       videoId,
@@ -270,6 +291,18 @@ export class VideoRepository {
       userId,
     }).exec();
     return result !== null;
+  }
+
+  /**
+   * Deletes an owned video and returns the removed document (needed to clean
+   * up its objects in storage). `null` when it does not exist or belongs to
+   * somebody else.
+   */
+  async deleteVideoByIdAndUser(
+    videoId: string,
+    userId: string,
+  ): Promise<VideoDocument | null> {
+    return VideoModel.findOneAndDelete({ _id: videoId, userId }).exec();
   }
 
   async deleteByUser(userId: string): Promise<number> {

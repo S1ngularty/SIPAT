@@ -146,3 +146,5 @@ export class DiagnosisRepository {
       .exec();
   }
 }
+
+export const diagnosisRepository = new DiagnosisRepository();

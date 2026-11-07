@@ -103,6 +103,58 @@ export class VideoController {
   };
 
   /**
+   * Deletes a video the signed-in user owns: the document, its diagnosis and
+   * all of its stored objects. Works for every status, so failed / cancelled
+   * videos (which never got a diagnosis) can be removed too.
+   */
+  deleteVideo = async (
+    req: Request<{ videoId: string }>,
+    res: Response<ApiResponse<{ videoId: string }>>,
+    next: NextFunction,
+  ) => {
+    try {
+      const { userId } = req.auth;
+      const { videoId } = req.params;
+
+      if (!userId) throw new Error("missing userId");
+      if (!videoId) throw new Error("Video ID is required");
+
+      await this.videoService.deleteVideoForUser(userId, videoId);
+
+      wrapResponse("Video deleted successfully", 200, res, { videoId });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Re-queues a failed or cancelled video for analysis. Responds with the
+   * video in its reset state (`uploaded`) so the client can start polling.
+   */
+  retryVideo = async (
+    req: Request<{ videoId: string }>,
+    res: Response<ApiResponse<Video>>,
+    next: NextFunction,
+  ) => {
+    try {
+      const { userId } = req.auth;
+      const { videoId } = req.params;
+
+      if (!userId) throw new Error("missing userId");
+      if (!videoId) throw new Error("Video ID is required");
+
+      const result = await this.videoService.retryVideoProcessing(
+        userId,
+        videoId,
+      );
+
+      wrapResponse("Video queued for analysis", 200, res, result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
    * Step 1 of the thumbnail flow: hand the client a presigned PUT plus the key
    * its rendered preview image must be stored at.
    */
@@ -132,8 +184,7 @@ export class VideoController {
     }
   };
 
-  /** Step 3: record the uploaded thumbnail on the video. */
-  attachThumbnail = async (
+  /** Step 3: record the uploaded thumbnail on the video. */  attachThumbnail = async (
     req: Request<{ videoId: string }, {}, AttachThumbnailInput>,
     res: Response<ApiResponse<IAttachThumbnailResponse>>,
     next: NextFunction,

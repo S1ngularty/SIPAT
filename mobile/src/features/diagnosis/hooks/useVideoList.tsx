@@ -163,7 +163,9 @@ export const useVideoList = () => {
   );
 
   /**
-   * Optimistically removes a video. Falling back to a refresh on failure.
+   * Optimistically removes a video via `DELETE /videos/:id` — the video
+   * collection endpoint, so rows without a diagnosis (failed / cancelled) can
+   * be deleted too. Falls back to a refresh on failure.
    */
   const deleteVideo = useCallback(
     async (videoId: string): Promise<boolean> => {
@@ -172,10 +174,40 @@ export const useVideoList = () => {
       setVideos((current) => current.filter((video) => video._id !== videoId));
 
       try {
-        await diagnosisApi.deleteDiagnosis(videoId);
+        const token = await getTokenRef.current();
+        await diagnosisApi.deleteVideo(videoId, token);
         return true;
       } catch (err) {
         console.error("Delete failed:", err);
+        setVideos(prev); // rollback
+        return false;
+      }
+    },
+    [videos],
+  );
+
+  /**
+   * Re-queues a failed / cancelled video. The row flips back to `uploaded`
+   * right away so the poller picks it up without a manual refresh.
+   */
+  const retryVideo = useCallback(
+    async (videoId: string): Promise<boolean> => {
+      const prev = videos;
+
+      setVideos((current) =>
+        current.map((video) =>
+          video._id === videoId
+            ? { ...video, status: "uploaded", processedAt: null }
+            : video,
+        ),
+      );
+
+      try {
+        const token = await getTokenRef.current();
+        await diagnosisApi.retryVideo(videoId, token);
+        return true;
+      } catch (err) {
+        console.error("Retry failed:", err);
         setVideos(prev); // rollback
         return false;
       }
@@ -193,5 +225,6 @@ export const useVideoList = () => {
     hasMore,
     renameVideo,
     deleteVideo,
+    retryVideo,
   };
 };

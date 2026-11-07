@@ -87,6 +87,8 @@ at the router level (see §4 for auth details).
 | DELETE   | `/users/:userId`                      | admin       | `deleteUser`                         |
 | POST     | `/videos/upload`                      | session     | `createVideoUpload`                  |
 | PATCH    | `/videos/:videoId/uploaded`           | session     | `updateVideoUploadStatus`            |
+| DELETE   | `/videos/:videoId`                    | session     | `deleteVideo`                        |
+| POST     | `/videos/:videoId/retry`              | session     | `retryVideo`                         |
 | POST     | `/diagnosis`                          | —           | `create`                             |
 | GET      | `/diagnosis/list`                     | —           | `getDiagnosisList`                   |
 | GET      | `/diagnosis/:diagnosisId`             | —           | `getById`                            |
@@ -157,7 +159,7 @@ route → controller → service → repository → model
 - **Model** `videos` — `userId`, `storageKey` (unique), `idempotencyKey`,
   `originalFileName`, `contentType`, `fileSize`, `status`, `processedAt`.
 - **Status lifecycle:** `pending_upload → uploaded → processing → completed`
-  (or `failed`).
+  (or `failed` / `cancelled`).
 - **Validation** (`validateVideoUpload`) restricts MIME types to
   `mp4`/`quicktime`/`webm` and enforces a 100 MB max.
 - **`createUpload`** validates input, checks the `Idempotency-Key`, then either
@@ -165,6 +167,13 @@ route → controller → service → repository → model
   objects are keyed as `videos/{userId}/{videoId}/{fileName}.{ext}`.
 - **`updateUploadedVideoStatus`** marks the video `uploaded` and enqueues an
   `ai-processing` job.
+- **`deleteVideo`** (route handler `deleteVideoForUser`) deletes an owned video
+  from the `videos` collection together with its diagnosis and every stored
+  object (prefix delete on `videos/{userId}/{videoId}/`). It works for any
+  status, so failed/cancelled videos with no diagnosis can be removed.
+- **`retryVideoProcessing`** accepts only `failed` / `cancelled` videos: it
+  drops any partial diagnosis, resets the status to `uploaded`, and enqueues a
+  fresh `ai-processing` job.
 - **`ai-processing.service.ts`** — the worker-side pipeline: set `processing`,
   build a download URL, call FastAPI, optionally call Groq, create the
   diagnosis, then set `completed`/`failed` (see §7).
@@ -177,6 +186,7 @@ route → controller → service → repository → model
   (`summary`, `recommendations[]`).
 - **Service** — create (rejects duplicates per video), paginated list, fetch by
   ID / video ID, update results, rename, delete by video ID (also deletes the
+  video; resolves to `null` when there is no diagnosis, e.g. a failed/cancelled
   video).
 - **Retrieval with URLs** — `getDiagnosisById` maps each result's `evidenceKey`
   and the video's `storageKey` to signed R2 download URLs before returning.

@@ -13,7 +13,8 @@ export type VideoStatus =
   | "uploaded"
   | "processing"
   | "completed"
-  | "failed";
+  | "failed"
+  | "cancelled";
 
 // ==========================================
 // DOMAIN MODEL (plain shape, not Mongoose)
