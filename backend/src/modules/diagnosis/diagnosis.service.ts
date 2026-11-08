@@ -93,6 +93,10 @@ export class DiagnosisService {
 
     return {
       _id: diagnosis._id,
+      ...(diagnosis.diagnosisName
+        ? { diagnosisName: diagnosis.diagnosisName }
+        : {}),
+      isSaved: diagnosis.isSaved ?? false,
       video,
       results,
       analysis: diagnosis.analysis,
@@ -115,6 +119,22 @@ export class DiagnosisService {
     }
 
     return diagnosis;
+  }
+
+  async saveDiagnosis(
+    diagnosisId: string,
+    flag: boolean,
+  ): Promise<{ diagnosisId: string; saved: boolean }> {
+    const diagnosis = await this.diagnosisRepository.saveDiagnosis(
+      diagnosisId,
+      flag,
+    );
+
+    if (!diagnosis) {
+      throw new Error("Diagnosis not Found");
+    }
+
+    return { diagnosisId, saved: flag };
   }
 
   /**

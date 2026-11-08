@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ import Animated, {
   useAnimatedStyle,
   withRepeat,
   withSequence,
+  withSpring,
   withTiming,
   Easing,
 } from "react-native-reanimated";
@@ -30,7 +31,9 @@ import { useDiagnosisDetail } from "../hooks/useDiagnosisDetail";
 import { useGlossary } from "../hooks/useGlossary";
 import { TermGlossaryModal } from "../components/TermGlossaryModal";
 import { TermHighlightText } from "../components/TermHighlightText";
+import { diagnosisApi } from "../diagnosisApi";
 import type { TrackResult } from "../diagnosisTypes";
+import showToast from "../../../helper/toast";
 
 // ============================================================
 // THEME
@@ -48,6 +51,8 @@ const COLORS = {
   black: "#171717",
   white: "#FFFFFF",
   danger: "#B4433A",
+  gold: "#D4AF37",
+  goldSoft: "#F5E7B8",
   backdrop: "rgba(23, 23, 23, 0.35)",
 };
 
@@ -178,6 +183,22 @@ const RefreshIcon: React.FC<IconProps> = ({
       stroke={color}
       strokeWidth="1.7"
       strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const BookmarkIcon: React.FC<IconProps & { filled?: boolean }> = ({
+  size = 20,
+  color = COLORS.text,
+  filled = false,
+}) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M6.5 4.6C6.5 3.7 7.2 3 8.1 3h7.8c.9 0 1.6.7 1.6 1.6V21l-5.5-3.6L6.5 21V4.6Z"
+      fill={filled ? color : "none"}
+      stroke={color}
+      strokeWidth="1.7"
       strokeLinejoin="round"
     />
   </Svg>
@@ -551,6 +572,94 @@ const NavBar: React.FC<NavBarProps> = ({ onBack, onMenu }) => (
 );
 
 // ============================================================
+// SAVE BUTTON
+// ============================================================
+
+interface SaveButtonProps {
+  saved: boolean;
+  disabled?: boolean;
+  onPress: () => void;
+}
+
+/**
+ * Bookmark toggle with a "pop" (springy scale) and a one-shot shine ring that
+ * expands out of the button. The animation runs on the UI thread so it stays
+ * smooth even while the save request is in flight.
+ */
+const SaveButton: React.FC<SaveButtonProps> = ({
+  saved,
+  disabled = false,
+  onPress,
+}) => {
+  const scale = useSharedValue(1);
+  const ringScale = useSharedValue(0.55);
+  const ringOpacity = useSharedValue(0);
+
+  const buttonStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const ringStyle = useAnimatedStyle(() => ({
+    opacity: ringOpacity.value,
+    transform: [{ scale: ringScale.value }],
+  }));
+
+  const playAnimation = useCallback(() => {
+    // Pop: quick squash, then an overshoot spring back to rest.
+    scale.value = withSequence(
+      withTiming(0.86, { duration: 80, easing: Easing.out(Easing.quad) }),
+      withSpring(1.2, { damping: 7, stiffness: 240, mass: 0.55 }),
+      withSpring(1, { damping: 11, stiffness: 180, mass: 0.55 }),
+    );
+
+    // Shine: a soft ring radiating outward and fading away.
+    ringScale.value = 0.55;
+    ringOpacity.value = 0.6;
+    ringScale.value = withTiming(2.15, {
+      duration: 620,
+      easing: Easing.out(Easing.cubic),
+    });
+    ringOpacity.value = withTiming(0, {
+      duration: 620,
+      easing: Easing.out(Easing.quad),
+    });
+  }, [scale, ringScale, ringOpacity]);
+
+  const handlePress = useCallback(() => {
+    if (disabled) return;
+
+    playAnimation();
+    onPress();
+  }, [disabled, onPress, playAnimation]);
+
+  return (
+    <View style={styles.saveButtonWrap}>
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.saveShineRing, ringStyle]}
+      />
+
+      <Animated.View style={buttonStyle}>
+        <TouchableOpacity
+          onPress={handlePress}
+          disabled={disabled}
+          activeOpacity={0.75}
+          style={styles.saveButton}
+          accessibilityRole="button"
+          accessibilityLabel={
+            saved ? "Remove diagnosis from saved" : "Save diagnosis"
+          }
+          accessibilityState={{ selected: saved, disabled }}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <BookmarkIcon size={28} color={COLORS.gold} filled={saved} />
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+  );
+};
+
+// ============================================================
 // OVERFLOW MENU
 // ============================================================
 
@@ -718,6 +827,14 @@ export const DiagnosisDetailScreen: React.FC = () => {
   const { activeTerm, segmentsFor, openTerm, closeTerm } = useGlossary(terms);
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [savedOverride, setSavedOverride] = useState<boolean | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Drop the optimistic value whenever a fresh diagnosis is fetched so the
+  // server remains the source of truth after a refresh.
+  useEffect(() => {
+    setSavedOverride(null);
+  }, [analysis]);
 
   const handleBack = useCallback(() => {
     navigation.goBack();
@@ -753,6 +870,9 @@ export const DiagnosisDetailScreen: React.FC = () => {
   const cropName = primary
     ? prettifyLabel(primary.crop) || "Crop not identified"
     : "Crop not identified";
+
+  /** Optimistic local value takes precedence until the next fetch. */
+  const isSaved = savedOverride ?? analysis?.isSaved ?? false;
 
   const observedText = useMemo(
     () => buildObservedSummary(primary, analysis?.analysis?.summary ?? null),
@@ -800,6 +920,39 @@ export const DiagnosisDetailScreen: React.FC = () => {
     setMenuOpen(false);
     refresh();
   }, [refresh]);
+
+  const handleToggleSave = useCallback(async () => {
+    if (!analysis?._id || isSaving) return;
+
+    const next = !isSaved;
+    const previous = isSaved;
+
+    setIsSaving(true);
+    setSavedOverride(next);
+
+    try {
+      await diagnosisApi.saveDiagnosis(analysis._id, next);
+
+      // showToast(
+      //   "success",
+      //   next ? "Diagnosis saved" : "Removed from saved",
+      //   next
+      //     ? "You can find it in your saved diagnoses."
+      //     : "This diagnosis is no longer in your saved list.",
+      // );
+    } catch (err) {
+      console.error("Failed to update saved state:", err);
+
+      setSavedOverride(previous);
+      showToast(
+        "error",
+        "Couldn't update saved diagnosis",
+        "Please check your connection and try again.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }, [analysis?._id, isSaved, isSaving]);
 
   const handleBackToHistory = useCallback(() => {
     try {
@@ -915,9 +1068,19 @@ export const DiagnosisDetailScreen: React.FC = () => {
             ) : null}
           </View>
 
-          <Text style={styles.diseaseName}>{diseaseName}</Text>
+          <View style={styles.nameRow}>
+            <View style={styles.nameBlock}>
+              <Text style={styles.diseaseName}>{diseaseName}</Text>
 
-          <Text style={styles.cropName}>{cropName}</Text>
+              <Text style={styles.cropName}>{cropName}</Text>
+            </View>
+
+            <SaveButton
+              saved={isSaved}
+              disabled={!analysis || isSaving}
+              onPress={handleToggleSave}
+            />
+          </View>
         </Animated.View>
 
         {/* ==================================================
@@ -1230,19 +1393,57 @@ const styles = StyleSheet.create({
     fontVariant: ["tabular-nums"],
   },
 
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 14,
+    marginTop: 16,
+  },
+
+  nameBlock: {
+    flex: 1,
+    minWidth: 0,
+  },
+
   diseaseName: {
     fontSize: 24,
     fontWeight: "600",
     color: COLORS.text,
     letterSpacing: -0.4,
     lineHeight: 30,
-    marginTop: 16,
   },
 
   cropName: {
     fontSize: 14,
     color: COLORS.textSecondary,
     marginTop: 4,
+  },
+
+  // ==========================================================
+  // SAVE BUTTON
+  // ==========================================================
+
+  saveButtonWrap: {
+    width: 52,
+    height: 52,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  saveShineRing: {
+    position: "absolute",
+    width: 42,
+    height: 42,
+    borderRadius: 26,
+    backgroundColor: COLORS.goldSoft,
+  },
+
+  saveButton: {
+    width: 52,
+    height: 52,
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   // ==========================================================

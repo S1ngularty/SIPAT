@@ -61,9 +61,7 @@ export class DiagnosisRepository {
     };
   }
 
-  async findByVideoId(
-    videoId: string,
-  ): Promise<Diagnosis | null> {
+  async findByVideoId(videoId: string): Promise<Diagnosis | null> {
     return DiagnosisModel.findOne({ videoId }).lean<Diagnosis>().exec();
   }
 
@@ -100,6 +98,19 @@ export class DiagnosisRepository {
       },
     )
       .lean<Diagnosis>()
+      .exec();
+  }
+
+  async saveDiagnosis(
+    diagnosisId: string,
+    flag: boolean,
+  ): Promise<Diagnosis | null> {
+    return DiagnosisModel.findByIdAndUpdate(
+      diagnosisId,
+      { isSaved: flag },
+      { new: true, runValidators: true },
+    )
+      .lean()
       .exec();
   }
 
