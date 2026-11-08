@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
-
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -8,265 +7,74 @@ import {
   StyleSheet,
   Text,
   View,
-} from "react-native";
+} from 'react-native';
 
-import {
-  AudioModule,
-  setAudioModeAsync,
-  useAudioStream,
-} from 'expo-audio';
+import { useSpeech, useSpeechRecorder } from './index';
 
-import { initWhisper, WhisperContext } from 'whisper.rn';
-
-import { downloadWhisperModel } from './speech.model';
-
-const TARGET_SAMPLE_RATE = 16000;
-
-function resampleAudio(
-  input: Float32Array,
-  originalRate: number,
-): Float32Array {
-  if (originalRate === TARGET_SAMPLE_RATE) {
-    return input;
-  }
-
-  const outputLength = Math.round(
-    input.length * TARGET_SAMPLE_RATE / originalRate,
-  );
-
-  const output = new Float32Array(outputLength);
-
-  for (let i = 0; i < outputLength; i++) {
-    const sourcePosition = i * originalRate / TARGET_SAMPLE_RATE;
-    const index = Math.floor(sourcePosition);
-    const fraction = sourcePosition - index;
-
-    const current = input[index] ?? 0;
-    const next = input[index + 1] ?? current;
-
-    output[i] = current + (next - current) * fraction;
-  }
-
-  return output;
-}
-
-// Convert Float32 samples (-1.0 ~ 1.0) to Int16 PCM (-32768 ~ 32767)
-function float32ToInt16(float32: Float32Array): Int16Array {
-  const int16 = new Int16Array(float32.length);
-  for (let i = 0; i < float32.length; i++) {
-    const s = Math.max(-1, Math.min(1, float32[i]));
-    int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-  }
-  return int16;
-}
-
+/**
+ * Developer lab for the offline speech pipeline. The model itself is prepared
+ * once at startup by `SpeechProvider`, so this screen only exercises capture.
+ */
 export default function SpeechTestScreen() {
-  const whisperRef = useRef<WhisperContext | null>(null);
+  const { status, progress, error, isReady, retry } = useSpeech();
 
-  const chunksRef = useRef<Float32Array[]>([]);
-  const recordingRef = useRef(false);
-  const totalSamplesRef = useRef(0);
-
-  const [modelLoaded, setModelLoaded] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const [downloadProgress, setDownloadProgress] = useState(0);
-  const [transcribeProgress, setTranscribeProgress] = useState(0);
+  const {
+    isRecording,
+    isTranscribing,
+    transcribeProgress,
+    durationMs,
+    startRecording,
+    stopRecording,
+    cancelRecording,
+  } = useSpeechRecorder();
 
   const [transcript, setTranscript] = useState('');
-  const [status, setStatus] = useState('Model not initialized');
 
-  // Capture mono Float32 PCM at 16 kHz.
-  const audio = useAudioStream({
-    sampleRate: TARGET_SAMPLE_RATE,
-    channels: 1,
-    encoding: 'float32',
-
-    onBuffer: ({ data }) => {
-      if (!recordingRef.current) return;
-
-      // Keep a copy because native buffers may be reused.
-      const samples = new Float32Array(data.slice(0));
-
-      chunksRef.current.push(samples);
-      totalSamplesRef.current += samples.length;
-    },
-  });
-
-  useEffect(() => {
-    return () => {
-      recordingRef.current = false;
-      audio.stream.stop();
-
-      if (whisperRef.current) {
-        void whisperRef.current.release();
-        whisperRef.current = null;
-      }
-    };
-  }, []);
-
-  // Download and initialize Whisper.
-  const initializeWhisper = async () => {
-    try {
-      setStatus('Downloading Whisper model...');
-      setDownloadProgress(0);
-
-      const modelPath = await downloadWhisperModel((progress) => {
-        setDownloadProgress(Math.round(progress * 100));
-      });
-
-      setStatus('Loading Whisper model...');
-
-      const context = await initWhisper({
-        filePath: modelPath,
-        useGpu: false,
-      });
-
-      whisperRef.current = context;
-
-      setModelLoaded(true);
-      setStatus('Whisper is ready');
-    } catch (error) {
-      console.error('Whisper initialization error:', error);
-
-      setStatus('Model initialization failed');
-
-      Alert.alert(
-        'Whisper Error',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
+  const statusText = (() => {
+    switch (status) {
+      case 'checking':
+        return 'Checking the speech model…';
+      case 'downloading':
+        return `Downloading the speech model… ${Math.round(progress * 100)}%`;
+      case 'loading':
+        return 'Loading the Whisper model…';
+      case 'ready':
+        return 'Whisper is ready';
+      case 'skipped':
+        return 'Voice input is disabled for this session';
+      case 'error':
+      default:
+        return error ?? 'Model initialization failed';
     }
-  };
+  })();
 
-  // Start microphone capture.
-  const startRecording = async () => {
+  const handleToggleRecording = useCallback(async () => {
     try {
-      if (!whisperRef.current) {
-        throw new Error('Initialize Whisper first.');
+      if (isRecording) {
+        const text = await stopRecording();
+
+        setTranscript(text || 'No speech was recognized.');
+        return;
       }
-
-      const permission =
-        await AudioModule.requestRecordingPermissionsAsync();
-
-      if (!permission.granted) {
-        throw new Error('Microphone permission was denied.');
-      }
-
-      await setAudioModeAsync({
-        allowsRecording: true,
-        playsInSilentMode: true,
-      });
-
-      chunksRef.current = [];
-      totalSamplesRef.current = 0;
 
       setTranscript('');
-      setTranscribeProgress(0);
-
-      recordingRef.current = true;
-
-      await audio.stream.start();
-
-      setIsRecording(true);
-      setStatus('Recording...');
-    } catch (error) {
-      recordingRef.current = false;
-
-      console.error('Recording error:', error);
-
-      setStatus('Recording failed');
+      await startRecording();
+    } catch (recordingError) {
+      console.error('Recording error:', recordingError);
 
       Alert.alert(
-        'Recording Error',
-        error instanceof Error ? error.message : 'Unknown error',
+        'Voice Input',
+        recordingError instanceof Error
+          ? recordingError.message
+          : 'Unknown error',
       );
     }
-  };
+  }, [isRecording, startRecording, stopRecording]);
 
-  // Stop recording and transcribe the captured samples.
-  const stopRecording = async () => {
-    try {
-      recordingRef.current = false;
-
-      const actualSampleRate = audio.stream.sampleRate;
-
-      audio.stream.stop();
-
-      setIsRecording(false);
-      setIsProcessing(true);
-
-      setStatus('Preparing audio...');
-
-      if (chunksRef.current.length === 0) {
-        throw new Error('No audio samples were captured.');
-      }
-
-      // Merge individual PCM buffers.
-      const totalLength = totalSamplesRef.current;
-      const mergedAudio = new Float32Array(totalLength);
-
-      let offset = 0;
-
-      for (const chunk of chunksRef.current) {
-        mergedAudio.set(chunk, offset);
-        offset += chunk.length;
-      }
-
-      chunksRef.current = [];
-
-      // Convert to Whisper's expected 16 kHz sample rate.
-      const processedAudio = resampleAudio(
-        mergedAudio,
-        actualSampleRate,
-      );
-
-      // Silence guard: avoid hallucinated output like "(Song)".
-      const maxAmplitude = processedAudio.reduce(
-        (max, v) => Math.max(max, Math.abs(v)),
-        0,
-      );
-
-      if (maxAmplitude < 0.001) {
-        throw new Error(
-          'Audio is essentially silent. Please record again and speak closer to the microphone.',
-        );
-      }
-
-      // Whisper expects 16-bit PCM, not float32.
-      const pcm16 = float32ToInt16(processedAudio);
-
-      setStatus('Transcribing Tagalog speech...');
-
-      const { promise } = whisperRef.current!.transcribeData(
-        pcm16.buffer as ArrayBuffer,
-        {
-          language: 'tl',
-          onProgress: (progress) => {
-            setTranscribeProgress(progress);
-          },
-        },
-      );
-
-      const { result } = await promise;
-
-      setTranscript(result);
-      setStatus('Transcription completed');
-    } catch (error) {
-      console.error('Transcription error:', error);
-
-      setStatus('Transcription failed');
-
-      Alert.alert(
-        'Transcription Error',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
-    } finally {
-      chunksRef.current = [];
-      totalSamplesRef.current = 0;
-      setIsProcessing(false);
-    }
-  };
+  const handleCancel = useCallback(() => {
+    cancelRecording();
+    setTranscript('');
+  }, [cancelRecording]);
 
   return (
     <ScrollView
@@ -284,29 +92,21 @@ export default function SpeechTestScreen() {
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Whisper Model</Text>
 
-        <Text style={styles.status}>{status}</Text>
+        <Text style={styles.status}>{statusText}</Text>
 
-        {!modelLoaded && (
-          <>
-            {downloadProgress > 0 && (
-              <Text style={styles.progress}>
-                Download: {downloadProgress}%
-              </Text>
-            )}
-
-            <Pressable
-              style={styles.primaryButton}
-              onPress={initializeWhisper}
-              disabled={isRecording || isProcessing}
-            >
-              <Text style={styles.buttonText}>
-                Initialize Whisper Base
-              </Text>
-            </Pressable>
-          </>
+        {status === 'downloading' && (
+          <Text style={styles.progress}>
+            Download: {Math.round(progress * 100)}%
+          </Text>
         )}
 
-        {modelLoaded && (
+        {status === 'error' && (
+          <Pressable style={styles.primaryButton} onPress={retry}>
+            <Text style={styles.buttonText}>Retry download</Text>
+          </Pressable>
+        )}
+
+        {isReady && (
           <Text style={styles.success}>Model loaded successfully</Text>
         )}
       </View>
@@ -317,25 +117,32 @@ export default function SpeechTestScreen() {
         <Text style={styles.sectionTitle}>Voice Recording</Text>
 
         <Text style={styles.recordingStatus}>
-          {isRecording ? '● Recording' : 'Ready'}
+          {isTranscribing
+            ? `Transcribing ${Math.round(transcribeProgress)}%`
+            : isRecording
+              ? `● Recording · ${Math.round(durationMs / 1000)}s`
+              : 'Ready'}
         </Text>
 
         <Pressable
-          style={[
-            styles.recordButton,
-            isRecording && styles.stopButton,
-          ]}
-          disabled={!modelLoaded || isProcessing}
-          onPress={isRecording ? stopRecording : startRecording}
+          style={[styles.recordButton, isRecording && styles.stopButton]}
+          disabled={!isReady || isTranscribing}
+          onPress={handleToggleRecording}
         >
           <Text style={styles.buttonText}>
-            {isRecording ? 'Stop Recording' : 'Start Recording'}
+            {isRecording ? 'Stop & Transcribe' : 'Start Recording'}
           </Text>
         </Pressable>
 
+        {isRecording && (
+          <Pressable onPress={handleCancel}>
+            <Text style={styles.cancelText}>Cancel recording</Text>
+          </Pressable>
+        )}
+
         <Text style={styles.hint}>
-          Speak naturally in Tagalog or Taglish.
-          Keep test recordings under 60 seconds.
+          Speak naturally in Tagalog or Taglish. Keep test recordings under 60
+          seconds.
         </Text>
       </View>
 
@@ -344,7 +151,7 @@ export default function SpeechTestScreen() {
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Transcription Result</Text>
 
-        {isProcessing && (
+        {isTranscribing && (
           <View style={styles.loading}>
             <ActivityIndicator size="small" color="#222" />
 
@@ -434,6 +241,11 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
+    fontWeight: '600',
+  },
+  cancelText: {
+    color: '#a52d2d',
+    fontSize: 13,
     fontWeight: '600',
   },
   hint: {

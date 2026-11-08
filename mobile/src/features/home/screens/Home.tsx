@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -20,6 +20,8 @@ import { ArrowRight, ScanLine, Sprout } from "lucide-react-native";
 
 import { colors, radii, spacing } from "../../../theme";
 import { Skeleton } from "../../../components/ui/SkeletonComponent";
+import { useSpeechRecorder } from "../../../modules/speech-recognition";
+import showToast from "../../../helper/toast";
 import { HomeHeroSheet } from "../components/HomeHeroSheet";
 import { ChatPromptBar } from "../components/ChatPromptBar";
 import { DiagnosisCard } from "../components/DiagnosisCard";
@@ -106,6 +108,31 @@ const HomeScreen: React.FC = () => {
   } = useChatbot();
 
   const [refreshing, setRefreshing] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  const {
+    isRecording,
+    isTranscribing,
+    transcribeProgress,
+    startRecording,
+    stopRecording,
+    cancelRecording,
+  } = useSpeechRecorder();
+
+  const isRecordingRef = useRef(isRecording);
+
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+  }, [isRecording]);
+
+  // Home stays mounted while other tabs are open, so stop capture on blur.
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        if (isRecordingRef.current) cancelRecording();
+      };
+    }, [cancelRecording]),
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -167,15 +194,45 @@ const HomeScreen: React.FC = () => {
    */
   const handleChatSend = useCallback(
     (message: string) => {
+      setDraft("");
       void sendChatMessage(message);
       openChat();
     },
     [openChat, sendChatMessage],
   );
 
-  const handleChatMic = useCallback(() => {
-    Alert.alert("Flora", "Voice questions are coming soon.");
-  }, []);
+  const handleChatMic = useCallback(async () => {
+    if (isTranscribing) return;
+
+    try {
+      if (isRecording) {
+        const text = await stopRecording();
+
+        if (!text) {
+          showToast(
+            "info",
+            "Voice input",
+            "No speech was recognized. Please try again.",
+          );
+          return;
+        }
+
+        setDraft((current) =>
+          current.trim().length > 0 ? `${current.trim()} ${text}` : text,
+        );
+        return;
+      }
+
+      await startRecording();
+    } catch (voiceError) {
+      console.error("Voice input failed:", voiceError);
+      showToast(
+        "error",
+        "Voice input",
+        voiceError instanceof Error ? voiceError.message : "Please try again.",
+      );
+    }
+  }, [isRecording, isTranscribing, startRecording, stopRecording]);
 
   const openAllSymptoms = useCallback(() => {
     Alert.alert(
@@ -229,9 +286,20 @@ const HomeScreen: React.FC = () => {
         />
 
         <ChatPromptBar
+          value={draft}
+          onChangeText={setDraft}
           onSend={handleChatSend}
           onPressMic={handleChatMic}
           isSending={isChatSending}
+          isRecording={isRecording}
+          isTranscribing={isTranscribing}
+          hint={
+            isRecording
+              ? "Listening… tap the mic to stop"
+              : isTranscribing
+                ? `Transcribing${transcribeProgress > 0 ? ` · ${Math.round(transcribeProgress)}%` : ""}…`
+                : "Your AI crop assistant"
+          }
         />
 
         {/* <SectionHeader title="Agri Tips" />

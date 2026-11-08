@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Animated,
   FlatList,
   Keyboard,
@@ -26,6 +25,7 @@ import { RichMessageText } from "../components/RichMessageText";
 import type { ChatMessage } from "../chatTypes";
 import type { UserStackParamList } from "../../../navigations/UserNavigation";
 import { Wave } from "react-native-animated-spinkit";
+import { useSpeechRecorder } from "../../../modules/speech-recognition";
 
 const BORDER = "#E3E8E0";
 const SUGGESTION_FILL = "#F6FAF1";
@@ -126,6 +126,15 @@ export const ChatMessagesScreen: React.FC<Props> = ({ navigation }) => {
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const suggestionsFade = useRef(new Animated.Value(1)).current;
   const [highlightTerm, setHighlightTerm] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
+
+  const {
+    isRecording,
+    isTranscribing,
+    transcribeProgress,
+    startRecording,
+    stopRecording,
+  } = useSpeechRecorder();
 
   /**
    * Quick prompts docked above the composer — same rotating pool as the Home
@@ -154,18 +163,50 @@ export const ChatMessagesScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleSend = useCallback(
     (message: string) => {
+      if (isRecording || isTranscribing) return;
+
+      setDraft("");
       void send(message);
     },
-    [send],
+    [isRecording, isTranscribing, send],
   );
 
   const handleRetry = useCallback(() => {
     void retry();
   }, [retry]);
 
-  const handleMicPress = useCallback(() => {
-    Alert.alert("Flora", "Voice questions are coming soon.");
-  }, []);
+  const handleMicPress = useCallback(async () => {
+    if (isTranscribing) return;
+
+    try {
+      if (isRecording) {
+        const text = await stopRecording();
+
+        if (!text) {
+          showToast(
+            "info",
+            "Voice input",
+            "No speech was recognized. Please try again.",
+          );
+          return;
+        }
+
+        setDraft((current) =>
+          current.trim().length > 0 ? `${current.trim()} ${text}` : text,
+        );
+        return;
+      }
+
+      await startRecording();
+    } catch (voiceError) {
+      console.error("Voice input failed:", voiceError);
+      showToast(
+        "error",
+        "Voice input",
+        voiceError instanceof Error ? voiceError.message : "Please try again.",
+      );
+    }
+  }, [isRecording, isTranscribing, startRecording, stopRecording]);
 
   const copyTerm = useCallback(async (term: string) => {
     try {
@@ -293,10 +334,12 @@ export const ChatMessagesScreen: React.FC<Props> = ({ navigation }) => {
               <Pressable
                 key={question}
                 onPress={() => handleSend(question)}
-                disabled={isSending}
+                disabled={isSending || isRecording || isTranscribing}
                 accessibilityRole="button"
                 accessibilityLabel={question}
-                accessibilityState={{ disabled: isSending }}
+                accessibilityState={{
+                  disabled: isSending || isRecording || isTranscribing,
+                }}
                 style={({ pressed }) => [
                   styles.suggestion,
                   pressed && styles.pressed,
@@ -309,9 +352,14 @@ export const ChatMessagesScreen: React.FC<Props> = ({ navigation }) => {
         )}
 
         <ChatComposer
+          value={draft}
+          onChangeText={setDraft}
           onSend={handleSend}
           onPressMic={handleMicPress}
           isSending={isSending}
+          isRecording={isRecording}
+          isTranscribing={isTranscribing}
+          transcribeProgress={transcribeProgress}
         />
       </KeyboardAvoidingView>
 

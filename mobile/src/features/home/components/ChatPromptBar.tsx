@@ -8,7 +8,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Mic, Send, Sparkles } from "lucide-react-native";
+import { Mic, Send, Sparkles, Square } from "lucide-react-native";
 import { colors, radii, spacing } from "../../../theme";
 import chatQuestions from "../../../data/chat-questions.json";
 import { useRotatingQuestions } from "../hooks/useRotatingQuestions";
@@ -22,9 +22,12 @@ const MIN_TEXT_HEIGHT = 20;
 const MAX_TEXT_HEIGHT = 100;
 
 type Props = {
+  /** Controlled draft text. */
+  value: string;
+  onChangeText: (text: string) => void;
   /** Called with the trimmed text when the user submits a question. */
   onSend: (message: string) => void;
-  /** Voice entry point — recording is not implemented yet. */
+  /** Starts/stops microphone capture. */
   onPressMic: () => void;
   /** Label shown above the bar. */
   label?: string;
@@ -38,6 +41,8 @@ type Props = {
   suggestions?: readonly string[];
   /** Shows a spinner in the send button and locks the input. */
   isSending?: boolean;
+  isRecording?: boolean;
+  isTranscribing?: boolean;
 };
 
 /**
@@ -49,6 +54,8 @@ type Props = {
  * the brand green, the fill warms slightly, and it scales up a touch.
  */
 export const ChatPromptBar: React.FC<Props> = ({
+  value,
+  onChangeText,
   onSend,
   onPressMic,
   label = "Flora",
@@ -56,8 +63,9 @@ export const ChatPromptBar: React.FC<Props> = ({
   placeholder = "Ask Flora",
   suggestions,
   isSending = false,
+  isRecording = false,
+  isTranscribing = false,
 }) => {
-  const [value, setValue] = useState("");
   const [textHeight, setTextHeight] = useState(MIN_TEXT_HEIGHT);
   const focusAnim = useRef(new Animated.Value(0)).current;
   const suggestionsFade = useRef(new Animated.Value(1)).current;
@@ -84,7 +92,12 @@ export const ChatPromptBar: React.FC<Props> = ({
     }).start();
   }, [questions, suggestionsFade]);
 
-  const canSend = value.trim().length > 0 && !isSending;
+  const canSend =
+    value.trim().length > 0 && !isSending && !isRecording && !isTranscribing;
+
+  useEffect(() => {
+    if (value.length === 0) setTextHeight(MIN_TEXT_HEIGHT);
+  }, [value]);
 
   const animateFocus = useCallback(
     (toValue: number) => {
@@ -111,15 +124,15 @@ export const ChatPromptBar: React.FC<Props> = ({
     if (!canSend) return;
 
     onSend(value.trim());
-    setValue("");
+    onChangeText("");
     setTextHeight(MIN_TEXT_HEIGHT);
   };
 
   /** Chips fill the bar and send in one tap. */
   const handleSuggestionPress = (question: string) => {
-    if (isSending) return;
+    if (isSending || isRecording || isTranscribing) return;
 
-    setValue(question);
+    onChangeText(question);
     onSend(question);
   };
 
@@ -159,8 +172,14 @@ export const ChatPromptBar: React.FC<Props> = ({
         <View style={styles.inputWrap}>
           <TextInput
             value={value}
-            onChangeText={setValue}
-            placeholder={placeholder}
+            onChangeText={onChangeText}
+            placeholder={
+              isRecording
+                ? "Listening…"
+                : isTranscribing
+                  ? "Transcribing…"
+                  : placeholder
+            }
             placeholderTextColor={colors.textMuted}
             style={[styles.input, { height: textHeight }]}
             multiline
@@ -172,7 +191,7 @@ export const ChatPromptBar: React.FC<Props> = ({
             }
             onFocus={() => animateFocus(1)}
             onBlur={() => animateFocus(0)}
-            editable={!isSending}
+            editable={!isSending && !isRecording && !isTranscribing}
             autoCapitalize="sentences"
             accessibilityLabel="Ask the AI assistant"
           />
@@ -180,12 +199,26 @@ export const ChatPromptBar: React.FC<Props> = ({
 
         <Pressable
           onPress={onPressMic}
+          disabled={isSending || isTranscribing}
           accessibilityRole="button"
-          accessibilityLabel="Ask with your voice"
+          accessibilityLabel={
+            isRecording ? "Stop voice input" : "Ask with your voice"
+          }
+          accessibilityState={{ disabled: isSending || isTranscribing }}
           hitSlop={6}
-          style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.iconButton,
+            isRecording && styles.micRecording,
+            pressed && !isSending && !isTranscribing && styles.pressed,
+          ]}
         >
-          <Mic size={19} color={colors.green} strokeWidth={2} />
+          {isTranscribing ? (
+            <ActivityIndicator size="small" color={colors.green} />
+          ) : isRecording ? (
+            <Square size={15} color={colors.danger} strokeWidth={2.4} />
+          ) : (
+            <Mic size={19} color={colors.green} strokeWidth={2} />
+          )}
         </Pressable>
 
         <Pressable
@@ -235,10 +268,12 @@ export const ChatPromptBar: React.FC<Props> = ({
             <Pressable
               key={question}
               onPress={() => handleSuggestionPress(question)}
-              disabled={isSending}
+              disabled={isSending || isRecording || isTranscribing}
               accessibilityRole="button"
               accessibilityLabel={question}
-              accessibilityState={{ disabled: isSending }}
+              accessibilityState={{
+                disabled: isSending || isRecording || isTranscribing,
+              }}
               style={({ pressed }) => [
                 styles.suggestion,
                 pressed && styles.pressed,
@@ -318,6 +353,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
+  },
+  micRecording: {
+    backgroundColor: "rgba(180, 67, 58, 0.12)",
   },
   sendButton: {
     width: 38,

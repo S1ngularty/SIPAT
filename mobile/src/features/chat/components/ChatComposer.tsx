@@ -1,6 +1,13 @@
-import React, { useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
-import { Mic, Send } from "lucide-react-native";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { Mic, Send, Square } from "lucide-react-native";
 import { colors, radii, spacing } from "../../../theme";
 
 const BORDER = "#E3E8E0";
@@ -10,39 +17,77 @@ const MIN_TEXT_HEIGHT = 20;
 const MAX_TEXT_HEIGHT = 100;
 
 type Props = {
+  value: string;
+  onChangeText: (text: string) => void;
   onSend: (message: string) => void;
-  /** Voice entry point — recording is not implemented yet. */
-  onPressMic?: () => void;
+  /** Starts/stops the microphone capture. */
+  onPressMic: () => void;
   isSending?: boolean;
+  isRecording?: boolean;
+  isTranscribing?: boolean;
+  /** Whisper progress, 0–100. */
+  transcribeProgress?: number;
 };
 
-/** Bottom composer for the chat screen. */
+/** Bottom composer for the chat screen, including voice input state. */
 export const ChatComposer: React.FC<Props> = ({
+  value,
+  onChangeText,
   onSend,
   onPressMic,
   isSending = false,
+  isRecording = false,
+  isTranscribing = false,
+  transcribeProgress = 0,
 }) => {
-  const [value, setValue] = useState("");
   const [textHeight, setTextHeight] = useState(MIN_TEXT_HEIGHT);
 
-  const canSend = value.trim().length > 0 && !isSending;
+  const isBusy = isSending || isTranscribing;
+
+  const canSend =
+    value.trim().length > 0 && !isBusy && !isRecording;
+
+  // Collapse the field back to one line when the draft is cleared.
+  useEffect(() => {
+    if (value.length === 0) setTextHeight(MIN_TEXT_HEIGHT);
+  }, [value]);
 
   const handleSend = () => {
     if (!canSend) return;
 
     onSend(value.trim());
-    setValue("");
+    onChangeText("");
     setTextHeight(MIN_TEXT_HEIGHT);
   };
 
+  const progressLabel =
+    transcribeProgress > 0 ? ` · ${Math.round(transcribeProgress)}%` : "";
+
   return (
     <View style={styles.wrapper}>
+      {(isRecording || isTranscribing) && (
+        <View style={styles.voiceRow}>
+          {isTranscribing ? (
+            <ActivityIndicator size="small" color={colors.green} />
+          ) : (
+            <View style={styles.recordingDot} />
+          )}
+          <Text style={styles.voiceText}>
+            {isTranscribing
+              ? `Transcribing${progressLabel}…`
+              : "Listening… tap the mic to stop"}
+          </Text>
+        </View>
+      )}
+
       <View style={styles.bar}>
         <View style={styles.inputWrap}>
           <TextInput
             value={value}
-            onChangeText={setValue}
-            placeholder="Message Flora..."
+            onChangeText={onChangeText}
+            placeholder={
+              isRecording ? "Listening…" : isTranscribing ? "Transcribing…" : "Message Flora..."
+            }
             placeholderTextColor={colors.textMuted}
             style={[styles.input, { height: textHeight }]}
             multiline
@@ -58,19 +103,33 @@ export const ChatComposer: React.FC<Props> = ({
               setTextHeight((current) => (current === next ? current : next));
             }}
             selectionColor={colors.green}
+            editable={!isRecording && !isTranscribing}
             accessibilityLabel="Message Flora"
           />
         </View>
 
         <Pressable
           onPress={onPressMic}
+          disabled={isBusy}
           accessibilityRole="button"
-          accessibilityLabel="Ask with your voice"
-          accessibilityState={{ disabled: !onPressMic }}
+          accessibilityLabel={
+            isRecording ? "Stop voice input" : "Ask with your voice"
+          }
+          accessibilityState={{ disabled: isBusy }}
           hitSlop={6}
-          style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.iconButton,
+            isRecording && styles.micRecording,
+            pressed && !isBusy && styles.pressed,
+          ]}
         >
-          <Mic size={19} color={colors.green} strokeWidth={2} />
+          {isTranscribing ? (
+            <ActivityIndicator size="small" color={colors.green} />
+          ) : isRecording ? (
+            <Square size={15} color={colors.danger} strokeWidth={2.4} />
+          ) : (
+            <Mic size={19} color={colors.green} strokeWidth={2} />
+          )}
         </Pressable>
 
         <Pressable
@@ -103,6 +162,24 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
     backgroundColor: colors.white,
+    gap: spacing.sm,
+  },
+  voiceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  recordingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: radii.pill,
+    backgroundColor: colors.danger,
+  },
+  voiceText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.textMuted,
   },
   bar: {
     flexDirection: "row",
@@ -139,6 +216,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
+  },
+  micRecording: {
+    backgroundColor: "rgba(180, 67, 58, 0.12)",
   },
   sendButton: {
     width: 38,
