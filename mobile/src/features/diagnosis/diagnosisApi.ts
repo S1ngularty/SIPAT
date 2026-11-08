@@ -244,6 +244,25 @@ class DiagnosisAPI {
     return response.result;
   }
 
+  /**
+   * Bookmark or un-bookmark a diagnosis.
+   *   PATCH /api/v1/diagnosis/:diagnosisId/save   body: { saved: boolean }
+   */
+  async saveDiagnosis(
+    diagnosisId: string,
+    saved: boolean,
+  ): Promise<{ diagnosisId: string; saved: boolean }> {
+    const response = await client.request<{
+      diagnosisId: string;
+      saved: boolean;
+    }>(`/api/v1/diagnosis/${diagnosisId}/save`, {
+      method: "PATCH",
+      body: JSON.stringify({ saved }),
+    });
+
+    return response.result;
+  }
+
   async deleteDiagnosis(videoId: string): Promise<void> {
     await client.request(`/api/v1/diagnosis/video/${videoId}`, {
       method: "DELETE",

@@ -37,6 +37,8 @@ export interface Diagnosis {
   results: DiagnosisResult[];
   analysis: GroqAnalysis | null;
 
+  isSaved?:boolean
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -82,6 +84,9 @@ export interface DiagnosisWIthDownloadUrls {
   _id: Types.ObjectId;
 
   diagnosisName?: string;
+
+  /** Whether the user bookmarked this diagnosis. */
+  isSaved?: boolean;
 
   video: DiagnosisVideoWithUrls;
 
