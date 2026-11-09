@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Alert,
   Pressable,
@@ -26,7 +32,10 @@ import { HomeHeroSheet } from "../components/HomeHeroSheet";
 import { ChatPromptBar } from "../components/ChatPromptBar";
 import { DiagnosisCard } from "../components/DiagnosisCard";
 import { AgriTipCard } from "../components/AgriTipCard";
-import { BrowseSymptoms, ExploreCropCareCard } from "../components/KnowledgeShortcuts";
+import {
+  BrowseSymptoms,
+  ExploreCropCareCard,
+} from "../components/KnowledgeShortcuts";
 import { getWeatherState } from "../weather";
 import { useDiagnosisList } from "../../diagnosis/hooks/useDiagnosisList";
 import { useChatbot } from "../../chat/ChatProvider";
@@ -102,10 +111,7 @@ const HomeScreen: React.FC = () => {
 
   const { analyses, isLoading, reload } = useDiagnosisList();
 
-  const {
-    isSending: isChatSending,
-    send: sendChatMessage,
-  } = useChatbot();
+  const { isSending: isChatSending, send: sendChatMessage } = useChatbot();
 
   const [refreshing, setRefreshing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -217,9 +223,14 @@ const HomeScreen: React.FC = () => {
           return;
         }
 
-        setDraft((current) =>
-          current.trim().length > 0 ? `${current.trim()} ${text}` : text,
-        );
+        const newText =
+          draft.trim().length > 0 ? `${draft.trim()} ${text}` : text;
+
+        setDraft(newText);
+        void sendChatMessage(newText);
+        setDraft("");
+        openChat();
+
         return;
       }
 
@@ -235,10 +246,7 @@ const HomeScreen: React.FC = () => {
   }, [isRecording, isTranscribing, startRecording, stopRecording]);
 
   const openAllSymptoms = useCallback(() => {
-    Alert.alert(
-      "Browse Symptoms",
-      "The full symptom list is coming soon.",
-    );
+    Alert.alert("Browse Symptoms", "The full symptom list is coming soon.");
   }, []);
 
   const displayName =

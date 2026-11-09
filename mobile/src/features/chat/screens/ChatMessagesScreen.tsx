@@ -191,9 +191,12 @@ export const ChatMessagesScreen: React.FC<Props> = ({ navigation }) => {
           return;
         }
 
-        setDraft((current) =>
-          current.trim().length > 0 ? `${current.trim()} ${text}` : text,
-        );
+        const newText =
+          draft.trim().length > 0 ? `${draft.trim()} ${text}` : text;
+        setDraft(newText);
+
+        setDraft("");
+        void send(newText);
         return;
       }
 
