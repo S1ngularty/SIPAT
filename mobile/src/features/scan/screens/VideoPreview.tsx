@@ -18,6 +18,10 @@ import {
   ScanLine,
   Save,
   Leaf,
+  CircleAlert,
+  Mic,
+  MicOff,
+  RefreshCw,
 } from "lucide-react-native";
 import { formatTime } from "../../../utils/formatTime";
 import usePreview from "../hooks/usePreview";
@@ -43,6 +47,12 @@ const VideoPreviewScreen = () => {
     videoUri,
     thumbnailUri,
     navigation,
+
+    transcriptionStatus,
+    transcriptionError,
+    recordTranscription,
+    transcribeProgress,
+    retryTranscription,
 
     handlePlayPause,
     handleRecapture,
@@ -186,6 +196,81 @@ const VideoPreviewScreen = () => {
           </View>
         )}
       </View>
+
+      {/* Voice note / transcription status */}
+      {transcriptionStatus !== "idle" && (
+        <Animated.View
+          entering={FadeInUp.duration(300)}
+          style={[
+            styles.transcriptionCard,
+            transcriptionStatus === "error" && styles.transcriptionCardError,
+          ]}
+        >
+          {transcriptionStatus === "extracting" ||
+          transcriptionStatus === "transcribing" ? (
+            <View style={styles.transcriptionRow}>
+              <ActivityIndicator size="small" color={colors.green} />
+              <Text style={styles.transcriptionStatusText}>
+                {transcriptionStatus === "extracting"
+                  ? "Extracting audio…"
+                  : `Transcribing voice note${
+                      transcribeProgress > 0
+                        ? ` · ${Math.round(transcribeProgress)}%`
+                        : "…"
+                    }`}
+              </Text>
+            </View>
+          ) : transcriptionStatus === "unavailable" ? (
+            <View style={styles.transcriptionRow}>
+              <MicOff
+                size={16}
+                color={colors.textMuted}
+                strokeWidth={ICON_STROKE}
+              />
+              <Text style={styles.transcriptionStatusText}>
+                {transcriptionError ?? "No voice note in this clip."}
+              </Text>
+            </View>
+          ) : transcriptionStatus === "done" ? (
+            <View style={styles.transcriptionRow}>
+              <Mic size={16} color={colors.green} strokeWidth={ICON_STROKE} />
+              <Text style={styles.transcriptionText} numberOfLines={3}>
+                {recordTranscription || "No speech detected in this clip."}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.transcriptionErrorRow}>
+              <CircleAlert
+                size={16}
+                color={colors.danger}
+                strokeWidth={ICON_STROKE}
+              />
+              <View style={styles.transcriptionErrorBody}>
+                <Text style={styles.transcriptionErrorTitle}>
+                  Voice note unavailable
+                </Text>
+                <Text style={styles.transcriptionErrorText} numberOfLines={4}>
+                  {transcriptionError ?? "Unknown transcription error."}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={retryTranscription}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Retry voice transcription"
+              >
+                <RefreshCw
+                  size={13}
+                  color={colors.green}
+                  strokeWidth={ICON_STROKE}
+                />
+                <Text style={styles.retryText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </Animated.View>
+      )}
 
       {/* Action Buttons */}
       <Animated.View
@@ -401,6 +486,72 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
     fontVariant: ["tabular-nums"],
+  },
+
+  // Voice note / transcription card
+  transcriptionCard: {
+    marginHorizontal: spacing.xl,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+  },
+  transcriptionCardError: {
+    borderColor: colors.danger,
+  },
+  transcriptionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  transcriptionStatusText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.textMuted,
+  },
+  transcriptionText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.text,
+  },
+  transcriptionErrorRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.sm,
+  },
+  transcriptionErrorBody: {
+    flex: 1,
+    gap: 2,
+  },
+  transcriptionErrorTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.danger,
+  },
+  transcriptionErrorText: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: colors.textMuted,
+  },
+  retryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.pill,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+  },
+  retryText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.green,
   },
 
   // Actions

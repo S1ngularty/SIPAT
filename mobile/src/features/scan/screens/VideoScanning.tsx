@@ -53,7 +53,8 @@ const VideoScanningScreen = () => {
   const handleVideoReady = useCallback(
     (uri: string) => {
       console.log("Video ready for processing:", uri);
-      navigation.navigate("VideoPreview", { videoUri: uri });
+      // Gallery videos may already contain a voice track, so always try.
+      navigation.navigate("VideoPreview", { videoUri: uri, micEnabled: true });
     },
     [navigation],
   );

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import Animated, {
   useAnimatedStyle,
   withTiming,
@@ -16,8 +16,20 @@ import { File } from "expo-file-system";
 import { useAuth } from "@clerk/expo";
 import * as Crypto from "expo-crypto";
 import * as VideoThumbnails from "expo-video-thumbnails";
+import {
+  extractVideoAudio,
+  useSpeechRecorder,
+} from "../../../modules/speech-recognition/index";
 
 type VideoScanningRouteProp = RouteProp<UserStackParamList, "VideoPreview">;
+
+export type PreviewTranscriptionStatus =
+  | "idle"
+  | "extracting"
+  | "transcribing"
+  | "done"
+  | "unavailable"
+  | "error";
 
 /** `expo-video-thumbnails` always renders a JPEG. */
 const THUMBNAIL_CONTENT_TYPE = "image/jpeg";
@@ -44,8 +56,11 @@ export default function usePreview() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<VideoScanningRouteProp>();
   const videoUri = route.params?.videoUri;
+  const micEnabled = route.params?.micEnabled;
 
   const { getToken, isLoaded, isSignedIn } = useAuth();
+
+  const { transcribeAudio, transcribeProgress } = useSpeechRecorder();
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,6 +69,13 @@ export default function usePreview() {
   const [hasEnded, setHasEnded] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [transcriptionStatus, setTranscriptionStatus] =
+    useState<PreviewTranscriptionStatus>("idle");
+  const [transcriptionError, setTranscriptionError] = useState<string | null>(
+    null,
+  );
+  const [recordTranscription, setRecordTranscription] = useState("");
+  const [transcriptionAttempt, setTranscriptionAttempt] = useState(0);
   const [thumbnailUri, setThumbnailUri] = useState<string | null>(null);
 
   const uploadIdRef = useRef<string | null>(null);
@@ -68,6 +90,92 @@ export default function usePreview() {
   const isPlayerValid = useRef(true);
   // Use a ref to track if component is mounted
   const isMounted = useRef(true);
+
+  // Extract the WAV, transcribe it, and keep the real failure around so the
+  // preview can display it. The previous implementation swallowed both errors
+  // and silently produced no transcript.
+  useEffect(() => {
+    if (!videoUri) return;
+
+    console.log("[video-audio] preview start", { videoUri, micEnabled });
+
+    // The recorder defaults to muted. Don't attempt extraction on a clip that
+    // was explicitly recorded without a microphone track; explain it instead.
+    if (micEnabled === false) {
+      setTranscriptionStatus("unavailable");
+      setTranscriptionError(
+        "The microphone was muted when this clip was recorded, so there is no voice note to transcribe.",
+      );
+      setRecordTranscription("");
+      return;
+    }
+
+    let cancelled = false;
+    let audioUri: string | null = null;
+
+    async function extractAndTranscribe() {
+      setTranscriptionStatus("extracting");
+      setTranscriptionError(null);
+      setRecordTranscription("");
+
+      try {
+        audioUri = await extractVideoAudio(videoUri);
+
+        if (cancelled) return;
+
+        setTranscriptionStatus("transcribing");
+
+        const transcription = await transcribeAudio(audioUri);
+
+        if (cancelled) return;
+
+        setRecordTranscription(transcription);
+        setTranscriptionStatus("done");
+      } catch (error) {
+        if (cancelled) return;
+
+        const message =
+          error instanceof Error ? error.message : String(error);
+
+        console.error("[video-audio] preview transcription failed:", error);
+
+        setTranscriptionError(message);
+        setTranscriptionStatus("error");
+      } finally {
+        if (audioUri) {
+          try {
+            new File(audioUri).delete();
+          } catch (cleanupError) {
+            console.warn(
+              "[video-audio] failed to delete temporary audio:",
+              cleanupError,
+            );
+          }
+        }
+      }
+    }
+
+    void extractAndTranscribe();
+
+    return () => {
+      cancelled = true;
+
+      if (audioUri) {
+        try {
+          new File(audioUri).delete();
+        } catch (cleanupError) {
+          console.warn(
+            "[video-audio] failed to delete temporary audio:",
+            cleanupError,
+          );
+        }
+      }
+    };
+  }, [micEnabled, transcribeAudio, transcriptionAttempt, videoUri]);
+
+  const retryTranscription = useCallback(() => {
+    setTranscriptionAttempt((attempt) => attempt + 1);
+  }, []);
 
   useEffect(() => {
     if (!videoUri) return;
@@ -424,6 +532,12 @@ export default function usePreview() {
     videoUri,
     thumbnailUri,
     navigation,
+
+    transcriptionStatus,
+    transcriptionError,
+    recordTranscription,
+    transcribeProgress,
+    retryTranscription,
 
     handlePlayPause,
     handleRecapture,

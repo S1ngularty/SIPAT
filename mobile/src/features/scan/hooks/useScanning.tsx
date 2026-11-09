@@ -74,7 +74,10 @@ export default function useScanning() {
           // Handle recorded video
           console.log("Video recorded:", video.uri);
           showToast("success", "", "Video recorded successfully!");
-          navigation.navigate("VideoPreview", { videoUri: video.uri });
+          navigation.navigate("VideoPreview", {
+            videoUri: video.uri,
+            micEnabled: !isMuted,
+          });
         }
       } catch (error) {
         console.error("Recording error:", error);

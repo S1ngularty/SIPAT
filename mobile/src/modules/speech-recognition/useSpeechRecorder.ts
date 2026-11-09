@@ -1,22 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  AppState,
-  type AppStateStatus,
-} from 'react-native';
-import {
-  AudioModule,
-  setAudioModeAsync,
-  useAudioStream,
-} from 'expo-audio';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState, type AppStateStatus } from "react-native";
+import { AudioModule, setAudioModeAsync, useAudioStream } from "expo-audio";
 
-import { useSpeech } from './SpeechProvider';
+import { useSpeech } from "./SpeechProvider";
 import {
   float32ToInt16,
   mergeAudioChunks,
   peakAmplitude,
   resampleAudio,
+  toPlainFilePath,
   WHISPER_SAMPLE_RATE,
-} from './speech.audio';
+} from "./speech.audio";
+import { File } from "expo-file-system";
 
 /** Below this peak level a recording is treated as silence, not speech. */
 const SILENCE_THRESHOLD = 0.0015;
@@ -35,6 +30,8 @@ type SpeechRecorder = {
   /** Stops the microphone, transcribes, and resolves with the text. */
   stopRecording: () => Promise<string>;
   cancelRecording: () => void;
+  /** Transcribe an extracted WAV file. Throws instead of returning `null`. */
+  transcribeAudio: (audioUri: string) => Promise<string>;
 };
 
 /**
@@ -73,7 +70,7 @@ export function useSpeechRecorder(): SpeechRecorder {
   const audio = useAudioStream({
     sampleRate: WHISPER_SAMPLE_RATE,
     channels: 1,
-    encoding: 'float32',
+    encoding: "float32",
 
     onBuffer: ({ data }) => {
       if (!recordingRef.current) return;
@@ -95,7 +92,7 @@ export function useSpeechRecorder(): SpeechRecorder {
     try {
       audio.stream.stop();
     } catch (stopError) {
-      console.warn('Failed to stop audio stream:', stopError);
+      console.warn("Failed to stop audio stream:", stopError);
     }
   }, [audio.stream]);
 
@@ -113,9 +110,9 @@ export function useSpeechRecorder(): SpeechRecorder {
   // A call or an app switch must not leave the microphone hot.
   useEffect(() => {
     const subscription = AppState.addEventListener(
-      'change',
+      "change",
       (nextState: AppStateStatus) => {
-        if (nextState === 'active' || !recordingRef.current) return;
+        if (nextState === "active" || !recordingRef.current) return;
 
         recordingRef.current = false;
 
@@ -135,12 +132,12 @@ export function useSpeechRecorder(): SpeechRecorder {
     if (recordingRef.current) return;
 
     if (isTranscribing) {
-      throw new Error('Please wait for the previous transcription to finish.');
+      throw new Error("Please wait for the previous transcription to finish.");
     }
 
     if (!isReady || !context) {
       throw new Error(
-        'Speech recognition is not ready yet. Restart the app to retry.',
+        "Speech recognition is not ready yet. Restart the app to retry.",
       );
     }
 
@@ -148,7 +145,7 @@ export function useSpeechRecorder(): SpeechRecorder {
 
     if (!permission.granted) {
       throw new Error(
-        'Microphone access is required for voice input. Enable it in your device settings.',
+        "Microphone access is required for voice input. Enable it in your device settings.",
       );
     }
 
@@ -174,7 +171,7 @@ export function useSpeechRecorder(): SpeechRecorder {
         allowsRecording: false,
         playsInSilentMode: true,
       }).catch((audioModeError) => {
-        console.warn('Failed to restore audio mode:', audioModeError);
+        console.warn("Failed to restore audio mode:", audioModeError);
       });
 
       throw startError;
@@ -206,7 +203,7 @@ export function useSpeechRecorder(): SpeechRecorder {
   ]);
 
   const stopRecording = useCallback(async (): Promise<string> => {
-    if (!recordingRef.current) return '';
+    if (!recordingRef.current) return "";
 
     recordingRef.current = false;
 
@@ -224,7 +221,7 @@ export function useSpeechRecorder(): SpeechRecorder {
         playsInSilentMode: true,
       });
     } catch (audioModeError) {
-      console.warn('Failed to restore audio mode:', audioModeError);
+      console.warn("Failed to restore audio mode:", audioModeError);
     }
 
     const chunks = chunksRef.current;
@@ -233,25 +230,31 @@ export function useSpeechRecorder(): SpeechRecorder {
     resetCapture();
 
     if (chunks.length === 0 || totalSamples === 0) {
-      throw new Error('No audio was captured. Please try again.');
+      throw new Error("No audio was captured. Please try again.");
     }
 
     if (!context) {
       throw new Error(
-        'Speech recognition is not ready yet. Restart the app to retry.',
+        "Speech recognition is not ready yet. Restart the app to retry.",
       );
     }
 
     const merged = mergeAudioChunks(chunks, totalSamples);
-    const resampled = resampleAudio(merged, actualSampleRate, WHISPER_SAMPLE_RATE);
+    const resampled = resampleAudio(
+      merged,
+      actualSampleRate,
+      WHISPER_SAMPLE_RATE,
+    );
 
     if (resampled.length < MIN_SAMPLES) {
-      throw new Error('That was too short. Hold the mic and speak a full question.');
+      throw new Error(
+        "That was too short. Hold the mic and speak a full question.",
+      );
     }
 
     if (peakAmplitude(resampled) < SILENCE_THRESHOLD) {
       throw new Error(
-        'We could not hear any speech. Try again and speak closer to the microphone.',
+        "We could not hear any speech. Try again and speak closer to the microphone.",
       );
     }
 
@@ -261,15 +264,12 @@ export function useSpeechRecorder(): SpeechRecorder {
     setTranscribeProgress(0);
 
     try {
-      const { promise } = context.transcribeData(
-        pcm16.buffer as ArrayBuffer,
-        {
-          language: 'tl',
-          onProgress: (value) => {
-            if (mountedRef.current) setTranscribeProgress(value);
-          },
+      const { promise } = context.transcribeData(pcm16.buffer as ArrayBuffer, {
+        language: "tl",
+        onProgress: (value) => {
+          if (mountedRef.current) setTranscribeProgress(value);
         },
-      );
+      });
 
       const { result } = await promise;
 
@@ -280,13 +280,7 @@ export function useSpeechRecorder(): SpeechRecorder {
         setTranscribeProgress(0);
       }
     }
-  }, [
-    audio.stream,
-    clearTimer,
-    context,
-    resetCapture,
-    stopStream,
-  ]);
+  }, [audio.stream, clearTimer, context, resetCapture, stopStream]);
 
   const cancelRecording = useCallback(() => {
     if (!recordingRef.current) return;
@@ -304,9 +298,56 @@ export function useSpeechRecorder(): SpeechRecorder {
       allowsRecording: false,
       playsInSilentMode: true,
     }).catch((audioModeError) => {
-      console.warn('Failed to restore audio mode:', audioModeError);
+      console.warn("Failed to restore audio mode:", audioModeError);
     });
   }, [clearTimer, resetCapture, stopStream]);
+
+  const transcribeAudio = useCallback(
+    async (audioUri: string): Promise<string> => {
+      const audioFile = new File(audioUri);
+
+      if (!audioFile.exists) {
+        throw new Error(`Extracted audio file does not exist: ${audioUri}`);
+      }
+
+      if (!context) {
+        throw new Error(
+          "Speech recognition is not ready yet. Restart the app to retry.",
+        );
+      }
+
+      // whisper.rn's `transcribe` reads a WAV file from disk and resamples it
+      // internally. `transcribeData` is only for raw PCM/base64 payloads, so it
+      // must not be used with a file path.
+      const audioPath = toPlainFilePath(audioFile.uri);
+
+      console.log("[video-audio] transcribing", audioPath, audioFile.size);
+
+      setIsTranscribing(true);
+      setTranscribeProgress(0);
+
+      try {
+        const { promise } = context.transcribe(audioPath, {
+          language: "tl",
+          onProgress: (value) => {
+            if (mountedRef.current) setTranscribeProgress(value);
+          },
+        });
+
+        const { result } = await promise;
+
+        console.log("[video-audio] transcription result:", result.trim());
+
+        return result.trim();
+      } finally {
+        if (mountedRef.current) {
+          setIsTranscribing(false);
+          setTranscribeProgress(0);
+        }
+      }
+    },
+    [context],
+  );
 
   return {
     isRecording,
@@ -316,5 +357,6 @@ export function useSpeechRecorder(): SpeechRecorder {
     startRecording,
     stopRecording,
     cancelRecording,
+    transcribeAudio,
   };
 }

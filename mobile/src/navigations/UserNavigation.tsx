@@ -14,6 +14,8 @@ export type UserStackParamList = {
   VideoScanning: undefined;
   VideoPreview: {
     videoUri: string;
+    /** False when the clip was recorded with the microphone muted. */
+    micEnabled?: boolean;
   };
   DiagnosisDetail: {
     videoId: string;
