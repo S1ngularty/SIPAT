@@ -65,7 +65,7 @@ export const ChatComposer: React.FC<Props> = ({
 
   return (
     <View style={styles.wrapper}>
-      {(isRecording || isTranscribing) && (
+      {/* {(isRecording || isTranscribing) && (
         <View style={styles.voiceRow}>
           {isTranscribing ? (
             <ActivityIndicator size="small" color={colors.green} />
@@ -78,7 +78,7 @@ export const ChatComposer: React.FC<Props> = ({
               : "Listening… tap the mic to stop"}
           </Text>
         </View>
-      )}
+      )} */}
 
       <View style={styles.bar}>
         <View style={styles.inputWrap}>

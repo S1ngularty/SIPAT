@@ -302,11 +302,12 @@ const HomeScreen: React.FC = () => {
           isRecording={isRecording}
           isTranscribing={isTranscribing}
           hint={
-            isRecording
-              ? "Listening… tap the mic to stop"
-              : isTranscribing
-                ? `Transcribing${transcribeProgress > 0 ? ` · ${Math.round(transcribeProgress)}%` : ""}…`
-                : "Your AI crop assistant"
+            "Your AI crop assistant"
+            // isRecording
+            //   ? "Listening… tap the mic to stop"
+            //   : isTranscribing
+            //     ? `Transcribing${transcribeProgress > 0 ? ` · ${Math.round(transcribeProgress)}%` : ""}…`
+            //     : "Your AI crop assistant"
           }
         />
 
