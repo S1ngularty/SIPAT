@@ -6,7 +6,7 @@ import shutil
 # CONFIGURATION
 # ============================================================
 
-INPUT_DATASET = Path("/home/singularity/Downloads/pest_disease_datasets/set2/curl")
+INPUT_DATASET = Path("/home/singularity/Downloads/pest_disease_datasets/set2/main")
 OUTPUT_DATASET = Path("/home/singularity/Downloads/pest_disease_datasets/set2/filtered_dataset")
 
 # Classes you WANT to keep.
@@ -29,27 +29,25 @@ OUTPUT_DATASET = Path("/home/singularity/Downloads/pest_disease_datasets/set2/fi
 # The names here must match your original data.yaml classes.
 
 KEEP_CLASSES = {
-'Leaf Curl':0, 
-
-#    "leaf_rust":0,
-#    "Healthy":1,
-#    "Late Blight":2,
-#    "Leaf Miner":3,
-#    "Leaf Mold":4,
-#    "Mosaic Virus":5,
-#    "Septoria":6,
-#    "Spider Mites":7,
-#    "Yellow Leaf Curl Virus":8,
-#    "Alternaria":9,
-#    "Downy Mildew":10,
-#    "Powdery Mildew":11,
-#    "Fruit Rot":12,
-#    "Melon Thrips":13,
-#    "Fruit Borer":14,
-#    "Aphids":15,
-#  "Flea Beetles":16,
-#    "Leaf Curl":17,
-#    "Anthracnose":18,
+ "Early Blight": 0,
+  "Healthy": 1,
+  "Late Blight": 2,
+  "Leaf Miner": 3,
+  "Leaf Mold": 4,
+  "Mosaic Virus": 5,
+  "Septoria": 6,
+  "Spider Mites": 7,
+  "Yellow Leaf Curl Virus": 8,
+  "Powdery Mildew": 9,
+  "Fruit Rot": 10,
+  "Melon Thrips": 11,
+  "Fruit Borer": 12,
+  "Aphids": 13,
+  "Flea Beetles": 14,
+  "Leaf Curl": 15,
+  "Anthracnose": 16,
+  "Bacterial Spot": 17,
+  "Bacterial Wilt": 18,
 }
 
 # Original class names.
@@ -63,7 +61,30 @@ KEEP_CLASSES = {
 #   3: early_blight
 
 ORIGINAL_CLASSES = [
-'Healthy', 'Leaf Curl', 'Leaf Spot', 'Yellow Leaves']
+  "Early Blight",
+  "Healthy",
+  "Late Blight",
+  "Leaf Miner",
+  "Leaf Mold",
+  "Mosaic Virus",
+  "Septoria",
+  "Spider Mites",
+  "Yellow Leaf Curl Virus",
+  "Alternaria",
+  "Downy Mildew",
+  "Powdery Mildew",
+  "Fruit Rot",
+  "Melon Thrips",
+  "Fruit Borer",
+  "Aphids",
+  "Flea Beetles",
+  "Leaf Curl",
+  "Anthracnose",
+  "Bacterial Spot",
+  "Cercospora Leaf Spot",
+  "Bacterial Wilt",
+  "Leaf Rust",
+  "Looper"]
 
 
 # ============================================================

@@ -94,84 +94,84 @@ export default function usePreview() {
   // Extract the WAV, transcribe it, and keep the real failure around so the
   // preview can display it. The previous implementation swallowed both errors
   // and silently produced no transcript.
-  useEffect(() => {
-    if (!videoUri) return;
+  // useEffect(() => {
+  //   if (!videoUri) return;
 
-    console.log("[video-audio] preview start", { videoUri, micEnabled });
+  //   console.log("[video-audio] preview start", { videoUri, micEnabled });
 
-    // The recorder defaults to muted. Don't attempt extraction on a clip that
-    // was explicitly recorded without a microphone track; explain it instead.
-    if (micEnabled === false) {
-      setTranscriptionStatus("unavailable");
-      setTranscriptionError(
-        "The microphone was muted when this clip was recorded, so there is no voice note to transcribe.",
-      );
-      setRecordTranscription("");
-      return;
-    }
+  //   // The recorder defaults to muted. Don't attempt extraction on a clip that
+  //   // was explicitly recorded without a microphone track; explain it instead.
+  //   if (micEnabled === false) {
+  //     setTranscriptionStatus("unavailable");
+  //     setTranscriptionError(
+  //       "The microphone was muted when this clip was recorded, so there is no voice note to transcribe.",
+  //     );
+  //     setRecordTranscription("");
+  //     return;
+  //   }
 
-    let cancelled = false;
-    let audioUri: string | null = null;
+  //   let cancelled = false;
+  //   let audioUri: string | null = null;
 
-    async function extractAndTranscribe() {
-      setTranscriptionStatus("extracting");
-      setTranscriptionError(null);
-      setRecordTranscription("");
+  //   async function extractAndTranscribe() {
+  //     setTranscriptionStatus("extracting");
+  //     setTranscriptionError(null);
+  //     setRecordTranscription("");
 
-      try {
-        audioUri = await extractVideoAudio(videoUri);
+  //     try {
+  //       audioUri = await extractVideoAudio(videoUri);
 
-        if (cancelled) return;
+  //       if (cancelled) return;
 
-        setTranscriptionStatus("transcribing");
+  //       setTranscriptionStatus("transcribing");
 
-        const transcription = await transcribeAudio(audioUri);
+  //       const transcription = await transcribeAudio(audioUri);
 
-        if (cancelled) return;
+  //       if (cancelled) return;
 
-        setRecordTranscription(transcription);
-        setTranscriptionStatus("done");
-      } catch (error) {
-        if (cancelled) return;
+  //       setRecordTranscription(transcription);
+  //       setTranscriptionStatus("done");
+  //     } catch (error) {
+  //       if (cancelled) return;
 
-        const message =
-          error instanceof Error ? error.message : String(error);
+  //       const message =
+  //         error instanceof Error ? error.message : String(error);
 
-        console.error("[video-audio] preview transcription failed:", error);
+  //       console.error("[video-audio] preview transcription failed:", error);
 
-        setTranscriptionError(message);
-        setTranscriptionStatus("error");
-      } finally {
-        if (audioUri) {
-          try {
-            new File(audioUri).delete();
-          } catch (cleanupError) {
-            console.warn(
-              "[video-audio] failed to delete temporary audio:",
-              cleanupError,
-            );
-          }
-        }
-      }
-    }
+  //       setTranscriptionError(message);
+  //       setTranscriptionStatus("error");
+  //     } finally {
+  //       if (audioUri) {
+  //         try {
+  //           new File(audioUri).delete();
+  //         } catch (cleanupError) {
+  //           console.warn(
+  //             "[video-audio] failed to delete temporary audio:",
+  //             cleanupError,
+  //           );
+  //         }
+  //       }
+  //     }
+  //   }
 
-    void extractAndTranscribe();
+  //   void extractAndTranscribe();
 
-    return () => {
-      cancelled = true;
+  //   return () => {
+  //     cancelled = true;
 
-      if (audioUri) {
-        try {
-          new File(audioUri).delete();
-        } catch (cleanupError) {
-          console.warn(
-            "[video-audio] failed to delete temporary audio:",
-            cleanupError,
-          );
-        }
-      }
-    };
-  }, [micEnabled, transcribeAudio, transcriptionAttempt, videoUri]);
+  //     if (audioUri) {
+  //       try {
+  //         new File(audioUri).delete();
+  //       } catch (cleanupError) {
+  //         console.warn(
+  //           "[video-audio] failed to delete temporary audio:",
+  //           cleanupError,
+  //         );
+  //       }
+  //     }
+  //   };
+  // }, [micEnabled, transcribeAudio, transcriptionAttempt, videoUri]);
 
   const retryTranscription = useCallback(() => {
     setTranscriptionAttempt((attempt) => attempt + 1);

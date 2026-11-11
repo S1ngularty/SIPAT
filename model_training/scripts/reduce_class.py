@@ -13,17 +13,17 @@ import yaml
 # ============================================================
 
 DATASET_PATH = Path(
-    "/home/singularity/Downloads/pest_disease_datasets/set2/mainv4.5"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/mainv4.7"
 )
 
 # Exact class names from data.yaml.
 TARGET_CLASSES = [
-    "Cercospora Leaf Spot",
+    "Fruit Rot",
 ]
 
 # Percentage of images containing any selected class to reduce.
 # 0 = no changes; 50 = reduce half; 100 = reduce all.
-PERCENTAGE_TO_REDUCE = 100.0
+PERCENTAGE_TO_REDUCE = 50.0
 
 # Splits to process. Use [] to process no splits.
 # Supported names: train, valid, val, test.

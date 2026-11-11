@@ -198,7 +198,7 @@ const VideoPreviewScreen = () => {
       </View>
 
       {/* Voice note / transcription status */}
-      {transcriptionStatus !== "idle" && (
+      {/* {transcriptionStatus !== "idle" && (
         <Animated.View
           entering={FadeInUp.duration(300)}
           style={[
@@ -270,7 +270,7 @@ const VideoPreviewScreen = () => {
             </View>
           )}
         </Animated.View>
-      )}
+      )} */}
 
       {/* Action Buttons */}
       <Animated.View

@@ -14,7 +14,7 @@ import yaml
 # ============================================================
 
 DATASET_PATH = Path(
-    "/home/singularity/Downloads/pest_disease_datasets/set2/mainv4.4"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/mainv4.7"
 )
 
 MAX_IMAGES_PER_CLASS = 3000
