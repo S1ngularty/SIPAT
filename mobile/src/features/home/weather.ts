@@ -8,7 +8,9 @@
  *
  * Replace `MOCK_WEATHER` (or the body of `getWeatherState`) with a real source
  * — backend endpoint or third-party API — and the sheet keeps working
- * unchanged. Nothing else in the app reads this file.
+ * unchanged. The only real input today is the place name resolved from the
+ * device location, so the block never shows a place that contradicts the
+ * location badge beside it.
  */
 
 export interface WeatherData {
@@ -36,7 +38,11 @@ const MOCK_WEATHER: Omit<WeatherData, "observedAt"> = {
   windKph: 12,
 };
 
-export const getWeatherState = (): WeatherState => ({
+export const getWeatherState = (locationLabel?: string): WeatherState => ({
   status: "ready",
-  data: { ...MOCK_WEATHER, observedAt: new Date().toISOString() },
+  data: {
+    ...MOCK_WEATHER,
+    location: locationLabel?.trim() || MOCK_WEATHER.location,
+    observedAt: new Date().toISOString(),
+  },
 });
