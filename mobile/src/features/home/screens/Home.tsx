@@ -26,6 +26,7 @@ import { DiagnosisCard } from "../components/DiagnosisCard";
 import { AgriTipCard } from "../components/AgriTipCard";
 import { BrowseSymptoms, ExploreCropCareCard } from "../components/KnowledgeShortcuts";
 import { getWeatherState } from "../weather";
+import { useCurrentLocation } from "../hooks/useCurrentLocation";
 import { useDiagnosisList } from "../../diagnosis/hooks/useDiagnosisList";
 import { useChatbot } from "../../chat/ChatProvider";
 import { getSessionTip } from "../utils/agriTips";
@@ -99,6 +100,9 @@ const HomeScreen: React.FC = () => {
   const { user } = useUser();
 
   const { analyses, isLoading, reload } = useDiagnosisList();
+
+  /** Asks for location permission once on mount, then shows the place name. */
+  const location = useCurrentLocation();
 
   const {
     isSending: isChatSending,
@@ -225,7 +229,8 @@ const HomeScreen: React.FC = () => {
           onPressAvatar={() => navigation.navigate("Profile")}
           onPressNotifications={openDiagnoses}
           onPressChat={openChat}
-          weather={getWeatherState()}
+          location={location}
+          weather={getWeatherState(location.place?.label)}
         />
 
         <ChatPromptBar
