@@ -35,6 +35,7 @@ type Props = {
   onPressChat: () => void;
   location: CurrentLocation;
   weather: WeatherState;
+  onPressWeatherRetry?: () => void;
 };
 
 /**
@@ -49,6 +50,7 @@ export const HomeHeroSheet: React.FC<Props> = ({
   onPressChat,
   location,
   weather,
+  onPressWeatherRetry,
 }) => {
   return (
     <ImageBackground
@@ -75,7 +77,7 @@ export const HomeHeroSheet: React.FC<Props> = ({
 
         {/* <LocationBadge location={location} /> */}
 
-        <WeatherBlock state={weather} />
+        <WeatherBlock state={weather} onRetry={onPressWeatherRetry} />
       </LinearGradient>
     </ImageBackground>
   );

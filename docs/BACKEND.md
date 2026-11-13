@@ -68,6 +68,7 @@ GET  /api/v1/health          → inline health check (status, timestamp)
      /api/v1/diagnosis       → diagnosis routes
      /api/v1/crop-problems   → crop problem reference routes
      /api/v1/chatbot         → chatbot routes
+     /api/v1/weather         → weather routes (Open-Meteo proxy)
 ```
 
 Each module owns its own `Router` in `<module>.route.ts`. Middleware is applied
@@ -104,6 +105,7 @@ at the router level (see §4 for auth details).
 | PATCH    | `/crop-problems/:identifier`          | admin       | `update`                             |
 | DELETE   | `/crop-problems/:identifier`          | admin       | `delete`                             |
 | POST     | `/chatbot/message`                    | session     | `sendMessage`                        |
+| GET      | `/weather`                            | —           | `getCurrentWeather`                  |
 
 ---
 
@@ -237,6 +239,25 @@ route → controller → service → repository → model
   metadata stays client-side; the API's `messages[]` accepts only
   `{ role, content }`.
 
+### `modules/weather`
+
+- **No model** — weather is read-through, not persisted.
+- **Endpoint** — `GET /api/v1/weather?lat=..&lon=..`. Both coordinates are
+  optional, but they must be supplied together (validated by
+  `weatherQuerySchema`); with neither, the service uses
+  `DEFAULT_LOCATION` (Cabanatuan City, Nueva Ecija).
+- **Public** — local weather carries no user data, so the route needs no Clerk
+  session (the mobile home screen can load it before/without a token).
+- **Service** — normalizes coordinates, caches readings in memory for 10
+  minutes (~1 km buckets, keyed by `lat/lon` rounded to 2 decimals), and maps
+  the integration's reading to the `WeatherSnapshot` response. Throws when the
+  provider is unreachable.
+- **Controller** — returns `400` for invalid coordinates and `502` when the
+  provider fails, plus `Cache-Control: public, max-age=600`. Response fields:
+  `location { latitude, longitude, timezone }`, `observedAt`, `temperatureC`,
+  `feelsLikeC`, `humidityPct`, `precipitationMm`, `precipitationChancePct`,
+  `windKph`, `windDirectionDeg`, `weatherCode`, `condition`, `isDay`.
+
 ---
 
 ## 6. Integrations
@@ -251,6 +272,13 @@ singleton.
 - **`fastApi/fastapi.client.ts`** — `FastAPIClient.aiProcess({ video_url,
   storage_key })` → `POST {FASTAPI_URL}/api/v1/detection/process`. Returns
   `{ success, results[] }` (raw detections) or `null` on error.
+- **`open-mateo/weather.client.ts`** — `WeatherClient.getCurrentWeather({
+  latitude, longitude })` calls the keyless Open-Meteo forecast API
+  (`https://api.open-meteo.com/v1/forecast`) with an 8 s abort timeout. It asks
+  for the `current` block plus `hourly=precipitation_probability`, maps WMO
+  weather codes to labels, converts the provider's local timestamp + UTC offset
+  to a real ISO instant, and resolves a `WeatherReading` (or `null` on any
+  upstream/transport failure).
 - **`groq/groq.client.ts`** — `GroqClient.getGroqChatCompletion(detections)`
   sends the detections to model `openai/gpt-oss-120b` with a detailed Tagalog
   system prompt and JSON response format, returning `{ summary,

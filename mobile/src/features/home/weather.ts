@@ -1,17 +1,12 @@
 /**
- * Weather source for the dashboard.
+ * Display model for the home weather block.
  *
- * TEMPORARY MOCK: SIPAT does not yet ship a weather provider (the backend
- * exposes no weather endpoint and no third-party key is configured). While
- * that is missing, the dashboard is fed the fixed sample reading below so the
- * hero sheet renders its full state.
- *
- * Replace `MOCK_WEATHER` (or the body of `getWeatherState`) with a real source
- * — backend endpoint or third-party API — and the sheet keeps working
- * unchanged. The only real input today is the place name resolved from the
- * device location, so the block never shows a place that contradicts the
- * location badge beside it.
+ * The data now comes from the SIPAT API (`GET /api/v1/weather`), which proxies
+ * Open-Meteo. `weatherApi.ts` types the wire format; this module keeps the
+ * shape the UI renders, plus the mapping between the two.
  */
+
+import type { WeatherSnapshot } from "./weatherApi";
 
 export interface WeatherData {
   location: string;
@@ -29,20 +24,19 @@ export type WeatherState =
   | { status: "unavailable"; location?: string; message?: string }
   | { status: "ready"; data: WeatherData };
 
-const MOCK_WEATHER: Omit<WeatherData, "observedAt"> = {
-  location: "Nueva Ecija, PH",
-  temperatureC: 31,
-  condition: "Partly cloudy",
-  humidityPct: 68,
-  precipitationPct: 20,
-  windKph: 12,
-};
-
-export const getWeatherState = (locationLabel?: string): WeatherState => ({
-  status: "ready",
-  data: {
-    ...MOCK_WEATHER,
-    location: locationLabel?.trim() || MOCK_WEATHER.location,
-    observedAt: new Date().toISOString(),
-  },
+/**
+ * Maps the API snapshot onto the display model. The place name comes from the
+ * device location, because the API only knows coordinates.
+ */
+export const toWeatherData = (
+  snapshot: WeatherSnapshot,
+  locationLabel?: string,
+): WeatherData => ({
+  location: locationLabel?.trim() || "Your area",
+  temperatureC: snapshot.temperatureC,
+  condition: snapshot.condition,
+  observedAt: snapshot.observedAt,
+  humidityPct: snapshot.humidityPct,
+  precipitationPct: snapshot.precipitationChancePct ?? undefined,
+  windKph: snapshot.windKph,
 });

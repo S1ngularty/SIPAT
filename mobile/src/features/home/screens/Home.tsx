@@ -25,8 +25,8 @@ import { ChatPromptBar } from "../components/ChatPromptBar";
 import { DiagnosisCard } from "../components/DiagnosisCard";
 import { AgriTipCard } from "../components/AgriTipCard";
 import { BrowseSymptoms, ExploreCropCareCard } from "../components/KnowledgeShortcuts";
-import { getWeatherState } from "../weather";
 import { useCurrentLocation } from "../hooks/useCurrentLocation";
+import { useWeather } from "../hooks/useWeather";
 import { useDiagnosisList } from "../../diagnosis/hooks/useDiagnosisList";
 import { useChatbot } from "../../chat/ChatProvider";
 import { getSessionTip } from "../utils/agriTips";
@@ -104,6 +104,26 @@ const HomeScreen: React.FC = () => {
   /** Asks for location permission once on mount, then shows the place name. */
   const location = useCurrentLocation();
 
+  /**
+   * Weather follows the resolved coordinates, so the reading always matches the
+   * place shown in the badge. While the GPS fix is pending the block stays in
+   * its loading state instead of flashing an error.
+   */
+  const weather = useWeather({
+    coordinates: location.place
+      ? {
+          latitude: location.place.latitude,
+          longitude: location.place.longitude,
+        }
+      : null,
+    locationLabel: location.place?.label,
+    pending: location.status === "loading",
+    unavailableMessage:
+      location.status === "denied"
+        ? "Turn on location to see the weather where you are."
+        : undefined,
+  });
+
   const {
     isSending: isChatSending,
     send: sendChatMessage,
@@ -140,12 +160,19 @@ const HomeScreen: React.FC = () => {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    weather.refresh();
     try {
       await reload();
     } finally {
       setRefreshing(false);
     }
-  }, [reload]);
+  }, [reload, weather.refresh]);
+
+  /** Weather retry re-resolves the location too, in case that was the failure. */
+  const retryWeather = useCallback(() => {
+    location.refresh();
+    weather.refresh();
+  }, [location.refresh, weather.refresh]);
 
   /**
    * Temporary: the Crop Care guide and symptom browser have no screens yet,
@@ -230,7 +257,8 @@ const HomeScreen: React.FC = () => {
           onPressNotifications={openDiagnoses}
           onPressChat={openChat}
           location={location}
-          weather={getWeatherState(location.place?.label)}
+          weather={weather.state}
+          onPressWeatherRetry={retryWeather}
         />
 
         <ChatPromptBar
