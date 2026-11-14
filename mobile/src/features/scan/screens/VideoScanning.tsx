@@ -8,7 +8,10 @@ import {
   Alert,
 } from "react-native";
 import { useState, useCallback } from "react";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { CameraView } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
@@ -51,9 +54,9 @@ const VideoScanningScreen = () => {
 
   // Hand off the picked video to your preview screen.
   const handleVideoReady = useCallback(
-    (uri: string) => {
+    (uri: string, uploaded: boolean) => {
       console.log("Video ready for processing:", uri);
-      navigation.navigate("VideoPreview", { videoUri: uri });
+      navigation.navigate("VideoPreview", { videoUri: uri, uploaded });
     },
     [navigation],
   );
@@ -84,7 +87,7 @@ const VideoScanningScreen = () => {
       if (result.canceled || !result.assets?.length) return;
 
       const asset = result.assets[0];
-      handleVideoReady(asset.uri);
+      handleVideoReady(asset.uri, true);
     } catch (error) {
       console.error("Failed to pick video:", error);
       Alert.alert("Error", "Could not open the video picker.");

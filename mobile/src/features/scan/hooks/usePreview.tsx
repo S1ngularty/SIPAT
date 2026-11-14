@@ -45,6 +45,7 @@ export default function usePreview() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<VideoScanningRouteProp>();
   const videoUri = route.params?.videoUri;
+  const isUploaded = route.params.uploaded;
 
   const { getToken, isLoaded, isSignedIn } = useAuth();
 
@@ -72,9 +73,10 @@ export default function usePreview() {
 
   useEffect(() => {
     if (!videoUri) return;
+
     uploadIdRef.current = Crypto.randomUUID();
     idempotencyKeyRef.current = Crypto.randomUUID();
-  }, [videoUri]);
+  }, [videoUri,isUploaded]);
 
   const animatedButtonStyle = useAnimatedStyle(() => {
     return {
@@ -281,7 +283,7 @@ export default function usePreview() {
           contentType,
           // Omitted when the device has no location; the backend then uses its
           // default farm location for weather context.
-          ...(location ? { location } : {}),
+          ...(location && !isUploaded ? { location } : {}),
         },
         token,
         idempotencyKey,
