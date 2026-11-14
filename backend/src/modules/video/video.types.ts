@@ -17,6 +17,19 @@ export type VideoStatus =
   | "cancelled";
 
 // ==========================================
+// LOCATION
+// ==========================================
+
+/**
+ * Where the recording was captured. Optional: the client may not have location
+ * access, in which case AI processing falls back to the default farm location.
+ */
+export interface VideoLocation {
+  latitude: number;
+  longitude: number;
+}
+
+// ==========================================
 // DOMAIN MODEL (plain shape, not Mongoose)
 // ==========================================
 
@@ -24,6 +37,8 @@ export interface Video {
   id: string;
   userId: string;
   storageKey: string;
+  /** Capture coordinates, or `null` when the client did not supply them. */
+  location: VideoLocation | null;
   /**
    * Object-storage key of the preview image, or `null` when none was stored.
    * The image is generated on-device and uploaded straight to R2; only the key
@@ -52,6 +67,8 @@ export interface CreateVideoInput {
   fileName: string;
   contentType: string;
   fileSize: number;
+  /** Optional capture coordinates, used for weather context during analysis. */
+  location?: VideoLocation | null;
 }
 
 /**
@@ -68,6 +85,7 @@ export interface ICreateVideo {
   status?: VideoStatus;
   processedAt?: Date | null;
   thumbnailStorageKey?: string | null;
+  location?: VideoLocation | null;
 }
 
 /**
@@ -98,6 +116,7 @@ export interface IUpdateVideo {
   storageKey?: string;
   originalFileName?: string;
   thumbnailStorageKey?: string | null;
+  location?: VideoLocation | null;
 }
 
 export interface UpdateVideoStatusInput {
@@ -158,6 +177,8 @@ export interface VideoWithDiagnosis {
   _id: Types.ObjectId;
   userId: string;
   storageKey: string;
+  /** Absent on documents created before location capture was added. */
+  location?: VideoLocation | null;
   originalFileName: string;
   contentType: string;
   fileSize: number;

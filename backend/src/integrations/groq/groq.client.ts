@@ -2,9 +2,10 @@
 import Groq from "groq-sdk";
 import { env } from "../../core/configs/env.config.js";
 import type { GroqAnalysis } from "../../modules/diagnosis/diagnosis.types.js";
+import type { WeatherSnapshot } from "../../modules/weather/weather.types.js";
 
 
-const systemPrompt = `Ikaw ay isang agricultural assistant para sa SIPAT. I-interpret ang AI detection results at ipaliwanag ang mga ito sa Filipino farmers. Ang input ay AI-generated detections lamang; hindi ikaw ang detector at hindi mo dapat ituring na confirmed diagnosis ang mga resulta.
+const systemPrompt = `Ikaw ay isang agricultural assistant para sa SIPAT. I-interpret ang AI detection results at ipaliwanag ang mga ito sa Filipino farmers. Ang input ay isang JSON object na may "detections" (AI-generated detection list) at "weather" (kasalukuyang panahon sa lokasyon ng video, o "null"); hindi ikaw ang detector at hindi mo dapat ituring na confirmed diagnosis ang mga resulta.
 
 RETURN VALID JSON ONLY:
 {
@@ -37,6 +38,13 @@ Gamitin ang ordinaryong crop names para sa malinaw na identifiers:
 - chili_leaves = sili
 - potato_leaf = patatas
 Huwag ilabas ang raw machine-learning identifiers. Panatilihin ang original detected disease at pest names; huwag isalin, baguhin, o paikliin ang mga ito.
+
+WEATHER CONTEXT
+Ang input ay may "weather" object — ang kasalukuyang panahon sa lokasyon kung saan kinunan ang video — o "null" kapag walang available na weather data.
+- Gamitin ito bilang supplementary context lamang, hindi bilang kumpirmasyon o dahilan ng diagnosis.
+- Kapag ang temperatura, humidity, ulan, o hangin ay kilalang pabor sa detected disease o pest, maaari itong banggitin sa summary bilang posibleng contributing factor, na may malinaw na uncertainty.
+- Huwag mag-imbento ng weather values, weather history, o forecast, at huwag gumawa ng weather-specific treatment claims.
+- Huwag banggitin ang weather kapag "null" ito o kapag walang malinaw na kaugnayan sa detection.
 
 RECOMMENDATIONS
 Magbigay ng practical, concise, non-duplicate actions:
@@ -79,6 +87,7 @@ Bago sumagot, tiyaking:
 - Recommendations at terms ay arrays; walang dagdag na fields.
 - Walang fabricated/unsupported diagnosis, symptoms, causes, severity, treatment, o agricultural claims.
 - Detection results lamang ang evidence; hindi ito automatic confirmation.
+- Weather context lamang ang ginamit kapag may available na "weather"; walang fabricated weather claims.
 - Hindi nadodoble ang condition dahil sa multiple tracks/evidence.
 - Malinaw ang uncertainty kapag kulang ang information.
 - Bawat glossary term ay exact text match sa summary o recommendations, at bawat definition ay accurate at understandable.
@@ -506,6 +515,24 @@ Huwag itong ituring na kumpirmadong diagnosis.
 ${lines.join("\n")}`;
 };
 
+/**
+ * LLM-facing weather context. Coordinates are left out on purpose: only the
+ * conditions that can plausibly interact with a disease/pest are useful, and
+ * omitting them keeps the model from quoting raw GPS values to the farmer.
+ */
+const toWeatherContext = (weather: WeatherSnapshot) => ({
+  condition: weather.condition,
+  observedAt: weather.observedAt,
+  timezone: weather.location.timezone,
+  temperatureC: weather.temperatureC,
+  feelsLikeC: weather.feelsLikeC,
+  humidityPct: weather.humidityPct,
+  precipitationMm: weather.precipitationMm,
+  precipitationChancePct: weather.precipitationChancePct,
+  windKph: weather.windKph,
+  isDay: weather.isDay,
+});
+
 export class GroqClient {
   private groq: Groq;
 
@@ -523,7 +550,15 @@ export class GroqClient {
       observations: string;
       evidence_key: string;
     }[],
+    weather?: WeatherSnapshot | null,
   ): Promise<GroqAnalysis | null> => {
+    // The model receives one structured payload: the detections plus the
+    // weather reading taken where the clip was recorded (`null` when unknown).
+    const input = {
+      detections: detectionResult,
+      weather: weather ? toWeatherContext(weather) : null,
+    };
+
     const messages: ChatMessage[] = [
       {
         role: "system",
@@ -531,7 +566,7 @@ export class GroqClient {
       },
       {
         role: "user",
-        content: JSON.stringify(detectionResult),
+        content: JSON.stringify(input),
       },
     ];
 

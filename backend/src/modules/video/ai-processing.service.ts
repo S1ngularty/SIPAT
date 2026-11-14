@@ -5,6 +5,7 @@ import { r2Client } from "../../integrations/storage/r2.client.js";
 import type { GroqAnalysis } from "../diagnosis/diagnosis.types.js";
 import { diagnosisService } from "../diagnosis/index.js";
 import { VideoRepository } from "./video.repository.js";
+import type { WeatherService } from "../weather/weather.service.js";
 
 const CROP_LABELS: Record<string, string> = {
   eggplant_leaf: "talong",
@@ -15,7 +16,10 @@ const CROP_LABELS: Record<string, string> = {
 };
 
 export class AIProcessingService {
-  constructor(private readonly videoRepository: VideoRepository) {}
+  constructor(
+    private readonly videoRepository: VideoRepository,
+    private readonly weatherService: WeatherService,
+  ) {}
 
   async processVideo(videoId: string): Promise<unknown> {
     try {
@@ -35,12 +39,30 @@ export class AIProcessingService {
 
       if (!downloadUrl) throw new Error("failed to general download url");
 
-      const processResult = await fastAPIClient.aiProcess({
-        storage_key: video.storageKey,
-        video_url: downloadUrl,
-      });
+      // Detection and weather are independent, so fetch them together. Weather
+      // is optional context: a provider outage must never fail an analysis.
+      const [processResult, weather] = await Promise.all([
+        fastAPIClient.aiProcess({
+          storage_key: video.storageKey,
+          video_url: downloadUrl,
+        }),
+        this.weatherService
+          .getCurrentWeather(
+            video.location
+              ? {
+                  latitude: video.location.latitude,
+                  longitude: video.location.longitude,
+                }
+              : {},
+          )
+          .catch((error: unknown) => {
+            console.log(`Weather lookup failed for video ${videoId}:`, error);
+            return null;
+          }),
+      ]);
 
       console.log("processed result log:", processResult);
+      console.log("weather context log:", weather);
 
       if (!processResult?.success) {
         throw new Error(`AI service failed to process the video: ${videoId}`);
@@ -48,13 +70,15 @@ export class AIProcessingService {
 
       let groqContent: GroqAnalysis | null | undefined;
       if (processResult.results?.length) {
-
         const normalizeResult = processResult.results?.map((detection) => ({
           ...detection,
           crop: CROP_LABELS[detection.crop] ?? "unknown",
         }));
-        
-        groqContent = await groqClient.getGroqChatCompletion(normalizeResult);
+
+        groqContent = await groqClient.getGroqChatCompletion(
+          normalizeResult,
+          weather,
+        );
       }
 
       const diagnosisData =

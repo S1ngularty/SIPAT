@@ -5,7 +5,26 @@ import {
   type InferSchemaType,
   type Model,
 } from "mongoose";
-import type { Video } from "./video.types.js";
+import type { Video, VideoLocation } from "./video.types.js";
+
+/** Capture coordinates embedded on a video (no separate `_id`). */
+const videoLocationSchema = new Schema<VideoLocation>(
+  {
+    latitude: {
+      type: Number,
+      required: true,
+      min: -90,
+      max: 90,
+    },
+    longitude: {
+      type: Number,
+      required: true,
+      min: -180,
+      max: 180,
+    },
+  },
+  { _id: false },
+);
 
 const videoSchema = new Schema<Video>(
   {
@@ -44,6 +63,10 @@ const videoSchema = new Schema<Video>(
       type: Number,
       required: true,
       min: 0,
+    },
+    location: {
+      type: videoLocationSchema,
+      default: null,
     },
     status: {
       type: String,
