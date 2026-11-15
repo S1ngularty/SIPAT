@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { ChevronRight } from "lucide-react-native";
 import { colors, radii, spacing } from "../../../theme";
-import type { VideoAnalysis } from "../../diagnosis/diagnosisTypes";
+import type { VideoListItem } from "../../diagnosis/diagnosisTypes";
 import {
   formatRelativeTime,
   getDiagnosisSubtitle,
@@ -28,10 +28,10 @@ import {
 const PLACEHOLDER_IMAGE = require("../../../../assets/images/crop-placeholder.png");
 
 type Props = {
-  analysis: VideoAnalysis;
+  item: VideoListItem;
   /** Card width. Only used by the "card" variant. */
   width?: number;
-  onPress: (analysis: VideoAnalysis) => void;
+  onPress: (item: VideoListItem) => void;
   /**
    * "card" is the photographic tile used in horizontal carousels; "row" is the
    * compact thumbnail row used by the vertical list on Home.
@@ -49,21 +49,21 @@ const TONE_COLORS: Record<StatusTone, string> = {
 };
 
 export const DiagnosisCard: React.FC<Props> = ({
-  analysis,
+  item,
   width = DEFAULT_CARD_WIDTH,
   onPress,
   variant = "card",
 }) => {
   const [imageFailed, setImageFailed] = useState(false);
 
-  const title = getDiagnosisTitle(analysis);
-  const subtitle = getDiagnosisSubtitle(analysis);
-  const tone = getStatusTone(analysis);
-  const topFinding = getTopFinding(analysis);
-  const processing = isProcessing(analysis);
+  const title = getDiagnosisTitle(item);
+  const subtitle = getDiagnosisSubtitle(item);
+  const tone = getStatusTone(item);
+  const topFinding = getTopFinding(item);
+  const processing = isProcessing(item);
 
   /** Prefer the video's own thumbnail, then the detected evidence crop. */
-  const imageUri = analysis.video?.thumbnailUrl || topFinding?.evidenceUrl;
+  const imageUri = item.thumbnailUrl || topFinding?.evidenceUrl;
   useEffect(() => {
     setImageFailed(false);
   }, [imageUri]);
@@ -71,19 +71,21 @@ export const DiagnosisCard: React.FC<Props> = ({
   const imageSource: ImageSourcePropType =
     imageUri && !imageFailed ? { uri: imageUri } : PLACEHOLDER_IMAGE;
 
-  const metaParts = [formatRelativeTime(analysis.createdAt)].filter(Boolean);
-  if (topFinding && analysis.video?.status === "completed") {
+  const metaParts = [formatRelativeTime(item.createdAt)].filter(Boolean);
+  if (topFinding && item.status === "completed") {
     metaParts.push(`${Math.round(topFinding.confidence * 100)}% confidence`);
-  } else if (analysis.results?.length) {
+  } else if (item.diagnosis?.results?.length) {
     metaParts.push(
-      `${analysis.results.length} finding${analysis.results.length > 1 ? "s" : ""}`,
+      `${item.diagnosis.results.length} finding${
+        item.diagnosis.results.length > 1 ? "s" : ""
+      }`,
     );
   }
 
   if (variant === "row") {
     return (
       <Pressable
-        onPress={() => onPress(analysis)}
+        onPress={() => onPress(item)}
         accessibilityRole="button"
         accessibilityLabel={`Open diagnosis ${title}`}
         style={({ pressed }) => [styles.row, pressed && styles.pressed]}
@@ -131,7 +133,7 @@ export const DiagnosisCard: React.FC<Props> = ({
 
   return (
     <Pressable
-      onPress={() => onPress(analysis)}
+      onPress={() => onPress(item)}
       accessibilityRole="button"
       accessibilityLabel={`Open diagnosis ${title}`}
       style={({ pressed }) => [

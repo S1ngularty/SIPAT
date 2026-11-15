@@ -63,17 +63,6 @@ const toDiseaseInfo = (
   };
 };
 
-export interface AnalysisListResult {
-  data: {
-    results: VideoAnalysis[];
-  };
-  meta: {
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
 class DiagnosisAPI {
   /**
    * Video-driven list that backs the Diagnoses screen: the signed-in user's
@@ -114,39 +103,18 @@ class DiagnosisAPI {
     };
   }
 
-  async diagnosisList({ page = 1, limit = 5 }): Promise<{
-    data: VideoAnalysis[];
-    meta: { page: number; limit: number; totalPages: number };
-  }> {
-    const params = new URLSearchParams();
-
-    params.append("page", String(page));
-    params.append("limit", String(limit));
-
-    const response = await client.request<VideoAnalysis[]>(
-      `/api/v1/diagnosis/list?${params.toString()}`,
-      { method: "GET" },
-    );
-
-    return {
-      data: response.result,
-      meta: {
-        page: Number(response.meta?.page),
-        limit: Number(response.meta?.limit),
-        totalPages: Number(response.meta?.total),
-      },
-    };
-  }
-
   /**
-   * Fetch a single diagnosis by videoId.
-   * Response shape matches the API payload you shared:
-   *   { _id, videoId, results: TrackResult[], createdAt, updatedAt }
+   * Fetch a single diagnosis by its id. Requires a Clerk token because the
+   * diagnosis routes are session-guarded.
    */
-  async diagnosisDetail(diagnosisId: string): Promise<VideoAnalysis> {
+  async diagnosisDetail(
+    diagnosisId: string,
+    token?: string | null,
+  ): Promise<VideoAnalysis> {
     const response = await client.request<VideoAnalysis>(
       `/api/v1/diagnosis/${diagnosisId}`,
       { method: "GET" },
+      { token },
     );
     return response.result;
   }
@@ -231,15 +199,17 @@ class DiagnosisAPI {
   }
 
   async renameDiagnosis(
-    videoId: string,
+    diagnosisId: string,
     newName: string,
+    token?: string | null,
   ): Promise<VideoAnalysis> {
     const response = await client.request<VideoAnalysis>(
-      `/api/v1/diagnosis/${videoId}`,
+      `/api/v1/diagnosis/${diagnosisId}`,
       {
         method: "PATCH",
         body: JSON.stringify({ diagnosisName: newName }),
       },
+      { token },
     );
     return response.result;
   }
@@ -251,29 +221,28 @@ class DiagnosisAPI {
   async saveDiagnosis(
     diagnosisId: string,
     saved: boolean,
+    token?: string | null,
   ): Promise<{ diagnosisId: string; saved: boolean }> {
     const response = await client.request<{
       diagnosisId: string;
       saved: boolean;
-    }>(`/api/v1/diagnosis/${diagnosisId}/save`, {
-      method: "PATCH",
-      body: JSON.stringify({ saved }),
-    });
+    }>(
+      `/api/v1/diagnosis/${diagnosisId}/save`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ saved }),
+      },
+      { token },
+    );
 
     return response.result;
   }
 
-  async deleteDiagnosis(videoId: string): Promise<void> {
-    await client.request(`/api/v1/diagnosis/video/${videoId}`, {
-      method: "DELETE",
-    });
-  }
-
   /**
    * Deletes a video from the `videos` collection (any status), together with
-   * its diagnosis and its stored objects. Unlike `deleteDiagnosis` this also
-   * works for failed / cancelled videos that never produced a diagnosis.
-   * Requires a Clerk token because it hits session-guarded `DELETE /videos/:id`.
+   * its diagnosis and its stored objects, so failed / cancelled videos that
+   * never produced a diagnosis can be removed too. Requires a Clerk token
+   * because it hits session-guarded `DELETE /videos/:id`.
    */
   async deleteVideo(videoId: string, token?: string | null): Promise<void> {
     await client.request(

@@ -1,10 +1,13 @@
-import type { TrackResult, VideoAnalysis } from "../../diagnosis/diagnosisTypes";
+import type {
+  TrackResult,
+  VideoListItem,
+} from "../../diagnosis/diagnosisTypes";
 
 export type StatusTone = "success" | "warning" | "danger" | "neutral";
 
-/** Highest-confidence detection in an analysis, or null when there are none. */
-export const getTopFinding = (analysis: VideoAnalysis): TrackResult | null => {
-  const results = analysis.results ?? [];
+/** Highest-confidence detection in a video's diagnosis, or null when it has none. */
+export const getTopFinding = (item: VideoListItem): TrackResult | null => {
+  const results = item.diagnosis?.results ?? [];
   if (results.length === 0) return null;
 
   return results.reduce((best, current) =>
@@ -13,22 +16,22 @@ export const getTopFinding = (analysis: VideoAnalysis): TrackResult | null => {
 };
 
 /** Human-readable title: the saved name, the detected crop, or the file name. */
-export const getDiagnosisTitle = (analysis: VideoAnalysis): string => {
-  const named = analysis.diagnosisName?.trim();
+export const getDiagnosisTitle = (item: VideoListItem): string => {
+  const named = item.diagnosis?.diagnosisName?.trim();
   if (named) return named;
 
-  const crop = getTopFinding(analysis)?.crop?.trim();
+  const crop = getTopFinding(item)?.crop?.trim();
   if (crop) return crop;
 
-  return analysis.video?.originalFileName || "Untitled video";
+  return item.originalFileName || "Untitled video";
 };
 
 /** Short condition/status line shown under the title. */
-export const getDiagnosisSubtitle = (analysis: VideoAnalysis): string => {
-  const status = analysis.video?.status ?? "processing";
+export const getDiagnosisSubtitle = (item: VideoListItem): string => {
+  const status = item.status;
 
   if (status === "completed") {
-    const top = getTopFinding(analysis);
+    const top = getTopFinding(item);
     return top ? top.condition : "Analysis complete";
   }
 
@@ -41,20 +44,27 @@ export const getDiagnosisSubtitle = (analysis: VideoAnalysis): string => {
       return "Analyzing video";
     case "failed":
       return "Analysis failed";
+    case "cancelled":
+      return "Analysis cancelled";
     default:
       return "Unknown status";
   }
 };
 
-export const isProcessing = (analysis: VideoAnalysis): boolean => {
-  const status = analysis.video?.status;
-  return status === "processing" || status === "uploaded" || status === "pending_upload";
+export const isProcessing = (item: VideoListItem): boolean => {
+  const status = item.status;
+  return (
+    status === "processing" ||
+    status === "uploaded" ||
+    status === "pending_upload"
+  );
 };
 
-export const getStatusTone = (analysis: VideoAnalysis): StatusTone => {
-  const status = analysis.video?.status;
+export const getStatusTone = (item: VideoListItem): StatusTone => {
+  const status = item.status;
   if (status === "completed") return "success";
   if (status === "failed") return "danger";
+  if (status === "cancelled") return "warning";
   if (status) return "warning";
   return "neutral";
 };

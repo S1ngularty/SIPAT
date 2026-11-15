@@ -27,10 +27,10 @@ import { AgriTipCard } from "../components/AgriTipCard";
 import { BrowseSymptoms, ExploreCropCareCard } from "../components/KnowledgeShortcuts";
 import { useCurrentLocation } from "../hooks/useCurrentLocation";
 import { useWeather } from "../hooks/useWeather";
-import { useDiagnosisList } from "../../diagnosis/hooks/useDiagnosisList";
+import { useVideoList } from "../../diagnosis/hooks/useVideoList";
 import { useChatbot } from "../../chat/ChatProvider";
 import { getSessionTip } from "../utils/agriTips";
-import type { VideoAnalysis } from "../../diagnosis/diagnosisTypes";
+import type { VideoListItem } from "../../diagnosis/diagnosisTypes";
 import type { TabParamList } from "../../../navigations/HomeTabNavigation";
 import type { UserStackParamList } from "../../../navigations/UserNavigation";
 
@@ -99,7 +99,7 @@ const HomeScreen: React.FC = () => {
   const tabBarHeight = useBottomTabBarHeight();
   const { user } = useUser();
 
-  const { analyses, isLoading, reload } = useDiagnosisList();
+  const { videos, isLoading, reload } = useVideoList();
 
   /** Asks for location permission once on mount, then shows the place name. */
   const location = useCurrentLocation();
@@ -150,10 +150,14 @@ const HomeScreen: React.FC = () => {
   }, [navigation]);
 
   const openDiagnosis = useCallback(
-    (analysis: VideoAnalysis) => {
+    (item: VideoListItem) => {
+      // Rows that have not produced a diagnosis yet (processing / failed) have
+      // no detail screen to open.
+      if (!item.diagnosis) return;
+
       navigation
         .getParent<UserStackNavigation>()
-        ?.navigate("DiagnosisDetail", { videoId: analysis._id });
+        ?.navigate("DiagnosisDetail", { videoId: item.diagnosis._id });
     },
     [navigation],
   );
@@ -218,20 +222,20 @@ const HomeScreen: React.FC = () => {
   const displayName =
     user?.firstName || user?.fullName || user?.username || "Farmer";
 
-  /** The newest diagnoses only, newest-first. */
+  /** The newest videos with their diagnosis, newest-first. */
   const latestDiagnoses = useMemo(
     () =>
-      [...analyses]
+      [...videos]
         .sort(
           (a, b) =>
             new Date(b.createdAt ?? 0).getTime() -
             new Date(a.createdAt ?? 0).getTime(),
         )
         .slice(0, MAX_HOME_DIAGNOSES),
-    [analyses],
+    [videos],
   );
 
-  const hasMoreDiagnoses = analyses.length > MAX_HOME_DIAGNOSES;
+  const hasMoreDiagnoses = videos.length > MAX_HOME_DIAGNOSES;
 
   /** Picked once per app session (module-level), so it's stable while open. */
   const tip = getSessionTip();
@@ -290,7 +294,7 @@ const HomeScreen: React.FC = () => {
             {latestDiagnoses.map((item) => (
               <DiagnosisCard
                 key={item._id}
-                analysis={item}
+                item={item}
                 variant="row"
                 onPress={openDiagnosis}
               />

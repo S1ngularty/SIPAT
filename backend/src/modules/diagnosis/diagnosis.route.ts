@@ -1,7 +1,10 @@
 import { Router } from "express";
 import { diagnosisController } from "./index.js";
+import { AuthMiddleware } from "../../middleware/auth.middleware.js";
 
 const router = Router();
+
+router.use(AuthMiddleware.requireSession);
 
 router.route("/").post(diagnosisController.create);
 

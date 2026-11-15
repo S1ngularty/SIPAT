@@ -25,8 +25,13 @@ export class DiagnosisService {
     return this.diagnosisRepository.create(input);
   }
 
-  async getDiagnosisList(page = 1, limit = 5) {
+  /**
+   * The signed-in user's diagnoses only: the aggregation joins each diagnosis
+   * to its video and keeps just the rows owned by `userId`.
+   */
+  async getDiagnosisList(userId: string, page = 1, limit = 5) {
     const DiagnosisList = await this.diagnosisRepository.findPaginated(
+      userId,
       page,
       limit,
     );

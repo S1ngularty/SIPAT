@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "@clerk/expo";
 import { diagnosisApi } from "../diagnosisApi";
 import type { GroqTerm, VideoAnalysis } from "../diagnosisTypes";
 import { normalizeTerms } from "../utils/termHighlight";
@@ -21,6 +22,16 @@ export const useDiagnosisDetail = (
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const { getToken } = useAuth();
+
+  // Keep the callback stable: Clerk's `getToken` changes identity between
+  // renders, which would re-fire the load effect on every render.
+  const getTokenRef = useRef(getToken);
+
+  useEffect(() => {
+    getTokenRef.current = getToken;
+  }, [getToken]);
+
   const load = useCallback(
     async (refreshing = false) => {
       try {
@@ -29,7 +40,8 @@ export const useDiagnosisDetail = (
 
         setError(null);
 
-        const data = await diagnosisApi.diagnosisDetail(videoId);
+        const token = await getTokenRef.current();
+        const data = await diagnosisApi.diagnosisDetail(videoId, token);
         setAnalysis(data);
       } catch (err: any) {
         setError(err?.message ?? "Failed to load diagnosis");

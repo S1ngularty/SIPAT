@@ -18,6 +18,7 @@ export class DiagnosisRepository {
   }
 
   async findPaginated(
+    userId: string,
     page: number,
     limit: number,
   ): Promise<DiagnosisListResult> {
@@ -35,6 +36,12 @@ export class DiagnosisRepository {
 
       {
         $unwind: "$video",
+      },
+
+      // Scope to the owner: a session alone is not enough, otherwise every
+      // signed-in user would see everyone else's diagnoses.
+      {
+        $match: { "video.userId": userId },
       },
 
       {
