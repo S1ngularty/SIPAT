@@ -2,7 +2,10 @@ import { randomUUID } from "node:crypto";
 import { r2Client } from "../../integrations/storage/r2.client.js";
 
 import type { CreateVideoInput, Video } from "./video.types.js";
-import { validateVideoUpload } from "./video.validation.js";
+import {
+  validateVideoLocation,
+  validateVideoUpload,
+} from "./video.validation.js";
 import type {
   IPresignedUploadResponse,
   IVideoListRow,
@@ -43,6 +46,7 @@ export class VideoService {
     idempotencyKey: string,
   ): Promise<IPresignedUploadResponse> {
     validateVideoUpload(input.contentType, input.fileSize);
+    validateVideoLocation(input.location);
 
     const idempotentVideoDoc =
       await this.videoRepository.findByIdempotencyKey(idempotencyKey);
@@ -73,6 +77,7 @@ export class VideoService {
       originalFileName: `${input.fileName}.${metadata.extension}`,
       contentType: input.contentType,
       status: "pending_upload",
+      location: input.location ?? null,
     });
 
     const plainVideoObj = videoDoc.toObject();

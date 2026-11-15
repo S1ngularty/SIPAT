@@ -3,6 +3,7 @@ import userRoutes from "../modules/user/user.route.js";
 import diagnosisRoutes from "../modules/diagnosis/diagnosis.route.js";
 import cropProblemRoutes from "../modules/crop-problem/cropProblem.route.js";
 import chatbotRoutes from "../modules/chatbot/chatbot.route.js";
+import weatherRoutes from "../modules/weather/weather.route.js";
 
 import { Router } from "express";
 
@@ -20,5 +21,6 @@ router.use("/videos", videoRoutes);
 router.use("/diagnosis", diagnosisRoutes);
 router.use("/crop-problems", cropProblemRoutes);
 router.use("/chatbot", chatbotRoutes);
+router.use("/weather", weatherRoutes);
 
 export default router;

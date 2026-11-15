@@ -7,7 +7,9 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { colors, radii, spacing } from "../../../theme";
 import type { WeatherState } from "../weather";
+import type { CurrentLocation } from "../hooks/useCurrentLocation";
 import { GreetingHeader } from "./GreetingHeader";
+import { LocationBadge } from "./LocationBadge";
 import { WeatherBlock } from "./WeatherBlock";
 
 /**
@@ -31,7 +33,9 @@ type Props = {
   onPressAvatar: () => void;
   onPressNotifications: () => void;
   onPressChat: () => void;
+  location: CurrentLocation;
   weather: WeatherState;
+  onPressWeatherRetry?: () => void;
 };
 
 /**
@@ -44,7 +48,9 @@ export const HomeHeroSheet: React.FC<Props> = ({
   onPressAvatar,
   onPressNotifications,
   onPressChat,
+  location,
   weather,
+  onPressWeatherRetry,
 }) => {
   return (
     <ImageBackground
@@ -69,7 +75,9 @@ export const HomeHeroSheet: React.FC<Props> = ({
           tone="light"
         />
 
-        <WeatherBlock state={weather} />
+        {/* <LocationBadge location={location} /> */}
+
+        <WeatherBlock state={weather} onRetry={onPressWeatherRetry} />
       </LinearGradient>
     </ImageBackground>
   );

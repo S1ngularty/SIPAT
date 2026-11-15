@@ -9,6 +9,14 @@ export interface CreateVideoUploadRequest {
   fileName: string;
   contentType: string;
   fileSize: number;
+  /** Optional capture coordinates, used by AI processing for weather context. */
+  location?: VideoLocation;
+}
+
+/** Where a recording was captured; drives the weather context of an analysis. */
+export interface VideoLocation {
+  latitude: number;
+  longitude: number;
 }
 
 export interface CreateVideoUploadResponse {
@@ -41,6 +49,8 @@ export interface IVideo {
   _id: string;
   userId: string;
   storageKey: string;
+  /** Capture coordinates recorded with the video, when the client supplied them. */
+  location?: VideoLocation | null;
   /** Object-storage key of the preview image, or null when none was stored. */
   thumbnailStorageKey: string | null;
   /** Pre-signed GET URL for the preview image, when the backend supplies one. */

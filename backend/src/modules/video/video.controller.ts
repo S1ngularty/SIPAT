@@ -61,7 +61,7 @@ export class VideoController {
 
       if (!userId) throw new Error("missing userId");
 
-      const { fileName, contentType, fileSize } = req.body;
+      const { fileName, contentType, fileSize, location } = req.body;
       const idempotencyKey = req.get("Idempotency-Key");
 
       if (!idempotencyKey) throw new Error("missing idempotency key");
@@ -72,6 +72,7 @@ export class VideoController {
           fileName,
           contentType,
           fileSize,
+          location: location ?? null,
         },
         idempotencyKey,
       );

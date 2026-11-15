@@ -24,6 +24,45 @@ export function validateVideoUpload(
 }
 
 // ==========================================
+// CAPTURE LOCATION
+// ==========================================
+
+/**
+ * Validates the optional capture coordinates used for weather context.
+ *
+ * Omitted / `null` is allowed (the client may not have location access); when
+ * present, both values must be finite numbers inside the legal coordinate
+ * ranges.
+ */
+export function validateVideoLocation(location?: unknown): void {
+  if (location === undefined || location === null) return;
+
+  if (typeof location !== "object" || Array.isArray(location)) {
+    throw new Error("location must be an object with latitude and longitude");
+  }
+
+  const { latitude, longitude } = location as Record<string, unknown>;
+
+  if (
+    typeof latitude !== "number" ||
+    !Number.isFinite(latitude) ||
+    latitude < -90 ||
+    latitude > 90
+  ) {
+    throw new Error("location latitude must be between -90 and 90");
+  }
+
+  if (
+    typeof longitude !== "number" ||
+    !Number.isFinite(longitude) ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    throw new Error("location longitude must be between -180 and 180");
+  }
+}
+
+// ==========================================
 // THUMBNAIL / PREVIEW IMAGE
 // ==========================================
 

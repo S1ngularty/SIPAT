@@ -14,6 +14,7 @@ export type UserStackParamList = {
   VideoScanning: undefined;
   VideoPreview: {
     videoUri: string;
+    uploaded: boolean;
   };
   DiagnosisDetail: {
     videoId: string;

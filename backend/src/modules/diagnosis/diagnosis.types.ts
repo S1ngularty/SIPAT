@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import type { Video } from "../video/video.types.js";
+import type { Video, VideoLocation } from "../video/video.types.js";
 
 export interface DiagnosisResult {
   trackId: number;
@@ -56,6 +56,9 @@ export interface DiagnosisVideo {
   contentType: string;
   fileSize: number;
   idempotencyKey: string;
+
+  /** Capture coordinates recorded with the video, when supplied. */
+  location?: VideoLocation | null;
 
   /** Object-storage key of the preview image, or `null` when none was stored. */
   thumbnailStorageKey: string | null;

@@ -12,6 +12,7 @@ import { useVideoPlayer } from "expo-video";
 import showToast from "../../../helper/toast";
 import { Alert } from "react-native";
 import { videoApi } from "../videoApi";
+import { getVideoLocation } from "../utils/videoLocation";
 import { File } from "expo-file-system";
 import { useAuth } from "@clerk/expo";
 import * as Crypto from "expo-crypto";
@@ -44,6 +45,7 @@ export default function usePreview() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<VideoScanningRouteProp>();
   const videoUri = route.params?.videoUri;
+  const isUploaded = route.params.uploaded;
 
   const { getToken, isLoaded, isSignedIn } = useAuth();
 
@@ -71,9 +73,10 @@ export default function usePreview() {
 
   useEffect(() => {
     if (!videoUri) return;
+
     uploadIdRef.current = Crypto.randomUUID();
     idempotencyKeyRef.current = Crypto.randomUUID();
-  }, [videoUri]);
+  }, [videoUri,isUploaded]);
 
   const animatedButtonStyle = useAnimatedStyle(() => {
     return {
@@ -250,7 +253,10 @@ export default function usePreview() {
         throw new Error("Clerk session is not active");
       }
 
-      const token = await getToken();
+      const [token, location] = await Promise.all([
+        getToken(),
+        getVideoLocation(),
+      ]);
 
       if (!token) {
         throw new Error("Failed to get Clerk token");
@@ -275,6 +281,9 @@ export default function usePreview() {
           fileName,
           fileSize,
           contentType,
+          // Omitted when the device has no location; the backend then uses its
+          // default farm location for weather context.
+          ...(location && !isUploaded ? { location } : {}),
         },
         token,
         idempotencyKey,

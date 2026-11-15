@@ -68,6 +68,7 @@ GET  /api/v1/health          → inline health check (status, timestamp)
      /api/v1/diagnosis       → diagnosis routes
      /api/v1/crop-problems   → crop problem reference routes
      /api/v1/chatbot         → chatbot routes
+     /api/v1/weather         → weather routes (Open-Meteo proxy)
 ```
 
 Each module owns its own `Router` in `<module>.route.ts`. Middleware is applied
@@ -104,6 +105,7 @@ at the router level (see §4 for auth details).
 | PATCH    | `/crop-problems/:identifier`          | admin       | `update`                             |
 | DELETE   | `/crop-problems/:identifier`          | admin       | `delete`                             |
 | POST     | `/chatbot/message`                    | session     | `sendMessage`                        |
+| GET      | `/weather`                            | —           | `getCurrentWeather`                  |
 
 ---
 
@@ -157,14 +159,19 @@ route → controller → service → repository → model
 ### `modules/video`
 
 - **Model** `videos` — `userId`, `storageKey` (unique), `idempotencyKey`,
-  `originalFileName`, `contentType`, `fileSize`, `status`, `processedAt`.
+  `originalFileName`, `contentType`, `fileSize`, optional `location`
+  (`{ latitude, longitude }`, embedded, `null` when the client had no fix),
+  `status`, `processedAt`.
 - **Status lifecycle:** `pending_upload → uploaded → processing → completed`
   (or `failed` / `cancelled`).
 - **Validation** (`validateVideoUpload`) restricts MIME types to
-  `mp4`/`quicktime`/`webm` and enforces a 100 MB max.
-- **`createUpload`** validates input, checks the `Idempotency-Key`, then either
-  re-issues a presigned URL for an existing record or creates a new one. Video
-  objects are keyed as `videos/{userId}/{videoId}/{fileName}.{ext}`.
+  `mp4`/`quicktime`/`webm` and enforces a 100 MB max. `validateVideoLocation`
+  accepts omitted/`null` coordinates and otherwise requires finite values
+  inside the legal latitude/longitude ranges.
+- **`createUpload`** validates input (including the optional capture location),
+  checks the `Idempotency-Key`, then either re-issues a presigned URL for an
+  existing record or creates a new one. Video objects are keyed as
+  `videos/{userId}/{videoId}/{fileName}.{ext}`.
 - **`updateUploadedVideoStatus`** marks the video `uploaded` and enqueues an
   `ai-processing` job.
 - **`deleteVideo`** (route handler `deleteVideoForUser`) deletes an owned video
@@ -175,7 +182,8 @@ route → controller → service → repository → model
   drops any partial diagnosis, resets the status to `uploaded`, and enqueues a
   fresh `ai-processing` job.
 - **`ai-processing.service.ts`** — the worker-side pipeline: set `processing`,
-  build a download URL, call FastAPI, optionally call Groq, create the
+  build a download URL, call FastAPI and fetch the current weather for the
+  video's location in parallel, optionally call Groq with both, create the
   diagnosis, then set `completed`/`failed` (see §7).
 
 ### `modules/diagnosis`
@@ -237,6 +245,25 @@ route → controller → service → repository → model
   metadata stays client-side; the API's `messages[]` accepts only
   `{ role, content }`.
 
+### `modules/weather`
+
+- **No model** — weather is read-through, not persisted.
+- **Endpoint** — `GET /api/v1/weather?lat=..&lon=..`. Both coordinates are
+  optional, but they must be supplied together (validated by
+  `weatherQuerySchema`); with neither, the service uses
+  `DEFAULT_LOCATION` (Cabanatuan City, Nueva Ecija).
+- **Public** — local weather carries no user data, so the route needs no Clerk
+  session (the mobile home screen can load it before/without a token).
+- **Service** — normalizes coordinates, caches readings in memory for 10
+  minutes (~1 km buckets, keyed by `lat/lon` rounded to 2 decimals), and maps
+  the integration's reading to the `WeatherSnapshot` response. Throws when the
+  provider is unreachable.
+- **Controller** — returns `400` for invalid coordinates and `502` when the
+  provider fails, plus `Cache-Control: public, max-age=600`. Response fields:
+  `location { latitude, longitude, timezone }`, `observedAt`, `temperatureC`,
+  `feelsLikeC`, `humidityPct`, `precipitationMm`, `precipitationChancePct`,
+  `windKph`, `windDirectionDeg`, `weatherCode`, `condition`, `isDay`.
+
 ---
 
 ## 6. Integrations
@@ -251,11 +278,21 @@ singleton.
 - **`fastApi/fastapi.client.ts`** — `FastAPIClient.aiProcess({ video_url,
   storage_key })` → `POST {FASTAPI_URL}/api/v1/detection/process`. Returns
   `{ success, results[] }` (raw detections) or `null` on error.
-- **`groq/groq.client.ts`** — `GroqClient.getGroqChatCompletion(detections)`
-  sends the detections to model `openai/gpt-oss-120b` with a detailed Tagalog
-  system prompt and JSON response format, returning `{ summary,
-  recommendations[], terms[] }`. The LLM only interprets detection output; it
-  does not detect.
+- **`open-mateo/weather.client.ts`** — `WeatherClient.getCurrentWeather({
+  latitude, longitude })` calls the keyless Open-Meteo forecast API
+  (`https://api.open-meteo.com/v1/forecast`) with an 8 s abort timeout. It asks
+  for the `current` block plus `hourly=precipitation_probability`, maps WMO
+  weather codes to labels, converts the provider's local timestamp + UTC offset
+  to a real ISO instant, and resolves a `WeatherReading` (or `null` on any
+  upstream/transport failure).
+- **`groq/groq.client.ts`** — `GroqClient.getGroqChatCompletion(detections,
+  weather?)` sends `{ detections, weather }` to model `openai/gpt-oss-120b`
+  with a detailed Tagalog system prompt and JSON response format, returning
+  `{ summary, recommendations[], terms[] }`. `weather` is an optional
+  `WeatherSnapshot`: its conditions are passed as supplementary context (the
+  prompt tells the model to treat them only as a possible contributing factor
+  and never to invent weather data). The LLM only interprets detection output;
+  it does not detect.
   - `getChatbotCompletion({ messages, context?, temperature?,
     maxCompletionTokens? })` — multi-turn chat for the chatbot feature. Uses
     JSON response format and returns a validated
@@ -282,10 +319,13 @@ singleton.
 
 1. Set video status → `processing` (with `processedAt`).
 2. Build a signed R2 download URL for the video.
-3. Call `fastAPIClient.aiProcess(...)`.
-4. On failure → status `failed`, throw.
-5. If detections exist → `groqClient.getGroqChatCompletion(...)` for the
-   analysis.
+3. Call `fastAPIClient.aiProcess(...)` and
+   `weatherService.getCurrentWeather({ latitude, longitude })` in parallel,
+   using the video's stored `location` (or the default farm location when it
+   has none). A weather failure resolves to `null` and never fails the job.
+4. On detection failure → status `failed`, throw.
+5. If detections exist → `groqClient.getGroqChatCompletion(detections, weather)`
+   for the analysis.
 6. Map detections to diagnosis `results` and call
    `diagnosisService.createDiagnosis(...)`.
 7. Set video status → `completed`.
@@ -337,13 +377,15 @@ which keeps defaults).
 
 ```
 1. POST /videos/upload              (client, session, Idempotency-Key header)
-2.   → validate type/size, create video doc (pending_upload), return presigned URL
+2.   → validate type/size/location, create video doc (pending_upload, with
+       optional capture coordinates), return presigned URL
 3. Client uploads file directly to R2
 4. PATCH /videos/:videoId/uploaded  → status "uploaded" + enqueue ai-processing
 5. Worker picks up job → aiProcessingService.processVideo(videoId)
 6.   → status "processing", signed download URL
-7.   → FastAPI /detection/process → detections
-8.   → Groq → { summary, recommendations }
+7.   → FastAPI /detection/process → detections, in parallel with the current
+       weather for the video's location
+8.   → Groq (detections + weather) → { summary, recommendations }
 9.   → create diagnosis doc → status "completed"
 10. GET /diagnosis/video/:videoId or /diagnosis/:diagnosisId
 11.   → results + Groq analysis + signed evidence/video URLs
