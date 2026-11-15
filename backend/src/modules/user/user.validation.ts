@@ -1,5 +1,19 @@
 import { z } from "zod";
 
+/**
+ * Body accepted when a freshly authenticated Clerk user is persisted.
+ *
+ * Only non-sensitive profile data is allowed through. Credentials (password,
+ * tokens, ...) live in Clerk and must never reach this API or the database.
+ * `role` is pinned to `"user"` so a client cannot self-assign `admin`; the
+ * server also ignores it and always creates accounts with the default role.
+ */
+export const signupSchema = z.object({
+  email: z.email("Invalid email address"),
+  name: z.string().trim().min(2).max(100).optional(),
+  role: z.literal("user").optional(),
+});
+
 export const updateProfileSchema = z.object({
   name: z
     .string()
@@ -50,6 +64,7 @@ export const getUsersQuerySchema = z.object({
   municipality: z.string().optional(),
 });
 
+export type SignupInput = z.infer<typeof signupSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type UpdatePreferredCropsInput = z.infer<
   typeof updatePreferredCropsSchema

@@ -1,5 +1,5 @@
 import videoRoutes from "../modules/video/video.route.js";
-import userRoutes from "../modules/user/user.route.js";
+import userRoutes, { signupRoutes } from "../modules/user/user.route.js";
 import diagnosisRoutes from "../modules/diagnosis/diagnosis.route.js";
 import cropProblemRoutes from "../modules/crop-problem/cropProblem.route.js";
 import chatbotRoutes from "../modules/chatbot/chatbot.route.js";
@@ -16,6 +16,7 @@ router.get("/health", (_req, res) => {
   });
 });
 
+router.use("/signup", signupRoutes);
 router.use("/users", userRoutes);
 router.use("/videos", videoRoutes);
 router.use("/diagnosis", diagnosisRoutes);

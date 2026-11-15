@@ -2,6 +2,18 @@ import { Router } from "express";
 import { UserController } from "./user.controller.js";
 import { AuthMiddleware } from "../../middleware/auth.middleware.js";
 
+/**
+ * Sign-up sync route, mounted at /api/v1/signup (not under /users).
+ * Requires a valid Clerk session because the Clerk ID is taken from the token.
+ */
+export const signupRoutes = Router();
+
+signupRoutes.post(
+  "/",
+  AuthMiddleware.requireSession,
+  UserController.findOrCreateUser,
+);
+
 const router = Router();
 
 // All user routes require authentication

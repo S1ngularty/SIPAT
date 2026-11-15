@@ -1,7 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useSignUp } from "@clerk/expo";
+import { useAuth, useSignUp } from "@clerk/expo";
 import { useNavigation } from "@react-navigation/native";
 import showToast from "../../../helper/toast";
+import { client } from "../../../api/apiClient";
+import { AuthNavigationProp } from "../../scan/types/navigationTypes";
+import { useSignUpContext } from "../context/SignUpContext";
 
 interface UserCredentials {
   first_name: string;
@@ -14,17 +17,20 @@ interface UserCredentials {
 
 export default function () {
   const { signUp } = useSignUp();
-  const navigation = useNavigation();
+  const { getToken } = useAuth();
+  const navigation = useNavigation<AuthNavigationProp>();
 
   const [loading, setLoading] = useState(false);
-  const [credentials, setCredentials] = useState<UserCredentials>({
-    first_name: "",
-    last_name: "",
-    role: "user",
-    username: "",
-    email: "",
-    password: "",
-  });
+  // const [credentials, setCredentials] = useState<UserCredentials>({
+  //   first_name: "",
+  //   last_name: "",
+  //   role: "user",
+  //   username: "",
+  //   email: "",
+  //   password: "",
+  // });
+
+  const { credentials, setCredentials } = useSignUpContext();
   const [verificationCode, setVerificationCode] = useState("");
   const [verificationStatus, setverificationStatus] = useState(false);
   const [error, setError] = useState("");
@@ -66,7 +72,7 @@ export default function () {
       }
 
       showToast("success", "Sign up verification", "Verification code sent.");
-      navigation.navigate("VerifyEmail" as never);
+      navigation.navigate("VerifyEmail");
     } catch (error) {
       console.error("Sign up error:", error);
     } finally {
@@ -87,14 +93,52 @@ export default function () {
         throw new Error(attemptVerification.error.message);
 
       if (signUp.status === "complete") {
-        console.log("User is now authenticated!");
-        signUp.finalize();
+        const { error: finalizeError } = await signUp.finalize();
+
+        if (finalizeError) throw finalizeError;
+
+        // The session is active now, so the request can carry a bearer token
+        // and the backend can bind the record to the Clerk user.
+        await storePersonalInfo();
         setverificationStatus(true);
       }
     } catch (error) {
       console.error("email verification error:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  /**
+   * Persist the non-sensitive parts of the profile in our API/database.
+   * The password never leaves Clerk and is deliberately not part of the body.
+   */
+  const storePersonalInfo = async (): Promise<void> => {
+    try {
+      const fullName = [credentials.first_name, credentials.last_name]
+        .filter((part) => part.trim().length > 0)
+        .map((part) => part.trim())
+        .join(" ");
+
+      const token = await getToken();
+
+      await client.request(
+        "/api/v1/signup",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            email: credentials.email,
+            role: credentials.role,
+            ...(fullName ? { name: fullName } : {}),
+          }),
+        },
+        { token },
+      );
+      return;
+    } catch (error) {
+      console.log("[sign up sync error] ", error);
+      // setError(error);
+      return;
     }
   };
 
