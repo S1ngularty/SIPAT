@@ -17,19 +17,25 @@ export const signupSchema = z.object({
 export const updateProfileSchema = z.object({
   name: z
     .string()
+    .trim()
     .min(2, "Name must be at least 2 characters")
     .max(100)
     .optional(),
   phoneNumber: z
     .string()
+    .trim()
     .regex(/^[0-9+\-\s()]+$/, "Invalid phone number format")
     .optional(),
   farmLocation: z
     .object({
-      province: z.string().min(1).max(100).optional(),
-      municipality: z.string().min(1).max(100).optional(),
-      barangay: z.string().min(1).max(100).optional(),
+      province: z.string().trim().min(1).max(100).optional(),
+      municipality: z.string().trim().min(1).max(100).optional(),
+      barangay: z.string().trim().min(1).max(100).optional(),
     })
+    .optional(),
+  preferredCrops: z
+    .array(z.enum(["tomato", "eggplant", "pepper", "potato"]))
+    .max(6, "Maximum 6 crops allowed")
     .optional(),
 });
 
