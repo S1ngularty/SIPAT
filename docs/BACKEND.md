@@ -63,6 +63,7 @@ Client ──▶ API (server.ts) ──▶ R2 (presigned upload)
 
 ```
 GET  /api/v1/health          → inline health check (status, timestamp)
+     /api/v1/signup          → sign-up profile sync route
      /api/v1/users           → user routes
      /api/v1/videos          → video routes
      /api/v1/diagnosis       → diagnosis routes
@@ -76,6 +77,7 @@ at the router level (see §4 for auth details).
 
 | Method   | Path                                  | Auth        | Handler                              |
 | -------- | ------------------------------------- | ----------- | ------------------------------------ |
+| POST     | `/signup`                             | session     | `findOrCreateUser`                   |
 | GET      | `/users/me`                           | session     | `getCurrentUser`                     |
 | PATCH    | `/users/me`                           | session     | `updateCurrentUser`                  |
 | PUT      | `/users/me/preferred-crops`           | session     | `updatePreferredCrops`               |
@@ -145,15 +147,22 @@ route → controller → service → repository → model
 
 ### `modules/user`
 
-- **Model** `users` — `clerkId` (unique), `name`, `role` (`user` | `admin`),
-  `phoneNumber`, nested `farmLocation` (province/municipality/barangay),
-  `preferredCrops` (`tomato`/`eggplant`/`pepper`/`potato`), `isActive`,
-  `lastLoginAt`. `email` is part of the user type and lookup queries.
+- **Model** `users` — `clerkId` (unique), `email` (unique, lowercased), `name`,
+  `role` (`user` | `admin`), `phoneNumber`, nested `farmLocation`
+  (province/municipality/barangay), `preferredCrops`
+  (`tomato`/`eggplant`/`pepper`/`potato`), `isActive`, `lastLoginAt`.
+- **Sign-up sync** — `POST /api/v1/signup` (`findOrCreateUser`, session
+  required) stores the non-sensitive profile of a freshly authenticated Clerk
+  user. The email/name come from the Clerk profile (request body as fallback),
+  the role is always `"user"`, and the copy is idempotent: an existing user is
+  returned unchanged (only `lastLoginAt` is bumped). Credentials such as the
+  password are owned by Clerk and are never accepted or persisted here; responses
+  go through a whitelist so no other fields can leak.
 - **Service** is a static class: profile updates, role changes, soft
   deactivation/reactivation, hard delete, paginated listing, and stats.
-- **Validation** uses Zod schemas (`updateProfileSchema`, `updateRoleSchema`,
-  `getUsersQuerySchema`, ...). Controllers call `safeParse` and return `400` on
-  failure.
+- **Validation** uses Zod schemas (`signupSchema`, `updateProfileSchema`,
+  `updateRoleSchema`, `getUsersQuerySchema`, ...). Controllers call `safeParse`
+  and return `400` on failure.
 - Guards against self-deactivation and self-deletion.
 
 ### `modules/video`
@@ -363,7 +372,7 @@ only consumed when that process is running.
 
 | Collection   | Key fields / indexes                                                       |
 | ------------ | -------------------------------------------------------------------------- |
-| `users`      | `clerkId` (unique); indexes on `clerkId+isActive`, `role+isActive`, `farmLocation.province+municipality`, `preferredCrops` |
+| `users`      | `clerkId` (unique), `email` (unique, sparse); indexes on `clerkId+isActive`, `role+isActive`, `farmLocation.province+municipality`, `preferredCrops` |
 | `videos`     | `storageKey` (unique), `status`; indexes on `userId+createdAt`, `userId+status`, `status+createdAt` |
 | `diagnoses`  | `videoId` (unique, ref `Video`); embedded `results[]`, `analysis`          |
 | `crop_problems` | `id` (unique), `slug` (unique); indexes on `type+severity`, `affectedCrops+type`, `category+severity`, and a text index over name/local/scientific name |

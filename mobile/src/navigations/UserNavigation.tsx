@@ -6,6 +6,8 @@ import { DiagnosisDetailScreen } from "../features/diagnosis/screens/DiagnosisDe
 import { EvidencePreviewScreen } from "../features/diagnosis/screens/EvidencePreviewScreen";
 import { ChatMessagesScreen } from "../features/chat/screens/ChatMessagesScreen";
 import { ChatProvider } from "../features/chat/ChatProvider";
+import EditProfileScreen from "../features/profile/screen/EditProfileScreen";
+import ChangePasswordScreen from "../features/profile/screen/ChangePasswordScreen";
 import { NavigatorScreenParams } from "@react-navigation/native";
 
 export type UserStackParamList = {
@@ -19,6 +21,8 @@ export type UserStackParamList = {
   DiagnosisDetail: {
     videoId: string;
   };
+  EditProfile: undefined;
+  ChangePassword: undefined;
   EvidencePreview: {
     crop: string;
     condition: string;
@@ -69,6 +73,20 @@ export default function UserNavigation() {
           name="DiagnosisDetail"
           options={{
             animation: "slide_from_right", // Optional: nice animation for scanner
+          }}
+        />
+        <UserStack.Screen
+          component={EditProfileScreen}
+          name="EditProfile"
+          options={{
+            animation: "slide_from_right",
+          }}
+        />
+        <UserStack.Screen
+          component={ChangePasswordScreen}
+          name="ChangePassword"
+          options={{
+            animation: "slide_from_right",
           }}
         />
         <UserStack.Screen

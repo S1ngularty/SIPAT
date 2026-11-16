@@ -4,7 +4,8 @@
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/main-icon.png",
+    "backgroundColor": "#30B57C",
     "scheme": "sipat",
     "userInterfaceStyle": "light",
     "ios": {
@@ -13,8 +14,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/adaptive-icon-foreground.png",
+        "backgroundColor": "#30B57C"
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
@@ -29,12 +30,17 @@
       "package": "com.anonymous.mobile"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/main-icon.png"
     },
     "plugins": [
       "@clerk/expo",
       "expo-secure-store",
-      ["expo-status-bar", { "style": "dark" }],
+      [
+        "expo-status-bar",
+        {
+          "style": "dark"
+        }
+      ],
       "expo-camera",
       "expo-video",
       "expo-audio",
@@ -43,6 +49,15 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "SIPAT uses your location to show the place you are in on the home screen."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-logo.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#27AE78"
         }
       ]
     ]

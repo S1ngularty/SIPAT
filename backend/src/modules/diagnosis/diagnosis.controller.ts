@@ -24,21 +24,26 @@ export class DiagnosisController {
     >,
     res: Response,
   ): Promise<void> => {
-    const { videoId, results, analysis } = req.body;
+    try {
+      const { videoId, results, analysis } = req.body;
 
-    const diagnosis = await this.diagnosisService.createDiagnosis({
-      videoId: videoId,
-      results,
-      analysis,
-    });
+      const diagnosis = await this.diagnosisService.createDiagnosis({
+        videoId: videoId,
+        results,
+        analysis,
+      });
 
-    const response: ApiResponse<typeof diagnosis> = {
-      message: "Diagnosis created successfully",
-      success: true,
-      result: diagnosis,
-    };
+      const response: ApiResponse<typeof diagnosis> = {
+        message: "Diagnosis created successfully",
+        success: true,
+        result: diagnosis,
+      };
 
-    res.status(201).json(response);
+      res.status(201).json(response);
+    } catch (error) {
+      console.log("[diagnosis]", error);
+      res.status(500).json("Failed to create the diagnosis");
+    }
   };
 
   getDiagnosisList = async (
@@ -47,8 +52,13 @@ export class DiagnosisController {
     next: NextFunction,
   ) => {
     try {
+      const { userId } = req.auth;
       const { page, limit } = req.query;
+
+      if (!userId) throw new Error("missing userId");
+
       const { data, meta } = await this.diagnosisService.getDiagnosisList(
+        userId,
         Number(page) || 1,
         Number(limit) || 5,
       );

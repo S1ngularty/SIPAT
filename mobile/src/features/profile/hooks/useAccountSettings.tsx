@@ -2,22 +2,40 @@ import { useState } from "react";
 import { Alert } from "react-native";
 import { useAuth, useUser } from "@clerk/expo";
 import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import showToast from "../../../helper/toast";
+import { useProfile } from "./useProfile";
+import {
+  formatFarmLocation,
+  formatPreferredCrops,
+} from "../profileTypes";
+import type { UserStackParamList } from "../../../navigations/UserNavigation";
 
 export default function useAccountSettings() {
   const { signOut } = useAuth();
   const { user } = useUser();
   const navigation = useNavigation();
 
+  const { profile, isLoading: isProfileLoading } = useProfile();
+
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // Derived user info
-  const userEmail = user?.primaryEmailAddress?.emailAddress ?? "—";
+  // Prefer the profile stored in our API; Clerk is the fallback while the
+  // request is in flight or if the record is missing.
+  const userEmail =
+    profile?.email ?? user?.primaryEmailAddress?.emailAddress ?? "—";
+
   const userName =
+    profile?.name?.trim() ||
     [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
     user?.username ||
     "Guest";
+
   const userInitial = (userName[0] ?? "?").toUpperCase();
+
+  const userPhoneNumber = profile?.phoneNumber?.trim() || "Not set";
+  const userFarmLocation = formatFarmLocation(profile?.farmLocation);
+  const userPreferredCrops = formatPreferredCrops(profile?.preferredCrops);
 
   const handleLogout = () => {
     Alert.alert(
@@ -48,13 +66,16 @@ export default function useAccountSettings() {
     }
   };
 
-  // Placeholder handlers for future features
   const handleEditProfile = () => {
-    showToast("info", "Coming Soon", "Profile editing will be available soon.");
+    navigation
+      .getParent<NativeStackNavigationProp<UserStackParamList>>()
+      ?.navigate("EditProfile");
   };
 
   const handleChangePassword = () => {
-    showToast("info", "Coming Soon", "Password change will be available soon.");
+    navigation
+      .getParent<NativeStackNavigationProp<UserStackParamList>>()
+      ?.navigate("ChangePassword");
   };
 
   const handleNotifications = () => {
@@ -82,6 +103,10 @@ export default function useAccountSettings() {
     userEmail,
     userName,
     userInitial,
+    userPhoneNumber,
+    userFarmLocation,
+    userPreferredCrops,
+    isProfileLoading,
 
     // State
     isLoggingOut,

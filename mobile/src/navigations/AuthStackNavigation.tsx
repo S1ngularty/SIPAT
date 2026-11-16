@@ -3,12 +3,29 @@ import React from "react";
 import SignUp from "../features/auth/screens/SignUp";
 import EmailVerificationScreen from "../features/auth/screens/VerifyEmail";
 import SignInScreen from "../features/auth/screens/SignIn";
+import { SignUpProvider } from "../features/auth/context/SignUpContext";
 
-const AuthStack = createNativeStackNavigator();
+export type AuthStackParamList = {
+  SignIn: undefined;
+  SignUp: undefined;
+  VerifyEmail:
+    | {
+        first_name: string;
+        last_name: string;
+        role: "user";
+        username?: string;
+        email: string;
+        password: string;
+      }
+    | undefined;
+};
+
+const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 
 export default function AuthNavigator() {
   return (
-    <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+   <SignUpProvider>
+     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
       <AuthStack.Screen component={SignInScreen} name="SignIn" />
       <AuthStack.Screen component={SignUp} name="SignUp" />
       <AuthStack.Screen
@@ -16,5 +33,6 @@ export default function AuthNavigator() {
         name="VerifyEmail"
       />
     </AuthStack.Navigator>
+   </SignUpProvider>
   );
 }

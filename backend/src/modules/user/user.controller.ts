@@ -1,15 +1,143 @@
 import type { Request, Response, NextFunction } from "express";
+import { clerkClient } from "@clerk/express";
 import { UserService } from "./user.service.js";
 import { wrapResponse } from "../../core/utils/response.util.js";
 import {
+  signupSchema,
   updateProfileSchema,
   updatePreferredCropsSchema,
   updateRoleSchema,
   getUsersQuerySchema,
+  type SignupInput,
 } from "./user.validation.js";
-import type { IUserListOptions } from "./user.types.js";
+import type { IUser, IUserListOptions } from "./user.types.js";
+import type { ApiResponse } from "../../core/types/api.type.js";
 
 export class UserController {
+  /**
+   * Whitelisted user fields returned to clients.
+   *
+   * Anything not listed here (passwords, tokens, internal flags, ...) is never
+   * serialized, even if it is added to the schema later.
+   */
+  private static serializeUser(user: IUser) {
+    return {
+      id: user._id,
+      clerkId: user.clerkId,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      phoneNumber: user.phoneNumber,
+      farmLocation: user.farmLocation,
+      preferredCrops: user.preferredCrops,
+      isActive: user.isActive,
+      lastLoginAt: user.lastLoginAt,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+  }
+
+  /**
+   * Read the authoritative profile from Clerk so the database never relies on
+   * client-supplied identity data. Failures are non-fatal: the request body is
+   * used as a fallback.
+   */
+  private static async getClerkProfile(
+    clerkId: string,
+  ): Promise<{ email?: string; name?: string }> {
+    try {
+      const clerkUser = await clerkClient.users.getUser(clerkId);
+
+      const email =
+        clerkUser.primaryEmailAddress?.emailAddress ??
+        clerkUser.emailAddresses[0]?.emailAddress;
+
+      const name = [clerkUser.firstName, clerkUser.lastName]
+        .filter((part): part is string => Boolean(part))
+        .join(" ")
+        .trim();
+
+      return {
+        ...(email ? { email } : {}),
+        ...(name ? { name } : {}),
+      };
+    } catch (error) {
+      console.error("Failed to fetch Clerk profile:", error);
+      return {};
+    }
+  }
+
+  /**
+   * Persist a newly authenticated Clerk user
+   * POST /api/v1/signup
+   *
+   * Idempotent: calling it again for the same Clerk user just updates the last
+   * login timestamp and returns the existing record. No sensitive data (such as
+   * the password) is ever accepted or stored here — Clerk owns credentials.
+   */
+  static async findOrCreateUser(
+    req: Request<{}, {}, SignupInput>,
+    res: Response<ApiResponse<unknown>>,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      if (!req.auth) {
+        wrapResponse("User not authenticated", 401, res, null);
+        return;
+      }
+
+      const validationResult = signupSchema.safeParse(req.body);
+
+      if (!validationResult.success) {
+        wrapResponse(
+          validationResult.error.issues.map((e) => e.message).join(", "),
+          400,
+          res,
+          null,
+        );
+        return;
+      }
+
+      const { email: bodyEmail, name: bodyName } = validationResult.data;
+      const clerkId = req.auth.userId;
+
+      const profile = await UserController.getClerkProfile(clerkId);
+
+      const email = profile.email ?? bodyEmail;
+
+      if (!email) {
+        wrapResponse("An email address is required", 400, res, null);
+        return;
+      }
+
+      const name =
+        profile.name ??
+        bodyName ??
+        email.split("@")[0] ??
+        "SIPAT user";
+
+      const { user, created } = await UserService.findOrCreateByClerkId(
+        clerkId,
+        {
+          clerkId,
+          email,
+          name,
+          // Never trust the role from the request: self-signup is always "user".
+          role: "user",
+        },
+      );
+
+      wrapResponse(
+        created ? "User registered successfully" : "User already registered",
+        created ? 201 : 200,
+        res,
+        UserController.serializeUser(user),
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
   /**
    * Get current user profile
    * GET /api/v1/users/me

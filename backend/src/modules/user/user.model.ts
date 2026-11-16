@@ -10,6 +10,17 @@ const userSchema = new Schema<IUser>(
       index: true,
       trim: true,
     },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      // `sparse` keeps the unique index buildable for users created before
+      // `email` was persisted (they simply have no value for it).
+      sparse: true,
+      lowercase: true,
+      trim: true,
+      index: true,
+    },
     name: {
       type: String,
       required: true,

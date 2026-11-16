@@ -15,6 +15,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { useAuth } from "@clerk/expo";
 import Svg, { Path, Circle, Rect } from "react-native-svg";
 import Animated, {
   FadeInDown,
@@ -820,6 +821,7 @@ export const DiagnosisDetailScreen: React.FC = () => {
   const route = useRoute<DiagnosisDetailRoute>();
   const { videoId } = route.params;
   const insets = useSafeAreaInsets();
+  const { getToken } = useAuth();
 
   const { analysis, terms, isLoading, isRefreshing, error, refresh } =
     useDiagnosisDetail(videoId);
@@ -931,7 +933,8 @@ export const DiagnosisDetailScreen: React.FC = () => {
     setSavedOverride(next);
 
     try {
-      await diagnosisApi.saveDiagnosis(analysis._id, next);
+      const token = await getToken();
+      await diagnosisApi.saveDiagnosis(analysis._id, next, token);
 
       // showToast(
       //   "success",
@@ -952,7 +955,7 @@ export const DiagnosisDetailScreen: React.FC = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [analysis?._id, isSaved, isSaving]);
+  }, [analysis?._id, isSaved, isSaving, getToken]);
 
   const handleBackToHistory = useCallback(() => {
     try {

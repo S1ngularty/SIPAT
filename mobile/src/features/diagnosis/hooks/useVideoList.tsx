@@ -15,8 +15,10 @@ const isInPipeline = (video: VideoListItem): boolean =>
   video.status === "processing";
 
 /**
- * Video-driven replacement for `useDiagnosisList`. Powers the Diagnoses screen
- * from `GET /videos`: every video (any status) with its diagnosis joined.
+ * Video-driven list shared by the Home and Diagnoses screens. Powered by
+ * `GET /videos`: the signed-in user's videos (any status) with each diagnosis
+ * joined. Never use the public diagnosis collection endpoint here — this one is
+ * session-guarded and scoped to the current user.
  */
 export const useVideoList = () => {
   const { getToken } = useAuth();
@@ -151,7 +153,8 @@ export const useVideoList = () => {
       );
 
       try {
-        await diagnosisApi.renameDiagnosis(diagnosisId, trimmed);
+        const token = await getTokenRef.current();
+        await diagnosisApi.renameDiagnosis(diagnosisId, trimmed, token);
         return true;
       } catch (err) {
         console.error("Rename failed:", err);

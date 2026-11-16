@@ -48,7 +48,7 @@ export interface IUpdateUser {
         barangay?: string | undefined;
       }
     | undefined;
-  preferredCrops?: string[];
+  preferredCrops?: string[] | undefined;
   isActive?: boolean;
   lastLoginAt?: Date;
 }

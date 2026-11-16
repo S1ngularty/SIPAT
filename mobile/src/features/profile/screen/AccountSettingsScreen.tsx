@@ -22,6 +22,9 @@ import {
   LogOut,
   ChevronRight,
   Leaf,
+  MapPin,
+  Phone,
+  Sprout,
   LucideIcon,
 } from "lucide-react-native";
 import useAccountSettings from "../hooks/useAccountSettings";
@@ -77,6 +80,10 @@ const AccountSettingsScreen = () => {
     userEmail,
     userName,
     userInitial,
+    userPhoneNumber,
+    userFarmLocation,
+    userPreferredCrops,
+    isProfileLoading,
     isLoggingOut,
     handleLogout,
     handleEditProfile,
@@ -122,6 +129,14 @@ const AccountSettingsScreen = () => {
             <Text style={styles.profileEmail} numberOfLines={1}>
               {userEmail}
             </Text>
+            {!isProfileLoading && userFarmLocation !== "Not set" ? (
+              <View style={styles.profileLocationRow}>
+                <MapPin size={12} color="#999" strokeWidth={1.8} />
+                <Text style={styles.profileLocation} numberOfLines={1}>
+                  {userFarmLocation}
+                </Text>
+              </View>
+            ) : null}
           </View>
           <TouchableOpacity
             style={styles.editButton}
@@ -150,6 +165,29 @@ const AccountSettingsScreen = () => {
               icon={Lock}
               label="Change Password"
               onPress={handleChangePassword}
+              isLast
+            />
+          </View>
+        </Animated.View>
+
+        {/* Farm Profile Section */}
+        <Animated.View entering={FadeInUp.delay(250).duration(500)}>
+          <Text style={styles.sectionTitle}>Farm Profile</Text>
+          <View style={styles.card}>
+            <SettingsItem
+              icon={Phone}
+              label="Phone Number"
+              value={isProfileLoading ? "…" : userPhoneNumber}
+            />
+            <SettingsItem
+              icon={MapPin}
+              label="Farm Location"
+              value={isProfileLoading ? "…" : userFarmLocation}
+            />
+            <SettingsItem
+              icon={Sprout}
+              label="Preferred Crops"
+              value={isProfileLoading ? "…" : userPreferredCrops}
               isLast
             />
           </View>
@@ -288,6 +326,17 @@ const styles = StyleSheet.create({
   },
   profileEmail: {
     fontSize: 13,
+    color: "#999",
+  },
+  profileLocationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 3,
+  },
+  profileLocation: {
+    flex: 1,
+    fontSize: 12,
     color: "#999",
   },
   editButton: {
