@@ -1,38 +1,92 @@
-import React, { useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
-import { Mic, Send } from "lucide-react-native";
+
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { Mic, MicOff, Send } from "lucide-react-native";
 import { colors, radii, spacing } from "../../../theme";
+import { useSpeechRecognition } from "../../../module/speech-recognition/hooks/useSpeechRecognition";
 
 const BORDER = "#E3E8E0";
 
-/** Grows with the message up to ~five lines, then scrolls. */
 const MIN_TEXT_HEIGHT = 20;
 const MAX_TEXT_HEIGHT = 100;
 
 type Props = {
   onSend: (message: string) => void;
-  /** Voice entry point — recording is not implemented yet. */
   onPressMic?: () => void;
   isSending?: boolean;
 };
 
-/** Bottom composer for the chat screen. */
 export const ChatComposer: React.FC<Props> = ({
   onSend,
-  onPressMic,
   isSending = false,
 }) => {
   const [value, setValue] = useState("");
   const [textHeight, setTextHeight] = useState(MIN_TEXT_HEIGHT);
 
+  const previousDraft = useRef("");
+
+  const {
+    isListening,
+    transcript,
+    error,
+    startListening,
+    stopListening,
+    clearTranscript,
+  } = useSpeechRecognition();
+
   const canSend = value.trim().length > 0 && !isSending;
+
+  // Update the voice portion without duplicating interim results.
+  useEffect(() => {
+    if (!isListening || !transcript) return;
+
+    const nextValue = [previousDraft.current, transcript]
+      .filter(Boolean)
+      .join(" ");
+
+    setValue(nextValue);
+  }, [transcript, isListening]);
+
+  // Stop recognition if the composer becomes unavailable.
+  useEffect(() => {
+    if (isSending && isListening) {
+      stopListening();
+    }
+  }, [isSending, isListening, stopListening]);
+
+  const handleMicPress = async () => {
+    if (isSending) return;
+
+    if (isListening) {
+      stopListening();
+      return;
+    }
+
+    previousDraft.current = value.trim();
+    clearTranscript();
+
+    await startListening();
+  };
 
   const handleSend = () => {
     if (!canSend) return;
 
+    if (isListening) {
+      stopListening();
+    }
+
     onSend(value.trim());
+
     setValue("");
     setTextHeight(MIN_TEXT_HEIGHT);
+    clearTranscript();
+    previousDraft.current = "";
   };
 
   return (
@@ -42,7 +96,7 @@ export const ChatComposer: React.FC<Props> = ({
           <TextInput
             value={value}
             onChangeText={setValue}
-            placeholder="Message Flora..."
+            placeholder={isListening ? "Listening..." : "Message Flora..."}
             placeholderTextColor={colors.textMuted}
             style={[styles.input, { height: textHeight }]}
             multiline
@@ -52,25 +106,45 @@ export const ChatComposer: React.FC<Props> = ({
             onContentSizeChange={(event) => {
               const next = Math.min(
                 MAX_TEXT_HEIGHT,
-                Math.max(MIN_TEXT_HEIGHT, Math.ceil(event.nativeEvent.contentSize.height)),
+                Math.max(
+                  MIN_TEXT_HEIGHT,
+                  Math.ceil(event.nativeEvent.contentSize.height),
+                ),
               );
 
-              setTextHeight((current) => (current === next ? current : next));
+              setTextHeight((current) =>
+                current === next ? current : next,
+              );
             }}
             selectionColor={colors.green}
+            editable={!isSending}
             accessibilityLabel="Message Flora"
           />
         </View>
 
         <Pressable
-          onPress={onPressMic}
+          onPress={handleMicPress}
+          disabled={isSending}
           accessibilityRole="button"
-          accessibilityLabel="Ask with your voice"
-          accessibilityState={{ disabled: !onPressMic }}
+          accessibilityLabel={
+            isListening ? "Stop voice recognition" : "Start voice recognition"
+          }
+          accessibilityState={{
+            disabled: isSending,
+            selected: isListening,
+          }}
           hitSlop={6}
-          style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.iconButton,
+            isListening && styles.micActive,
+            pressed && styles.pressed,
+          ]}
         >
-          <Mic size={19} color={colors.green} strokeWidth={2} />
+          {isListening ? (
+            <MicOff size={19} color={colors.white} strokeWidth={2} />
+          ) : (
+            <Mic size={19} color={colors.green} strokeWidth={2} />
+          )}
         </Pressable>
 
         <Pressable
@@ -93,6 +167,18 @@ export const ChatComposer: React.FC<Props> = ({
           />
         </Pressable>
       </View>
+
+      {/* {isListening && (
+        <Text style={styles.speechStatus}>
+          Listening...
+        </Text>
+      )} */}
+
+      {error && (
+        <Text style={styles.speechError}>
+          {error}
+        </Text>
+      )}
     </View>
   );
 };
@@ -140,6 +226,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexShrink: 0,
   },
+  micActive: {
+    backgroundColor: colors.green,
+  },
   sendButton: {
     width: 38,
     height: 38,
@@ -151,6 +240,16 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     backgroundColor: colors.surfaceMuted,
+  },
+  speechStatus: {
+    marginTop: spacing.xs,
+    fontSize: 12,
+    color: colors.green,
+  },
+  speechError: {
+    marginTop: spacing.xs,
+    fontSize: 12,
+    color: "#C0392B",
   },
   pressed: {
     opacity: 0.7,

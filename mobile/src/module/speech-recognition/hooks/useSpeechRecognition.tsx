@@ -49,7 +49,7 @@ export function useSpeechRecognition() {
       ExpoSpeechRecognitionModule.start({
         lang: "fil-PH",
         interimResults: true,
-        continuous: false,
+        continuous: true,
       });
     } catch (err) {
       setError(
