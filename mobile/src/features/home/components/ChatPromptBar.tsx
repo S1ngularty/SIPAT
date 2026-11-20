@@ -59,6 +59,8 @@ export const ChatPromptBar: React.FC<Props> = ({
 
   // Preserve text that existed before voice input started.
   const previousDraft = useRef("");
+  /** True while dictated text belongs in the input (cleared on send). */
+  const voiceSessionActive = useRef(false);
 
   const pool = suggestions ?? chatQuestions;
 
@@ -79,16 +81,17 @@ export const ChatPromptBar: React.FC<Props> = ({
     }).start();
   }, [questions, suggestionsFade]);
 
-  // Synchronize speech recognition results with the input.
+  // Synchronize speech recognition results with the input. The hook already
+  // accumulates segments, so this just mirrors base draft + transcript.
   useEffect(() => {
-    if (!isListening || !transcript) return;
+    if (!voiceSessionActive.current) return;
 
     const nextValue = [previousDraft.current, transcript]
       .filter(Boolean)
       .join(" ");
 
     setValue(nextValue);
-  }, [transcript, isListening]);
+  }, [transcript]);
 
   // Stop listening when the composer becomes unavailable.
   useEffect(() => {
@@ -126,6 +129,8 @@ export const ChatPromptBar: React.FC<Props> = ({
       stopListening();
     }
 
+    voiceSessionActive.current = false;
+
     onSend(value.trim());
 
     setValue("");
@@ -143,6 +148,7 @@ export const ChatPromptBar: React.FC<Props> = ({
     }
 
     previousDraft.current = value.trim();
+    voiceSessionActive.current = true;
     clearTranscript();
 
     await startListening();
@@ -155,6 +161,7 @@ export const ChatPromptBar: React.FC<Props> = ({
       stopListening();
     }
 
+    voiceSessionActive.current = false;
     clearTranscript();
     previousDraft.current = "";
 

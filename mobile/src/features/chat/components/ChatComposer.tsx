@@ -30,6 +30,8 @@ export const ChatComposer: React.FC<Props> = ({
   const [textHeight, setTextHeight] = useState(MIN_TEXT_HEIGHT);
 
   const previousDraft = useRef("");
+  /** True while dictated text belongs in the input (cleared on send). */
+  const voiceSessionActive = useRef(false);
 
   const {
     isListening,
@@ -42,16 +44,18 @@ export const ChatComposer: React.FC<Props> = ({
 
   const canSend = value.trim().length > 0 && !isSending;
 
-  // Update the voice portion without duplicating interim results.
+  // Mirror the (already accumulated) voice transcript into the input. The
+  // transcript only changes when new speech arrives, so manual edits between
+  // results are preserved.
   useEffect(() => {
-    if (!isListening || !transcript) return;
+    if (!voiceSessionActive.current) return;
 
     const nextValue = [previousDraft.current, transcript]
       .filter(Boolean)
       .join(" ");
 
     setValue(nextValue);
-  }, [transcript, isListening]);
+  }, [transcript]);
 
   // Stop recognition if the composer becomes unavailable.
   useEffect(() => {
@@ -69,6 +73,7 @@ export const ChatComposer: React.FC<Props> = ({
     }
 
     previousDraft.current = value.trim();
+    voiceSessionActive.current = true;
     clearTranscript();
 
     await startListening();
@@ -80,6 +85,8 @@ export const ChatComposer: React.FC<Props> = ({
     if (isListening) {
       stopListening();
     }
+
+    voiceSessionActive.current = false;
 
     onSend(value.trim());
 
