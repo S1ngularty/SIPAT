@@ -23,7 +23,6 @@ import { BottomTabBar } from "./components/BottomTabBar";
 import { UserStackParamList } from "./UserNavigation"; // Import your stack param list
 import { colors, spacing } from "../theme";
 import AccountSettingsScreen from "../features/profile/screen/AccountSettingsScreen";
-import SpeechDemo from "../module/tts/tts.module";
 
 // Define types for navigation
 export type TabParamList = {
@@ -157,7 +156,7 @@ const HomeTabNavigator: React.FC = () => {
       />
       <Tab.Screen
         name="History"
-        component={SpeechDemo}
+        component={PlaceholderScreen}
         options={{ tabBarLabel: "History", animation: "shift" }}
       />
       <Tab.Screen
