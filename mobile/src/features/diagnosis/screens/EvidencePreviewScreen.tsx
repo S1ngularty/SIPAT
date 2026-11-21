@@ -10,15 +10,13 @@ import {
   Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  useNavigation,
-  useRoute,
-  RouteProp,
-} from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import Svg, { Path, Circle, Rect } from "react-native-svg";
 
 import { useEvidencePreview } from "../hooks/useEvidencePreview";
 import type { TrackResult } from "../diagnosisTypes";
+import { TextToSpeechProvider } from "../../../module/text-to-speech/context/TextToSpeechProvider";
+import { SpeakButton } from "../../../module/text-to-speech/components/SpeakButton";
 
 // ==========================================
 // THEME
@@ -313,154 +311,181 @@ export const EvidencePreviewScreen: React.FC = () => {
       !!diseaseInfo.safety?.harvestRestrictions);
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
-      <Header onBack={handleBack} />
+    <TextToSpeechProvider>
+      <SafeAreaView style={styles.safe} edges={["top"]}>
+        <Header onBack={handleBack} />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Disease name + average confidence */}
-        <View style={styles.titleSection}>
-          <View style={styles.titleRow}>
-            <Text style={styles.diseaseName} numberOfLines={2}>
-              {diseaseName}
-            </Text>
-
-            <View style={styles.averageBlock}>
-              <Text style={styles.averageValue}>
-                {formatPercent(averageConfidence)}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Disease name + average confidence */}
+          <View style={styles.titleSection}>
+            <View style={styles.titleRow}>
+              <Text style={styles.diseaseName} numberOfLines={2}>
+                {diseaseName}
               </Text>
-              <Text style={styles.averageLabel}>average</Text>
+
+              <View style={styles.averageBlock}>
+                <Text style={styles.averageValue}>
+                  {formatPercent(averageConfidence)}
+                </Text>
+                <Text style={styles.averageLabel}>average</Text>
+              </View>
             </View>
+
+            <Text style={styles.cropName}>{cropName}</Text>
+
+            {diseaseInfo?.scientificName ? (
+              <Text style={styles.scientificName}>
+                {diseaseInfo.scientificName}
+              </Text>
+            ) : null}
           </View>
 
-          <Text style={styles.cropName}>{cropName}</Text>
+          {/* Carousel */}
+          <View style={styles.galleryWrapper}>
+            <Carousel frames={frames} />
+          </View>
 
-          {diseaseInfo?.scientificName ? (
-            <Text style={styles.scientificName}>
-              {diseaseInfo.scientificName}
-            </Text>
-          ) : null}
-        </View>
-
-        {/* Carousel */}
-        <View style={styles.galleryWrapper}>
-          <Carousel frames={frames} />
-        </View>
-
-        {/* Disease explanation + prevention */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About this condition</Text>
-
-          {isLoading ? (
-            <View style={styles.skeleton}>
-              <View style={[styles.skeletonLine, { width: "94%" }]} />
-              <View style={[styles.skeletonLine, { width: "86%" }]} />
-              <View style={[styles.skeletonLine, { width: "68%" }]} />
-              <View style={[styles.skeletonLine, { width: "78%" }]} />
+          {/* Disease explanation + prevention */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>About this condition</Text>
+              <SpeakButton
+              id="about-condition"
+              label="about the evidence condition"
+              text={[
+                diseaseInfo?.name,
+                diseaseInfo?.description,
+                diseaseInfo?.localName
+                  ? `O sa filipino ay ${diseaseInfo.localName}`
+                  : "",
+                `at mga sintomas nito ay ${diseaseInfo?.symptoms.join(", ")}`,
+                `Mga angkop o pabor na kondisyon: ${diseaseInfo?.favorableConditions.join(", ")}`,
+                `Ang sakit na ito ay kumakalat dahil sa ${diseaseInfo?.transmission.join(", ")}`,
+                `Para mapigilan ang pagkalat o pag lala ng sakit gawin ang: ${diseaseInfo?.prevention.join(", ")}`,
+                `at para sa safety o kaligtasan: ${[diseaseInfo?.safety?.ppe.join(", "), diseaseInfo?.safety?.environmentalPrecautions.join(", "), diseaseInfo?.safety?.harvestRestrictions].join(", ")}`,
+              ]
+                .filter(Boolean)
+                .join(". ")}
+              variant="icon"
+              disabled={!diseaseInfo}
+              />
             </View>
-          ) : diseaseInfo ? (
-            <>
-              <View style={styles.metaRow}>
-                <View
-                  style={[
-                    styles.metaChip,
-                    {
-                      backgroundColor: (SEVERITY_STYLES[diseaseInfo.severity] ??
-                        SEVERITY_STYLES.low).bg,
-                    },
-                  ]}
-                >
-                  <Text
+            {isLoading ? (
+              <View style={styles.skeleton}>
+                <View style={[styles.skeletonLine, { width: "94%" }]} />
+                <View style={[styles.skeletonLine, { width: "86%" }]} />
+                <View style={[styles.skeletonLine, { width: "68%" }]} />
+                <View style={[styles.skeletonLine, { width: "78%" }]} />
+              </View>
+            ) : diseaseInfo ? (
+              <>
+                <View style={styles.metaRow}>
+                  <View
                     style={[
-                      styles.metaChipText,
+                      styles.metaChip,
                       {
-                        color: (SEVERITY_STYLES[diseaseInfo.severity] ??
-                          SEVERITY_STYLES.low).fg,
+                        backgroundColor: (
+                          SEVERITY_STYLES[diseaseInfo.severity] ??
+                          SEVERITY_STYLES.low
+                        ).bg,
                       },
                     ]}
                   >
-                    {`${diseaseInfo.severity} severity`}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.metaChipText,
+                        {
+                          color: (
+                            SEVERITY_STYLES[diseaseInfo.severity] ??
+                            SEVERITY_STYLES.low
+                          ).fg,
+                        },
+                      ]}
+                    >
+                      {`${diseaseInfo.severity} severity`}
+                    </Text>
+                  </View>
+
+                  {diseaseInfo.category ? (
+                    <View style={styles.metaChip}>
+                      <Text style={styles.metaChipText}>
+                        {diseaseInfo.category}
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
 
-                {diseaseInfo.category ? (
-                  <View style={styles.metaChip}>
-                    <Text style={styles.metaChipText}>
-                      {diseaseInfo.category}
+                {diseaseInfo.description ? (
+                  <Text style={styles.description}>
+                    {diseaseInfo.description}
+                  </Text>
+                ) : null}
+
+                {diseaseInfo.localName ? (
+                  <View style={styles.localNameBlock}>
+                    <Text style={styles.localNameLabel}>Sa Filipino</Text>
+                    <Text style={styles.localNameText}>
+                      {diseaseInfo.localName}
                     </Text>
                   </View>
                 ) : null}
-              </View>
 
-              {diseaseInfo.description ? (
-                <Text style={styles.description}>
-                  {diseaseInfo.description}
+                <ListBlock title="Symptoms" items={diseaseInfo.symptoms} />
+                <ListBlock
+                  title="Favorable conditions"
+                  items={diseaseInfo.favorableConditions}
+                />
+                <ListBlock
+                  title="How it spreads"
+                  items={diseaseInfo.transmission}
+                />
+                <ListBlock title="Prevention" items={diseaseInfo.prevention} />
+                <ListBlock title="Treatment" items={diseaseInfo.treatment} />
+
+                {hasSafety && diseaseInfo.safety ? (
+                  <View style={styles.block}>
+                    <Text style={styles.blockTitle}>Safety</Text>
+
+                    <Bullets items={diseaseInfo.safety.ppe} />
+                    <Bullets
+                      items={diseaseInfo.safety.environmentalPrecautions}
+                    />
+
+                    {diseaseInfo.safety.harvestRestrictions ? (
+                      <Text style={[styles.bulletText, styles.harvestNote]}>
+                        {diseaseInfo.safety.harvestRestrictions}
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : null}
+
+                {diseaseInfo.sources.length > 0 ? (
+                  <View style={styles.block}>
+                    <Text style={styles.blockTitle}>Sources</Text>
+
+                    {diseaseInfo.sources.map((source) => (
+                      <Text key={source} style={styles.sourceText}>
+                        {source}
+                      </Text>
+                    ))}
+                  </View>
+                ) : null}
+              </>
+            ) : (
+              <View style={styles.placeholderBlock}>
+                <ImageIcon size={22} color={COLORS.textSecondary} />
+                <Text style={styles.placeholderText}>
+                  Detailed guidance for this condition is not available yet.
                 </Text>
-              ) : null}
-
-              {diseaseInfo.localName ? (
-                <View style={styles.localNameBlock}>
-                  <Text style={styles.localNameLabel}>Sa Filipino</Text>
-                  <Text style={styles.localNameText}>
-                    {diseaseInfo.localName}
-                  </Text>
-                </View>
-              ) : null}
-
-              <ListBlock title="Symptoms" items={diseaseInfo.symptoms} />
-              <ListBlock
-                title="Favorable conditions"
-                items={diseaseInfo.favorableConditions}
-              />
-              <ListBlock
-                title="How it spreads"
-                items={diseaseInfo.transmission}
-              />
-              <ListBlock title="Prevention" items={diseaseInfo.prevention} />
-              <ListBlock title="Treatment" items={diseaseInfo.treatment} />
-
-              {hasSafety && diseaseInfo.safety ? (
-                <View style={styles.block}>
-                  <Text style={styles.blockTitle}>Safety</Text>
-
-                  <Bullets items={diseaseInfo.safety.ppe} />
-                  <Bullets
-                    items={diseaseInfo.safety.environmentalPrecautions}
-                  />
-
-                  {diseaseInfo.safety.harvestRestrictions ? (
-                    <Text style={[styles.bulletText, styles.harvestNote]}>
-                      {diseaseInfo.safety.harvestRestrictions}
-                    </Text>
-                  ) : null}
-                </View>
-              ) : null}
-
-              {diseaseInfo.sources.length > 0 ? (
-                <View style={styles.block}>
-                  <Text style={styles.blockTitle}>Sources</Text>
-
-                  {diseaseInfo.sources.map((source) => (
-                    <Text key={source} style={styles.sourceText}>
-                      {source}
-                    </Text>
-                  ))}
-                </View>
-              ) : null}
-            </>
-          ) : (
-            <View style={styles.placeholderBlock}>
-              <ImageIcon size={22} color={COLORS.textSecondary} />
-              <Text style={styles.placeholderText}>
-                Detailed guidance for this condition is not available yet.
-              </Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </TextToSpeechProvider>
   );
 };
 
@@ -493,7 +518,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   navTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
     color: COLORS.text,
     letterSpacing: 0.1,
@@ -515,38 +540,39 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 16,
+    gap: 12,
   },
   diseaseName: {
     flex: 1,
-    fontSize: 24,
+    minWidth: 0,
+    fontSize: 25,
     fontWeight: "600",
     color: COLORS.text,
     letterSpacing: -0.4,
-    lineHeight: 30,
+    lineHeight: 32,
   },
   averageBlock: {
     alignItems: "flex-end",
     paddingTop: 2,
   },
   averageValue: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: "600",
     color: COLORS.statusText,
     fontVariant: ["tabular-nums"],
   },
   averageLabel: {
-    fontSize: 11,
+    fontSize: 12,
     color: COLORS.textSecondary,
     marginTop: 2,
   },
   cropName: {
-    fontSize: 14,
+    fontSize: 15,
     color: COLORS.textSecondary,
     marginTop: 6,
   },
   scientificName: {
-    fontSize: 13,
+    fontSize: 14,
     fontStyle: "italic",
     color: COLORS.textSecondary,
     marginTop: 4,
@@ -569,7 +595,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceMuted,
   },
   metaChipText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "600",
     color: COLORS.textSecondary,
     textTransform: "capitalize",
@@ -610,7 +636,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.backdrop,
   },
   confidenceBadgeText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "600",
     color: COLORS.white,
     fontVariant: ["tabular-nums"],
@@ -639,16 +665,25 @@ const styles = StyleSheet.create({
   section: {
     paddingHorizontal: MARGIN,
     paddingTop: 30,
+    
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 14,
   },
   sectionTitle: {
-    fontSize: 17,
+    flex: 1,
+    fontSize: 18,
     fontWeight: "600",
     color: COLORS.text,
     letterSpacing: -0.2,
-    marginBottom: 12,
+    marginBottom: 0,
   },
   description: {
-    fontSize: 15,
+    fontSize: 16,
     color: COLORS.textSecondary,
     lineHeight: 23,
   },
@@ -661,7 +696,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   blockTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
     color: COLORS.text,
     marginBottom: 10,
@@ -681,9 +716,9 @@ const styles = StyleSheet.create({
   },
   bulletText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 15,
     color: COLORS.textSecondary,
-    lineHeight: 21,
+    lineHeight: 23,
   },
   localNameBlock: {
     marginTop: 16,
@@ -701,12 +736,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   localNameText: {
-    fontSize: 14,
+    fontSize: 15,
     color: COLORS.text,
     lineHeight: 21,
   },
   sourceText: {
-    fontSize: 13,
+    fontSize: 14,
     color: COLORS.statusText,
     lineHeight: 20,
     marginBottom: 6,
@@ -738,7 +773,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.mutedGreen,
   },
   placeholderText: {
-    fontSize: 13,
+    fontSize: 14,
     color: COLORS.textSecondary,
     textAlign: "center",
     lineHeight: 19,

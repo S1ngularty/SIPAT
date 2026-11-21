@@ -9,7 +9,7 @@ import sys
 # ============================================================
 
 SOURCE_PATH = Path(
-    "/home/singularity/Downloads/pest_disease_datasets/set2/main"
+    "/home/singularity/Downloads/pest_disease_datasets/set2/mainv4.7"
 )
 
 OUTPUT_PATH = Path(

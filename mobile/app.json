@@ -59,7 +59,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#27AE78"
         }
-      ]
+      ],
+      "expo-speech-recognition"
     ]
   }
 }

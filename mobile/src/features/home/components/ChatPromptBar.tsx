@@ -1,3 +1,4 @@
+
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -8,46 +9,29 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Mic, Send, Sparkles } from "lucide-react-native";
+import { Mic, MicOff, Send, Sparkles } from "lucide-react-native";
 import { colors, radii, spacing } from "../../../theme";
 import chatQuestions from "../../../data/chat-questions.json";
 import { useRotatingQuestions } from "../hooks/useRotatingQuestions";
+import { useSpeechRecognition } from "../../../module/speech-recognition/hooks/useSpeechRecognition";
 
-/** Softer than the shared `borderStrong` so the green accents stay the focus. */
+/** Softer than the shared borderStrong. */
 const RESTING_BORDER = "#E3E8E0";
 const FOCUS_FILL = "#F6FAF1";
 
-/** Text area grows with the message, then scrolls past this height. */
 const MIN_TEXT_HEIGHT = 20;
 const MAX_TEXT_HEIGHT = 100;
 
 type Props = {
-  /** Called with the trimmed text when the user submits a question. */
   onSend: (message: string) => void;
-  /** Voice entry point — recording is not implemented yet. */
-  onPressMic: () => void;
-  /** Label shown above the bar. */
+  onPressMic?: () => void;
   label?: string;
-  /** Muted text shown next to the label. */
   hint?: string;
   placeholder?: string;
-  /**
-   * Static questions to show instead of the rotating pool. Pass `[]` to hide
-   * the chips entirely.
-   */
   suggestions?: readonly string[];
-  /** Shows a spinner in the send button and locks the input. */
   isSending?: boolean;
 };
 
-/**
- * Home entry point for the AI assistant: a label, then a horizontal bar with
- * the assistant sparkle on the left, a free-text field, and the mic / send
- * actions on the right. Sits between the hero sheet and "Agri Tips".
- *
- * The bar gently lifts when focused: the outline shifts from a soft neutral to
- * the brand green, the fill warms slightly, and it scales up a touch.
- */
 export const ChatPromptBar: React.FC<Props> = ({
   onSend,
   onPressMic,
@@ -59,10 +43,27 @@ export const ChatPromptBar: React.FC<Props> = ({
 }) => {
   const [value, setValue] = useState("");
   const [textHeight, setTextHeight] = useState(MIN_TEXT_HEIGHT);
+
   const focusAnim = useRef(new Animated.Value(0)).current;
   const suggestionsFade = useRef(new Animated.Value(1)).current;
 
+  // Speech recognition
+  const {
+    isListening,
+    transcript,
+    error,
+    startListening,
+    stopListening,
+    clearTranscript,
+  } = useSpeechRecognition();
+
+  // Preserve text that existed before voice input started.
+  const previousDraft = useRef("");
+  /** True while dictated text belongs in the input (cleared on send). */
+  const voiceSessionActive = useRef(false);
+
   const pool = suggestions ?? chatQuestions;
+
   const questions = useRotatingQuestions(pool, {
     enabled: suggestions === undefined,
     intervalMs: 15_000,
@@ -70,10 +71,6 @@ export const ChatPromptBar: React.FC<Props> = ({
     maxCount: 4,
   });
 
-  /**
-   * Fade the chip cloud whenever the rotating set changes so the swap reads as
-   * a refresh rather than a flicker.
-   */
   useEffect(() => {
     suggestionsFade.setValue(0);
 
@@ -83,6 +80,25 @@ export const ChatPromptBar: React.FC<Props> = ({
       useNativeDriver: true,
     }).start();
   }, [questions, suggestionsFade]);
+
+  // Synchronize speech recognition results with the input. The hook already
+  // accumulates segments, so this just mirrors base draft + transcript.
+  useEffect(() => {
+    if (!voiceSessionActive.current) return;
+
+    const nextValue = [previousDraft.current, transcript]
+      .filter(Boolean)
+      .join(" ");
+
+    setValue(nextValue);
+  }, [transcript]);
+
+  // Stop listening when the composer becomes unavailable.
+  useEffect(() => {
+    if (isSending && isListening) {
+      stopListening();
+    }
+  }, [isSending, isListening, stopListening]);
 
   const canSend = value.trim().length > 0 && !isSending;
 
@@ -97,27 +113,57 @@ export const ChatPromptBar: React.FC<Props> = ({
     [focusAnim],
   );
 
-  /** Grows the input between one and ~five lines, then lets it scroll. */
   const handleContentSizeChange = (contentHeight: number) => {
     const next = Math.min(
       MAX_TEXT_HEIGHT,
       Math.max(MIN_TEXT_HEIGHT, Math.ceil(contentHeight)),
     );
 
-    setTextHeight((current) => (current === next ? current : next));
+    setTextHeight((current) => current === next ? current : next);
   };
 
   const handleSend = () => {
     if (!canSend) return;
 
+    if (isListening) {
+      stopListening();
+    }
+
+    voiceSessionActive.current = false;
+
     onSend(value.trim());
+
     setValue("");
     setTextHeight(MIN_TEXT_HEIGHT);
+    clearTranscript();
+    previousDraft.current = "";
   };
 
-  /** Chips fill the bar and send in one tap. */
+  const handleMicPress = async () => {
+    if (isSending) return;
+
+    if (isListening) {
+      stopListening();
+      return;
+    }
+
+    previousDraft.current = value.trim();
+    voiceSessionActive.current = true;
+    clearTranscript();
+
+    await startListening();
+  };
+
   const handleSuggestionPress = (question: string) => {
     if (isSending) return;
+
+    if (isListening) {
+      stopListening();
+    }
+
+    voiceSessionActive.current = false;
+    clearTranscript();
+    previousDraft.current = "";
 
     setValue(question);
     onSend(question);
@@ -160,7 +206,7 @@ export const ChatPromptBar: React.FC<Props> = ({
           <TextInput
             value={value}
             onChangeText={setValue}
-            placeholder={placeholder}
+            placeholder={isListening ? "Listening..." : placeholder}
             placeholderTextColor={colors.textMuted}
             style={[styles.input, { height: textHeight }]}
             multiline
@@ -179,13 +225,25 @@ export const ChatPromptBar: React.FC<Props> = ({
         </View>
 
         <Pressable
-          onPress={onPressMic}
+          onPress={handleMicPress}
+          disabled={isSending}
           accessibilityRole="button"
-          accessibilityLabel="Ask with your voice"
+          accessibilityLabel={
+            isListening ? "Stop voice recognition" : "Start voice recognition"
+          }
+          accessibilityState={{ disabled: isSending }}
           hitSlop={6}
-          style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.iconButton,
+            isListening && styles.micActive,
+            pressed && styles.pressed,
+          ]}
         >
-          <Mic size={19} color={colors.green} strokeWidth={2} />
+          {isListening ? (
+            <MicOff size={19} color={colors.white} strokeWidth={2} />
+          ) : (
+            <Mic size={19} color={colors.green} strokeWidth={2} />
+          )}
         </Pressable>
 
         <Pressable
@@ -212,6 +270,18 @@ export const ChatPromptBar: React.FC<Props> = ({
           )}
         </Pressable>
       </Animated.View>
+
+      {isListening && (
+        <Text style={styles.speechStatus}>
+          Listening to your voice...
+        </Text>
+      )}
+
+      {error && (
+        <Text style={styles.speechError}>
+          {error}
+        </Text>
+      )}
 
       {questions.length > 0 ? (
         <Animated.View
@@ -287,7 +357,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     backgroundColor: colors.white,
   },
-  /** Bare sparkle — no filled badge, so the icon reads as part of the field. */
   leading: {
     width: 24,
     height: 38,
@@ -295,7 +364,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexShrink: 0,
   },
-  /** Pads the text area vertically so the bar stays 58 tall for one line. */
   inputWrap: {
     flex: 1,
     minWidth: 0,
@@ -319,6 +387,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexShrink: 0,
   },
+  micActive: {
+    backgroundColor: colors.green,
+  },
   sendButton: {
     width: 38,
     height: 38,
@@ -331,7 +402,18 @@ const styles = StyleSheet.create({
   sendButtonDisabled: {
     backgroundColor: colors.surfaceMuted,
   },
-  /** Wrapping chip cloud — fills each row before starting a new one. */
+  speechStatus: {
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    fontSize: 12,
+    color: colors.green,
+  },
+  speechError: {
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    fontSize: 12,
+    color: "#C0392B",
+  },
   suggestions: {
     flexDirection: "row",
     flexWrap: "wrap",

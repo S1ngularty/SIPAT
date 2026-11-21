@@ -35,6 +35,8 @@ import { TermHighlightText } from "../components/TermHighlightText";
 import { diagnosisApi } from "../diagnosisApi";
 import type { TrackResult } from "../diagnosisTypes";
 import showToast from "../../../helper/toast";
+import { TextToSpeechProvider } from "../../../module/text-to-speech/context/TextToSpeechProvider";
+import { SpeakButton } from "../../../module/text-to-speech/components/SpeakButton";
 
 // ============================================================
 // THEME
@@ -759,11 +761,7 @@ interface FindingRowProps {
   onPress: (group: EvidenceGroup) => void;
 }
 
-const FindingRow: React.FC<FindingRowProps> = ({
-  group,
-  isLast,
-  onPress,
-}) => {
+const FindingRow: React.FC<FindingRowProps> = ({ group, isLast, onPress }) => {
   const thumbnail = group.imageUrls[0] ?? null;
   const disease = prettifyLabel(group.condition) || "Unknown condition";
   const crop = prettifyLabel(group.crop) || "Crop not identified";
@@ -816,7 +814,7 @@ type DiagnosisDetailRoute = RouteProp<
 // SCREEN
 // ============================================================
 
-export const DiagnosisDetailScreen: React.FC = () => {
+const DiagnosisDetailContent: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<DiagnosisDetailRoute>();
   const { videoId } = route.params;
@@ -1029,7 +1027,9 @@ export const DiagnosisDetailScreen: React.FC = () => {
         <Animated.View entering={ENTER} style={styles.headingBlock}>
           <Text style={styles.eyebrow}>Video diagnosis / {reference}</Text>
 
-          <Text style={styles.heading}>{heading}</Text>
+          <View style={styles.headingRow}>
+            <Text style={styles.heading}>{heading}</Text>
+          </View>
 
           {analysis?.createdAt ? (
             <Text style={styles.headingDate}>
@@ -1042,10 +1042,7 @@ export const DiagnosisDetailScreen: React.FC = () => {
             EVIDENCE IMAGE
         ================================================== */}
 
-        <Animated.View
-          entering={ENTER.delay(60)}
-          style={styles.imageWrapper}
-        >
+        <Animated.View entering={ENTER.delay(60)} style={styles.imageWrapper}>
           <EvidenceImage uri={heroImageUrl} />
         </Animated.View>
 
@@ -1053,10 +1050,7 @@ export const DiagnosisDetailScreen: React.FC = () => {
             DIAGNOSIS SUMMARY
         ================================================== */}
 
-        <Animated.View
-          entering={ENTER.delay(100)}
-          style={styles.summaryBlock}
-        >
+        <Animated.View entering={ENTER.delay(100)} style={styles.summaryBlock}>
           <View style={styles.summaryMetaRow}>
             <View style={styles.statusPill}>
               <Text style={styles.statusPillText}>{statusLabel}</Text>
@@ -1064,9 +1058,7 @@ export const DiagnosisDetailScreen: React.FC = () => {
 
             {primary ? (
               <Text style={styles.confidenceText}>
-                {`Model confidence ${Math.round(
-                  primary.topConfidence * 100,
-                )}%`}
+                {`Model confidence ${Math.round(primary.topConfidence * 100)}%`}
               </Text>
             ) : null}
           </View>
@@ -1078,11 +1070,13 @@ export const DiagnosisDetailScreen: React.FC = () => {
               <Text style={styles.cropName}>{cropName}</Text>
             </View>
 
-            <SaveButton
-              saved={isSaved}
-              disabled={!analysis || isSaving}
-              onPress={handleToggleSave}
-            />
+            <View style={styles.summaryControls}>
+              <SaveButton
+                saved={isSaved}
+                disabled={!analysis || isSaving}
+                onPress={handleToggleSave}
+              />
+            </View>
           </View>
         </Animated.View>
 
@@ -1090,11 +1084,17 @@ export const DiagnosisDetailScreen: React.FC = () => {
             OBSERVED SYMPTOMS
         ================================================== */}
 
-        <Animated.View
-          entering={ENTER.delay(140)}
-          style={styles.section}
-        >
-          <Text style={styles.sectionTitle}>Observed symptoms</Text>
+        <Animated.View entering={ENTER.delay(140)} style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Observed symptoms</Text>
+            <SpeakButton
+              id="observed-symptoms"
+              label="observed symptoms"
+              text={observedText}
+              variant="icon"
+              disabled={!observedText.trim()}
+            />
+          </View>
 
           <TermHighlightText
             text={observedText}
@@ -1114,10 +1114,7 @@ export const DiagnosisDetailScreen: React.FC = () => {
             <ArrowUpRightIcon size={16} color={COLORS.statusText} />
 
             <Text
-              style={[
-                styles.linkText,
-                !primary && styles.linkTextDisabled,
-              ]}
+              style={[styles.linkText, !primary && styles.linkTextDisabled]}
             >
               View original evidence
             </Text>
@@ -1128,11 +1125,29 @@ export const DiagnosisDetailScreen: React.FC = () => {
             RECOMMENDED ACTIONS
         ================================================== */}
 
-        <Animated.View
-          entering={ENTER.delay(180)}
-          style={styles.section}
-        >
-          <Text style={styles.sectionTitle}>Recommended actions</Text>
+        <Animated.View entering={ENTER.delay(180)} style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recommended actions</Text>
+            <SpeakButton
+              id="recommended-actions"
+              label="all recommended actions"
+              text={
+                actions.length > 0
+                  ? actions
+                      .map((action, index) => {
+                        const details = [action.title, action.explanation]
+                          .filter(Boolean)
+                          .join(". ");
+                        return `Step ${index + 1}. ${details}`;
+                      })
+                      .filter((step) => step.trim().length > 0)
+                      .join(".")
+                  : "No specific actions were suggested for this clip."
+              }
+              variant="icon"
+              disabled={actions.length === 0}
+            />
+          </View>
 
           {actions.length === 0 ? (
             <Text style={styles.bodyText}>
@@ -1140,30 +1155,31 @@ export const DiagnosisDetailScreen: React.FC = () => {
             </Text>
           ) : (
             actions.map((action, index) => (
-              <View
-                key={`${action.title}-${index}`}
-                style={styles.actionRow}
-              >
+              <View key={`${action.title}-${index}`} style={styles.actionRow}>
                 <Text style={styles.actionNumber}>
                   {String(index + 1).padStart(2, "0")}
                 </Text>
 
                 <View style={styles.actionContent}>
-                  <TermHighlightText
-                    text={action.title}
-                    segments={action.titleSegments}
-                    onPressTerm={openTerm}
-                    style={styles.actionTitle}
-                  />
+                  <View style={styles.actionHeader}>
+                    <View style={styles.actionTextContent}>
+                      <TermHighlightText
+                        text={action.title}
+                        segments={action.titleSegments}
+                        onPressTerm={openTerm}
+                        style={styles.actionTitle}
+                      />
 
-                  {action.explanation ? (
-                    <TermHighlightText
-                      text={action.explanation}
-                      segments={action.explanationSegments}
-                      onPressTerm={openTerm}
-                      style={styles.actionExplanation}
-                    />
-                  ) : null}
+                      {action.explanation ? (
+                        <TermHighlightText
+                          text={action.explanation}
+                          segments={action.explanationSegments}
+                          onPressTerm={openTerm}
+                          style={styles.actionExplanation}
+                        />
+                      ) : null}
+                    </View>
+                  </View>
                 </View>
               </View>
             ))
@@ -1175,11 +1191,10 @@ export const DiagnosisDetailScreen: React.FC = () => {
         ================================================== */}
 
         {otherFindings.length > 0 && (
-          <Animated.View
-            entering={ENTER.delay(220)}
-            style={styles.section}
-          >
-            <Text style={styles.sectionTitle}>Other findings</Text>
+          <Animated.View entering={ENTER.delay(220)} style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Other findings</Text>
+            </View>
 
             <View style={styles.findingsList}>
               {otherFindings.map((group, index) => (
@@ -1318,13 +1333,21 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
 
+  headingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    marginTop: 10,
+  },
+
   heading: {
+    flex: 1,
     fontSize: 28,
     fontWeight: "600",
     color: COLORS.text,
     letterSpacing: -0.5,
     lineHeight: 34,
-    marginTop: 10,
   },
 
   headingDate: {
@@ -1409,6 +1432,12 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
 
+  summaryControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
   diseaseName: {
     fontSize: 24,
     fontWeight: "600",
@@ -1458,12 +1487,20 @@ const styles = StyleSheet.create({
     paddingTop: 30,
   },
 
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 12,
+  },
+
   sectionTitle: {
+    flex: 1,
     fontSize: 17,
     fontWeight: "600",
     color: COLORS.text,
     letterSpacing: -0.2,
-    marginBottom: 12,
   },
 
   bodyText: {
@@ -1515,6 +1552,18 @@ const styles = StyleSheet.create({
   },
 
   actionContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  actionHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+
+  actionTextContent: {
     flex: 1,
     minWidth: 0,
   },
@@ -1682,3 +1731,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 });
+
+/**
+ * Keep the TTS provider around the complete screen so all section buttons
+ * share one speech session and selecting another section replaces playback.
+ * If the navigator already provides this context globally, remove this local
+ * wrapper and export DiagnosisDetailContent directly instead.
+ */
+export const DiagnosisDetailScreen: React.FC = () => (
+  <TextToSpeechProvider>
+    <DiagnosisDetailContent />
+  </TextToSpeechProvider>
+);

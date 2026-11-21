@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, Sparkles } from "lucide-react-native";
+import { ArrowLeft, Sparkles, Volume2, VolumeX } from "lucide-react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as Clipboard from "expo-clipboard";
 import { colors, radii, spacing } from "../../../theme";
@@ -26,6 +26,7 @@ import { RichMessageText } from "../components/RichMessageText";
 import type { ChatMessage } from "../chatTypes";
 import type { UserStackParamList } from "../../../navigations/UserNavigation";
 import { Wave } from "react-native-animated-spinkit";
+import { useTextToSpeech } from "../../../module/text-to-speech/hook/useTextToSpeech";
 
 const BORDER = "#E3E8E0";
 const SUGGESTION_FILL = "#F6FAF1";
@@ -35,11 +36,19 @@ type Props = NativeStackScreenProps<UserStackParamList, "Chat">;
 type MessageBubbleProps = {
   message: ChatMessage;
   onPressHighlight: (term: string) => void;
+  onSpeak: (messageId: string, text: string) => void;
+  onStopSpeaking: () => void;
+  messageId: string;
+  isSpeaking: boolean;
 };
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({
   message,
   onPressHighlight,
+  onSpeak,
+  onStopSpeaking,
+  messageId,
+  isSpeaking,
 }) => {
   const isUser = message.role === "user";
   const entrance = useRef(new Animated.Value(isUser ? 1 : 0)).current;
@@ -54,6 +63,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       useNativeDriver: true,
     }).start();
   }, [entrance, isUser]);
+
+  const handleSpeakPress = useCallback(() => {
+    if (isSpeaking) {
+      onStopSpeaking();
+      return;
+    }
+
+    onSpeak(messageId, message.content);
+  }, [isSpeaking, message.content, messageId, onSpeak, onStopSpeaking]);
 
   return (
     <Animated.View
@@ -90,6 +108,37 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               : styles.messageText
           }
         />
+
+        {!isUser && (
+          <Pressable
+            onPress={handleSpeakPress}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isSpeaking ? "Stop reading this reply" : "Read this reply aloud"
+            }
+            accessibilityState={{ selected: isSpeaking }}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.speakButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            {isSpeaking ? (
+              <VolumeX size={14} color={colors.green} strokeWidth={2.2} />
+            ) : (
+              <Volume2
+                size={14}
+                color={colors.textMuted}
+                strokeWidth={2.2}
+              />
+            )}
+            <Text
+              style={[styles.speakLabel, isSpeaking && styles.speakLabelActive]}
+            >
+              {isSpeaking ? "Stop" : "Listen"}
+            </Text>
+          </Pressable>
+        )}
       </View>
     </Animated.View>
   );
@@ -126,6 +175,39 @@ export const ChatMessagesScreen: React.FC<Props> = ({ navigation }) => {
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const suggestionsFade = useRef(new Animated.Value(1)).current;
   const [highlightTerm, setHighlightTerm] = useState<string | null>(null);
+
+  /** Text-to-speech: at most one reply is read aloud at a time. */
+  const {
+    speak: speakText,
+    stop: stopSpeaking,
+    isSpeaking,
+    error: speechError,
+  } = useTextToSpeech();
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(
+    null,
+  );
+
+  const handleSpeakMessage = useCallback(
+    (messageId: string, text: string) => {
+      setSpeakingMessageId(messageId);
+      void speakText(text);
+    },
+    [speakText],
+  );
+
+  const handleStopSpeaking = useCallback(() => {
+    setSpeakingMessageId(null);
+    void stopSpeaking();
+  }, [stopSpeaking]);
+
+  /** Clear the active reply once playback finishes or fails on its own. */
+  useEffect(() => {
+    if (!isSpeaking) setSpeakingMessageId(null);
+  }, [isSpeaking]);
+
+  useEffect(() => {
+    if (speechError) showToast("error", "Text to speech", speechError);
+  }, [speechError]);
 
   /**
    * Quick prompts docked above the composer — same rotating pool as the Home
@@ -244,12 +326,20 @@ export const ChatMessagesScreen: React.FC<Props> = ({ navigation }) => {
           ref={listRef}
           data={messages}
           keyExtractor={(item, index) => `${item.role}-${index}`}
-          renderItem={({ item }) => (
-            <MessageBubble
-              message={item}
-              onPressHighlight={handleHighlightPress}
-            />
-          )}
+          renderItem={({ item, index }) => {
+            const messageId = `${item.role}-${index}`;
+
+            return (
+              <MessageBubble
+                message={item}
+                messageId={messageId}
+                onPressHighlight={handleHighlightPress}
+                onSpeak={handleSpeakMessage}
+                onStopSpeaking={handleStopSpeaking}
+                isSpeaking={isSpeaking && speakingMessageId === messageId}
+              />
+            );
+          }}
           contentContainerStyle={styles.messages}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -411,6 +501,23 @@ const styles = StyleSheet.create({
   },
   userMessageText: {
     color: colors.white,
+  },
+  /** Speaker toggle shown under assistant replies. */
+  speakButton: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: spacing.sm,
+    paddingVertical: 2,
+  },
+  speakLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: colors.textMuted,
+  },
+  speakLabelActive: {
+    color: colors.green,
   },
   typingBubble: {
     flexDirection: "row",
