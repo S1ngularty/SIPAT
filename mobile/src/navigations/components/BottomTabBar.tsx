@@ -16,6 +16,8 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { colors, radii, spacing } from "../../theme";
+import { useNetwork } from "../../network/NetworkProvider";
+import { OFFLINE_ROUTE_NAMES } from "../offlineRoutes";
 
 type TabItemConfig = {
   name: string;
@@ -67,18 +69,39 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
   insets,
 }) => {
   const onHeightChange = React.useContext(BottomTabBarHeightCallbackContext);
+  const { isOffline } = useNetwork();
 
   const [rowWidth, setRowWidth] = React.useState(0);
-  const segmentWidth = rowWidth > 0 ? rowWidth / state.routes.length : 0;
+
+  // Online-only destinations are removed from the bar in limited mode. The
+  // routes stay registered in the navigator (so their screens remain mounted
+  // when reconnecting) — they are simply not reachable from here.
+  const visibleRoutes = React.useMemo(
+    () =>
+      isOffline
+        ? state.routes.filter((route) => OFFLINE_ROUTE_NAMES.has(route.name))
+        : state.routes,
+    [isOffline, state.routes],
+  );
+
+  const activeRouteKey = state.routes[state.index]?.key;
+  const activeVisibleIndex = Math.max(
+    0,
+    visibleRoutes.findIndex((route) => route.key === activeRouteKey),
+  );
+  const segmentWidth =
+    rowWidth > 0 && visibleRoutes.length > 0
+      ? rowWidth / visibleRoutes.length
+      : 0;
 
   const indicatorX = useSharedValue(0);
 
   React.useEffect(() => {
     if (segmentWidth === 0) return;
-    indicatorX.value = withTiming(state.index * segmentWidth, {
+    indicatorX.value = withTiming(activeVisibleIndex * segmentWidth, {
       duration: SLIDE_DURATION,
     });
-  }, [state.index, segmentWidth, indicatorX]);
+  }, [activeVisibleIndex, segmentWidth, indicatorX]);
 
   const indicatorStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: indicatorX.value }],
@@ -91,6 +114,10 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
   };
 
   const handlePress = (routeName: string, routeKey: string, focused: boolean) => {
+    // Defensive: the item is hidden in limited mode, but a programmatic press
+    // should never open an online-only tab.
+    if (isOffline && !OFFLINE_ROUTE_NAMES.has(routeName)) return;
+
     // The center action always launches the recording flow instead of a tab.
     if (routeName === CENTER_TAB) {
       navigation.getParent()?.navigate("VideoScanning" as never);
@@ -134,11 +161,11 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
             />
           ) : null}
 
-          {state.routes.map((route, index) => {
+          {visibleRoutes.map((route) => {
             const config = TAB_ITEMS.find((item) => item.name === route.name);
             if (!config) return null;
 
-            const focused = state.index === index;
+            const focused = activeRouteKey === route.key;
             const isCenter = route.name === CENTER_TAB;
 
             return (

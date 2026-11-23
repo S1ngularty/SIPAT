@@ -14,13 +14,20 @@ const isInPipeline = (video: VideoListItem): boolean =>
   video.status === "uploaded" ||
   video.status === "processing";
 
+type UseVideoListOptions = {
+  /** Set false to suspend fetching (e.g. while the device is offline). */
+  enabled?: boolean;
+};
+
 /**
  * Video-driven list shared by the Home and Diagnoses screens. Powered by
  * `GET /videos`: the signed-in user's videos (any status) with each diagnosis
  * joined. Never use the public diagnosis collection endpoint here — this one is
  * session-guarded and scoped to the current user.
  */
-export const useVideoList = () => {
+export const useVideoList = ({
+  enabled = true,
+}: UseVideoListOptions = {}) => {
   const { getToken } = useAuth();
 
   const [videos, setVideos] = useState<VideoListItem[]>([]);
@@ -28,6 +35,14 @@ export const useVideoList = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+
+  // Keep the latest value readable from stable callbacks without making them
+  // change identity (the polling and focus effects depend on those callbacks).
+  const enabledRef = useRef(enabled);
+
+  useEffect(() => {
+    enabledRef.current = enabled;
+  }, [enabled]);
 
   // Clerk's `getToken` does not keep its identity between renders, so calling it
   // directly inside `fetchVideos` would make `fetchVideos` change every render.
@@ -42,6 +57,8 @@ export const useVideoList = () => {
 
   const fetchVideos = useCallback(
     async (pageNum: number, mode: FetchMode = "replace") => {
+      if (!enabledRef.current) return;
+
       try {
         const token = await getTokenRef.current();
 
@@ -80,6 +97,12 @@ export const useVideoList = () => {
   const didInitialLoad = useRef(false);
 
   useEffect(() => {
+    if (!enabled) {
+      // Nothing to fetch offline; stop the skeleton and wait for reconnection.
+      setIsLoading(false);
+      return;
+    }
+
     if (didInitialLoad.current) return;
     didInitialLoad.current = true;
 
@@ -88,7 +111,7 @@ export const useVideoList = () => {
       await fetchVideos(1, "replace");
       setIsLoading(false);
     })();
-  }, [fetchVideos]);
+  }, [enabled, fetchVideos]);
 
   // Derived as a boolean so the interval below is only re-created when this
   // actually flips — not on every poll (a `videos` dependency would tear the
@@ -98,14 +121,14 @@ export const useVideoList = () => {
   // Silent background poll. Merges page 1 in place: no skeleton, no spinner, no
   // scroll jump. Stops on its own once nothing is left in the pipeline.
   useEffect(() => {
-    if (!hasProcessing) return;
+    if (!enabled || !hasProcessing) return;
 
     const interval = setInterval(() => {
       fetchVideos(1, "merge");
     }, POLL_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [hasProcessing, fetchVideos]);
+  }, [enabled, hasProcessing, fetchVideos]);
 
   /** Pull-to-refresh: native spinner only, no skeleton. */
   const refresh = useCallback(async () => {

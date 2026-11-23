@@ -8,6 +8,7 @@ import AnimatedSplashScreen from "./components/AnimatedSplashScreen";
 import { toastConfig } from "./helper/toast";
 import Toast from "react-native-toast-message";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { NetworkProvider, useNetwork } from "./network/NetworkProvider";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -23,6 +24,7 @@ SplashScreen.preventAutoHideAsync().catch((error) => {
 
 function AppContent() {
   const { isLoaded } = useAuth();
+  const { isOffline, isInitialized } = useNetwork();
   const [isSplashVisible, setIsSplashVisible] = useState(true);
 
   const handleSplashFinish = useCallback(() => {
@@ -34,7 +36,11 @@ function AppContent() {
       <RootNavigator />
       {isSplashVisible ? (
         <AnimatedSplashScreen
-          isAppReady={isLoaded}
+          // Offline cold starts never finish Clerk's network bootstrap. Let the
+          // limited experience in instead of holding the splash forever. The
+          // NetInfo reading is awaited too so online-only UI never flashes
+          // before the first offline detection.
+          isAppReady={(isLoaded && isInitialized) || isOffline}
           onFinish={handleSplashFinish}
         />
       ) : null}
@@ -45,9 +51,11 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <AppContent />
-    </ClerkProvider>
+    <NetworkProvider>
+      <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+        <AppContent />
+      </ClerkProvider>
+    </NetworkProvider>
   );
 }
 

@@ -36,6 +36,8 @@ type Props = {
   location: CurrentLocation;
   weather: WeatherState;
   onPressWeatherRetry?: () => void;
+  /** Hides the weather and account shortcuts while the device is offline. */
+  isOffline?: boolean;
 };
 
 /**
@@ -51,6 +53,7 @@ export const HomeHeroSheet: React.FC<Props> = ({
   location,
   weather,
   onPressWeatherRetry,
+  isOffline = false,
 }) => {
   return (
     <ImageBackground
@@ -69,15 +72,17 @@ export const HomeHeroSheet: React.FC<Props> = ({
         <GreetingHeader
           name={name}
           avatarUrl={avatarUrl}
-          onPressAvatar={onPressAvatar}
-          onPressNotifications={onPressNotifications}
-          onPressChat={onPressChat}
+          onPressAvatar={isOffline ? undefined : onPressAvatar}
+          onPressNotifications={isOffline ? undefined : onPressNotifications}
+          onPressChat={isOffline ? undefined : onPressChat}
           tone="light"
         />
 
         {/* <LocationBadge location={location} /> */}
 
-        <WeatherBlock state={weather} onRetry={onPressWeatherRetry} />
+        {isOffline ? null : (
+          <WeatherBlock state={weather} onRetry={onPressWeatherRetry} />
+        )}
       </LinearGradient>
     </ImageBackground>
   );

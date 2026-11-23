@@ -20,6 +20,7 @@ import { ArrowRight, ScanLine, Sprout } from "lucide-react-native";
 
 import { colors, radii, spacing } from "../../../theme";
 import { Skeleton } from "../../../components/ui/SkeletonComponent";
+import { OfflineNotice } from "../../../components/common/OfflineNotice";
 import { HomeHeroSheet } from "../components/HomeHeroSheet";
 import { ChatPromptBar } from "../components/ChatPromptBar";
 import { DiagnosisCard } from "../components/DiagnosisCard";
@@ -33,6 +34,7 @@ import { getSessionTip } from "../utils/agriTips";
 import type { VideoListItem } from "../../diagnosis/diagnosisTypes";
 import type { TabParamList } from "../../../navigations/HomeTabNavigation";
 import type { UserStackParamList } from "../../../navigations/UserNavigation";
+import { useNetwork } from "../../../network/NetworkProvider";
 
 /** Home only previews the newest diagnoses; the rest live on the Diagnoses tab. */
 const MAX_HOME_DIAGNOSES = 3;
@@ -98,11 +100,13 @@ const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeNavigation>();
   const tabBarHeight = useBottomTabBarHeight();
   const { user } = useUser();
+  const { isOffline } = useNetwork();
 
-  const { videos, isLoading, reload } = useVideoList();
+  // Suspended while offline: the list is owned data and needs a session.
+  const { videos, isLoading, reload } = useVideoList({ enabled: !isOffline });
 
   /** Asks for location permission once on mount, then shows the place name. */
-  const location = useCurrentLocation();
+  const location = useCurrentLocation({ enabled: !isOffline });
 
   /**
    * Weather follows the resolved coordinates, so the reading always matches the
@@ -122,6 +126,7 @@ const HomeScreen: React.FC = () => {
       location.status === "denied"
         ? "Turn on location to see the weather where you are."
         : undefined,
+    enabled: !isOffline,
   });
 
   const {
@@ -133,36 +138,41 @@ const HomeScreen: React.FC = () => {
 
   useFocusEffect(
     useCallback(() => {
-      reload();
-    }, [reload]),
+      if (!isOffline) reload();
+    }, [isOffline, reload]),
   );
 
   const openVideoScan = useCallback(() => {
+    if (isOffline) return;
     navigation.getParent<UserStackNavigation>()?.navigate("VideoScanning");
-  }, [navigation]);
+  }, [isOffline, navigation]);
 
   const openChat = useCallback(() => {
+    if (isOffline) return;
     navigation.getParent<UserStackNavigation>()?.navigate("Chat");
-  }, [navigation]);
+  }, [isOffline, navigation]);
 
   const openDiagnoses = useCallback(() => {
+    if (isOffline) return;
     navigation.navigate("Diagnoses");
-  }, [navigation]);
+  }, [isOffline, navigation]);
 
   const openDiagnosis = useCallback(
     (item: VideoListItem) => {
       // Rows that have not produced a diagnosis yet (processing / failed) have
       // no detail screen to open.
-      if (!item.diagnosis) return;
+      if (isOffline || !item.diagnosis) return;
 
       navigation
         .getParent<UserStackNavigation>()
         ?.navigate("DiagnosisDetail", { videoId: item.diagnosis._id });
     },
-    [navigation],
+    [isOffline, navigation],
   );
 
   const onRefresh = useCallback(async () => {
+    if (isOffline) return;
+
     setRefreshing(true);
     weather.refresh();
     try {
@@ -170,13 +180,15 @@ const HomeScreen: React.FC = () => {
     } finally {
       setRefreshing(false);
     }
-  }, [reload, weather.refresh]);
+  }, [isOffline, reload, weather.refresh]);
 
   /** Weather retry re-resolves the location too, in case that was the failure. */
   const retryWeather = useCallback(() => {
+    if (isOffline) return;
+
     location.refresh();
     weather.refresh();
-  }, [location.refresh, weather.refresh]);
+  }, [isOffline, location.refresh, weather.refresh]);
 
   /**
    * Temporary: the Crop Care guide and symptom browser have no screens yet,
@@ -202,15 +214,17 @@ const HomeScreen: React.FC = () => {
    */
   const handleChatSend = useCallback(
     (message: string) => {
+      if (isOffline) return;
       void sendChatMessage(message);
       openChat();
     },
-    [openChat, sendChatMessage],
+    [isOffline, openChat, sendChatMessage],
   );
 
   const handleChatMic = useCallback(() => {
+    if (isOffline) return;
     Alert.alert("Flora", "Voice questions are coming soon.");
-  }, []);
+  }, [isOffline]);
 
   const openAllSymptoms = useCallback(() => {
     Alert.alert(
@@ -246,12 +260,14 @@ const HomeScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: tabBarHeight + spacing.xxl }}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.green}
-            colors={[colors.green]}
-          />
+          isOffline ? undefined : (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.green}
+              colors={[colors.green]}
+            />
+          )
         }
       >
         <HomeHeroSheet
@@ -263,43 +279,52 @@ const HomeScreen: React.FC = () => {
           location={location}
           weather={weather.state}
           onPressWeatherRetry={retryWeather}
+          isOffline={isOffline}
         />
 
-        <ChatPromptBar
-          onSend={handleChatSend}
-          onPressMic={handleChatMic}
-          isSending={isChatSending}
-        />
+        {isOffline ? <OfflineNotice /> : null}
+
+        {isOffline ? null : (
+          <ChatPromptBar
+            onSend={handleChatSend}
+            onPressMic={handleChatMic}
+            isSending={isChatSending}
+          />
+        )}
 
         {/* <SectionHeader title="Agri Tips" />
 
         {tip ? <AgriTipCard tip={tip} /> : null} */}
 
-        <SectionHeader
-          title="Recent Diagnoses"
-          actionLabel={hasMoreDiagnoses ? "See More" : undefined}
-          onPressAction={openDiagnoses}
-        />
+        {isOffline ? null : (
+          <>
+            <SectionHeader
+              title="Recent Diagnoses"
+              actionLabel={hasMoreDiagnoses ? "See More" : undefined}
+              onPressAction={openDiagnoses}
+            />
 
-        {isLoading ? (
-          <View style={styles.list}>
-            <DiagnosisRowSkeleton />
-            <DiagnosisRowSkeleton />
-            <DiagnosisRowSkeleton />
-          </View>
-        ) : latestDiagnoses.length === 0 ? (
-          <EmptyDiagnoses onRecord={openVideoScan} />
-        ) : (
-          <View style={styles.list}>
-            {latestDiagnoses.map((item) => (
-              <DiagnosisCard
-                key={item._id}
-                item={item}
-                variant="row"
-                onPress={openDiagnosis}
-              />
-            ))}
-          </View>
+            {isLoading ? (
+              <View style={styles.list}>
+                <DiagnosisRowSkeleton />
+                <DiagnosisRowSkeleton />
+                <DiagnosisRowSkeleton />
+              </View>
+            ) : latestDiagnoses.length === 0 ? (
+              <EmptyDiagnoses onRecord={openVideoScan} />
+            ) : (
+              <View style={styles.list}>
+                {latestDiagnoses.map((item) => (
+                  <DiagnosisCard
+                    key={item._id}
+                    item={item}
+                    variant="row"
+                    onPress={openDiagnosis}
+                  />
+                ))}
+              </View>
+            )}
+          </>
         )}
 
         <ExploreCropCareCard onPress={openCropCare} />

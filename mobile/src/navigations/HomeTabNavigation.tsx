@@ -23,6 +23,8 @@ import { BottomTabBar } from "./components/BottomTabBar";
 import { UserStackParamList } from "./UserNavigation"; // Import your stack param list
 import { colors, spacing } from "../theme";
 import AccountSettingsScreen from "../features/profile/screen/AccountSettingsScreen";
+import { useNetwork } from "../network/NetworkProvider";
+import { OFFLINE_ROUTE_NAMES } from "./offlineRoutes";
 
 // Define types for navigation
 export type TabParamList = {
@@ -132,12 +134,24 @@ const Tab = createBottomTabNavigator<TabParamList>();
 const renderTabBar = (props: BottomTabBarProps) => <BottomTabBar {...props} />;
 
 const HomeTabNavigator: React.FC = () => {
+  const { isOffline } = useNetwork();
+
   return (
     <Tab.Navigator
+      initialRouteName="Home"
       tabBar={renderTabBar}
       screenOptions={{
         headerShown: false,
       }}
+      // The bar hides online-only tabs in limited mode; this listener also
+      // blocks any programmatic tab press that targets one of them.
+      screenListeners={({ route }) => ({
+        tabPress: (event) => {
+          if (isOffline && !OFFLINE_ROUTE_NAMES.has(route.name)) {
+            event.preventDefault();
+          }
+        },
+      })}
     >
       <Tab.Screen
         name="Home"

@@ -43,6 +43,7 @@ import { Skeleton } from "../../../components/ui/SkeletonComponent";
 import { CategoryFilterList } from "../../../components/ui/CategoryFilterList";
 import { colors, radii, spacing } from "../../../theme";
 import { scheduleOnRN } from "react-native-worklets";
+import { useNetwork } from "../../../network/NetworkProvider";
 
 // ==========================================
 // ICONS
@@ -848,6 +849,7 @@ const Header: React.FC = () => (
 export const DiagnosisListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const tabBarHeight = useBottomTabBarHeight();
+  const { isOffline } = useNetwork();
 
   const {
     videos,
@@ -860,7 +862,7 @@ export const DiagnosisListScreen: React.FC = () => {
     renameVideo,
     deleteVideo,
     retryVideo,
-  } = useVideoList();
+  } = useVideoList({ enabled: !isOffline });
 
   const [activeFilter, setActiveFilter] = useState<FilterValue>("all");
   const [menuTarget, setMenuTarget] = useState<VideoListItem | null>(null);
@@ -869,8 +871,8 @@ export const DiagnosisListScreen: React.FC = () => {
   // Silent on focus: update rows in place instead of flashing the skeleton.
   useFocusEffect(
     useCallback(() => {
-      reload();
-    }, [reload]),
+      if (!isOffline) reload();
+    }, [isOffline, reload]),
   );
 
   const handleItemPress = (item: VideoListItem) => {
