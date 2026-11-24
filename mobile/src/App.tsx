@@ -9,6 +9,7 @@ import { toastConfig } from "./helper/toast";
 import Toast from "react-native-toast-message";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NetworkProvider, useNetwork } from "./network/NetworkProvider";
+import { initDatabase } from "./database/schema";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -19,7 +20,10 @@ if (!publishableKey) {
 // Keep the native splash visible while the JS bundle boots. The custom splash
 // is rendered underneath it and hides it only after its first layout pass.
 SplashScreen.preventAutoHideAsync().catch((error) => {
-  console.warn("SIPAT: unable to keep the native splash screen visible.", error);
+  console.warn(
+    "SIPAT: unable to keep the native splash screen visible.",
+    error,
+  );
 });
 
 function AppContent() {
@@ -27,7 +31,8 @@ function AppContent() {
   const { isOffline, isInitialized } = useNetwork();
   const [isSplashVisible, setIsSplashVisible] = useState(true);
 
-  const handleSplashFinish = useCallback(() => {
+  const handleSplashFinish = useCallback(async() => {
+    await initDatabase();
     setIsSplashVisible(false);
   }, []);
 
