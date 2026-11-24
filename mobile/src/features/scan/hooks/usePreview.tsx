@@ -33,7 +33,14 @@ export default function usePreview() {
   const uploadState = route.params.uploadState;
   const localVideoId = route.params.localVideoId;
 
-  const { getToken, userId } = useAuth();
+  const { getToken, isLoaded, isSignedIn, userId, sessionId } = useAuth();
+
+  // console.log("[CLERK STATE]", {
+  //   isLoaded,
+  //   isSignedIn,
+  //   userId,
+  //   sessionId,
+  // });
   const { isConnected, isInternetReachable, isServerReachable } = useNetwork();
 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -220,10 +227,19 @@ export default function usePreview() {
   };
 
   const handleAnalyze = async () => {
-    if (!isMounted.current) return;
+    if (!isMounted.current || isAnalyzing) return;
 
     pausePlayback();
 
+    // Already uploaded videos should not be uploaded again.
+    if (isUploaded) {
+      navigation.navigate("HomeTabs", {
+        screen: "Diagnoses",
+      });
+      return;
+    }
+
+    // Support previously queued videos from older workflows.
     if (uploadState) {
       handleAlreadyHandled();
       return;
@@ -233,65 +249,98 @@ export default function usePreview() {
     buttonScale.value = withTiming(0.95, { duration: 100 });
 
     try {
-      buttonScale.value = withTiming(1, { duration: 100 });
-
       if (!videoUri) {
         throw new Error("Missing video URI");
       }
+      // console.log("[DEBUG] Starting token retrieval");
 
-      const locationPromise = isUploaded
-        ? Promise.resolve<VideoLocation | undefined>(undefined)
-        : getVideoLocation();
+      // const tokenPromise = getToken()
+      //   .then((value) => {
+      //     console.log("[DEBUG] Token resolved:", Boolean(value));
+      //     return value;
+      //   })
+      //   .catch((error) => {
+      //     console.log("[DEBUG] Token failed:", error);
+      //     return null;
+      //   });
 
-      const [token, location] = await Promise.all([
-        getToken().catch(() => null),
-        locationPromise,
-      ]);
+      // console.log("[DEBUG] Starting location retrieval");
 
+      // const locationPromise = getVideoLocation()
+      //   .then((value) => {
+      //     console.log("[DEBUG] Location resolved:", value);
+      //     return value;
+      //   })
+      //   .catch((error) => {
+      //     console.log("[DEBUG] Location failed:", error);
+      //     return undefined;
+      //   });
+
+      // const [token, location] = await Promise.all([
+      //   tokenPromise,
+      //   locationPromise,
+      // ]);
+
+      // console.log("[DEBUG] Both resolved");
+
+      const location = await getVideoLocation();
+
+      // 3. Check whether the application can communicate
+      // with the backend.
       const online =
         isConnected !== false &&
         isInternetReachable !== false &&
         isServerReachable === true;
 
+      // 4. Queue or upload the video.
       const outcome = await handleVideoForUpload({
         localUri: videoUri,
         ownerId: userId ?? null,
-        token,
-        online: online && !!token,
+        token: null,
+        online: false,
         location,
         thumbnailUri,
       });
 
-      if (outcome.status === "uploaded") {
-        navigation.navigate("HomeTabs", {
-          screen: "Diagnoses",
-        });
+      if (!isMounted.current) return;
 
+      // 5. Handle the upload outcome.
+      if (outcome.status === "uploaded") {
         showToast(
           "success",
           "Uploaded Successfully",
           "Video is now being processed",
         );
-      } else {
-        navigation.navigate("HomeTabs", {
-          screen: "Home",
-        });
 
+        navigation.navigate("HomeTabs", {
+          screen: "Diagnoses",
+        });
+      } else {
         showToast(
           "info",
           "Saved for Upload",
           "Your video will be uploaded automatically when the server is reachable.",
         );
+
+        navigation.navigate("HomeTabs", {
+          screen: "Home",
+        });
       }
     } catch (error) {
-      console.log(error);
-      showToast(
-        "error",
-        "Upload Failed",
-        "Something went wrong, please try again.",
-      );
+      console.error("Video analysis failed:", error);
+
+      if (isMounted.current) {
+        showToast(
+          "error",
+          "Upload Failed",
+          "Something went wrong, please try again.",
+        );
+      }
     } finally {
-      setIsAnalyzing(false);
+      if (isMounted.current) {
+        setIsAnalyzing(false);
+        buttonScale.value = withTiming(1, { duration: 100 });
+      }
     }
   };
 

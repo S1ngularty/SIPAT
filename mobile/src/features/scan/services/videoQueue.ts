@@ -100,6 +100,14 @@ async function persistVideoRecording(
 export async function handleVideoForUpload(
   input: HandleVideoForUploadInput,
 ): Promise<VideoUploadOutcome> {
+  
+  console.log("[VIDEO QUEUE] Function entered", {
+    online: input.online,
+    ownerId: input.ownerId,
+    hasToken: Boolean(input.token),
+    localUri: input.localUri,
+  });
+
   const id = Crypto.randomUUID();
   const idempotencyKey = Crypto.randomUUID();
   const contentType = videoContentType(input.localUri);
@@ -158,8 +166,7 @@ export async function handleVideoForUpload(
         id,
         contentType,
       );
-      const fileSize =
-        readLocalFileSize(persisted.uri) || capturedFileSize;
+      const fileSize = readLocalFileSize(persisted.uri) || capturedFileSize;
       const message = toMessage(error);
 
       await videoRepository.markQueued(
@@ -181,12 +188,19 @@ export async function handleVideoForUpload(
     }
   }
 
+  console.log("[VIDEO QUEUE] Starting offline persistence");
+
   const persisted = await persistVideoRecording(
     input.localUri,
     id,
     contentType,
   );
+
+  console.log("[VIDEO QUEUE] Recording persisted:", persisted);
+
   const fileSize = readLocalFileSize(persisted.uri) || capturedFileSize;
+
+  console.log("[VIDEO QUEUE] Inserting SQLite record");
 
   await videoRepository.insert({
     id,
@@ -203,6 +217,8 @@ export async function handleVideoForUpload(
     storageKind: persisted.storageKind,
     createdAt,
   });
+
+  console.log("[VIDEO QUEUE] SQLite record inserted");
 
   return {
     localVideoId: id,
