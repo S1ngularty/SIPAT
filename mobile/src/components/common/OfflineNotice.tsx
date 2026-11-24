@@ -21,7 +21,7 @@ type Props = {
  */
 export const OfflineNotice: React.FC<Props> = ({
   title = "You're offline",
-  message = "Browse crop care guides and symptom tips. Scanning, diagnoses, Flora and your profile come back when you're online.",
+  message = "Browse crop care guides and record scans offline. Saved recordings upload automatically. Diagnoses, Flora and your profile come back when you're online.",
   style,
 }) => (
   <View

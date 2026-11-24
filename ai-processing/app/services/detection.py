@@ -16,21 +16,21 @@ from models.ai import AIModels
 # CONFIGURATION
 # ============================================================
 
-SAMPLE_FPS = 10
+SAMPLE_FPS = 15
 
 # Rough amount of evidence required before reporting.
 PERSISTENCE_SECONDS = 1.0
 
 # Observations expected per second at the sampling rate above.
-MIN_OBSERVATIONS = 5
+MIN_OBSERVATIONS = 7
 
 # How many sampled frames a track can disappear before
 # we consider the object gone.
-MAX_MISSED_FRAMES = 2
+MAX_MISSED_FRAMES = 3
 
-CROP_CONFIDENCE = 0.40
+CROP_CONFIDENCE = 0.50
 
-DISEASE_CONFIDENCE = 0.25
+DISEASE_CONFIDENCE = 0.50
 
 # Minimum percentage of the disease bounding box that
 # should overlap the crop bounding box.
@@ -86,7 +86,7 @@ class DetectionService:
         
         self.models = AIModels(
                 "app/models/crop_identification/v2.pt",
-                "app/models/pest_disease_identification/v4.pt"
+                "app/models/pest_disease_identification/v5.pt"
             )
         
         self.storage = R2Storage()

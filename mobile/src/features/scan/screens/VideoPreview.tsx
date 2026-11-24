@@ -37,6 +37,7 @@ const VideoPreviewScreen = () => {
     hasEnded,
     isAnalyzing,
     isSaving,
+    uploadState,
     animatedPlayButtonStyle,
     animatedButtonStyle,
     player,
@@ -51,6 +52,12 @@ const VideoPreviewScreen = () => {
   } = usePreview();
 
   const isBusy = isAnalyzing || isSaving;
+  const analyzeLabel =
+    uploadState === "uploaded"
+      ? "View Diagnoses"
+      : uploadState === "queued"
+        ? "Saved for Upload"
+        : "Analyze Plant";
 
   const handleBack = () => {
     if (player) {
@@ -207,11 +214,19 @@ const VideoPreviewScreen = () => {
             ) : (
               <>
                 <ScanLine size={18} color={colors.white} strokeWidth={1.9} />
-                <Text style={styles.analyzeButtonText}>Analyze Plant</Text>
+                <Text style={styles.analyzeButtonText}>{analyzeLabel}</Text>
               </>
             )}
           </TouchableOpacity>
         </Animated.View>
+
+        {uploadState ? (
+          <Text style={styles.uploadStatusText}>
+            {uploadState === "uploaded"
+              ? "Uploaded — your scan is being processed."
+              : "Saved on this device — it will upload automatically once the server is reachable."}
+          </Text>
+        ) : null}
 
         {/* Secondary Actions */}
         <View style={styles.secondaryActions}>
@@ -427,6 +442,12 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 16,
     fontWeight: "700",
+  },
+  uploadStatusText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: "center",
   },
   secondaryActions: {
     flexDirection: "row",

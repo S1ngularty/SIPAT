@@ -10,6 +10,7 @@ import Toast from "react-native-toast-message";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NetworkProvider, useNetwork } from "./network/NetworkProvider";
 import { initDatabase } from "./database/schema";
+import { VideoSyncProvider } from "./features/scan/VideoSyncProvider";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -38,7 +39,9 @@ function AppContent() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <RootNavigator />
+      <VideoSyncProvider>
+        <RootNavigator />
+      </VideoSyncProvider>
       {isSplashVisible ? (
         <AnimatedSplashScreen
           // Offline cold starts never finish Clerk's network bootstrap. Let the

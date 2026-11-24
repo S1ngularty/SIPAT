@@ -11,43 +11,30 @@ import { UserStackParamList } from "../../../navigations/UserNavigation";
 import { useVideoPlayer } from "expo-video";
 import showToast from "../../../helper/toast";
 import { Alert } from "react-native";
-import { videoApi } from "../videoApi";
 import { getVideoLocation } from "../utils/videoLocation";
-import { File } from "expo-file-system";
 import { useAuth } from "@clerk/expo";
-import * as Crypto from "expo-crypto";
 import * as VideoThumbnails from "expo-video-thumbnails";
+import { useNetwork } from "../../../network/NetworkProvider";
+import {
+  discardQueuedVideo,
+  handleVideoForUpload,
+} from "../services/videoQueue";
+import type { VideoLocation } from "../../../types/video";
 
 type VideoScanningRouteProp = RouteProp<UserStackParamList, "VideoPreview">;
 
-/** `expo-video-thumbnails` always renders a JPEG. */
-const THUMBNAIL_CONTENT_TYPE = "image/jpeg";
 const THUMBNAIL_QUALITY = 0.7;
-
-/**
- * Content types accepted by the backend, keyed by file extension. Derived from
- * the recording itself because iOS captures `.mov` while Android captures
- * `.mp4`, and the value must match the one the upload URL is signed with.
- */
-const VIDEO_CONTENT_TYPES: Record<string, string> = {
-  mp4: "video/mp4",
-  mov: "video/quicktime",
-  webm: "video/webm",
-};
-
-function videoContentType(uri: string): string {
-  const extension = uri.split(".").pop()?.toLowerCase() ?? "";
-
-  return VIDEO_CONTENT_TYPES[extension] ?? "video/mp4";
-}
 
 export default function usePreview() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<VideoScanningRouteProp>();
   const videoUri = route.params?.videoUri;
   const isUploaded = route.params.uploaded;
+  const uploadState = route.params.uploadState;
+  const localVideoId = route.params.localVideoId;
 
-  const { getToken, isLoaded, isSignedIn } = useAuth();
+  const { getToken, userId } = useAuth();
+  const { isConnected, isInternetReachable, isServerReachable } = useNetwork();
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,8 +45,6 @@ export default function usePreview() {
   const [isSaving, setIsSaving] = useState(false);
   const [thumbnailUri, setThumbnailUri] = useState<string | null>(null);
 
-  const uploadIdRef = useRef<string | null>(null);
-  const idempotencyKeyRef = useRef<string | null>(null);
   // Rendering a frame is only worth doing once per recording.
   const thumbnailRequestedRef = useRef(false);
 
@@ -70,13 +55,6 @@ export default function usePreview() {
   const isPlayerValid = useRef(true);
   // Use a ref to track if component is mounted
   const isMounted = useRef(true);
-
-  useEffect(() => {
-    if (!videoUri) return;
-
-    uploadIdRef.current = Crypto.randomUUID();
-    idempotencyKeyRef.current = Crypto.randomUUID();
-  }, [videoUri,isUploaded]);
 
   const animatedButtonStyle = useAnimatedStyle(() => {
     return {
@@ -168,6 +146,17 @@ export default function usePreview() {
     };
   }, []);
 
+  const pausePlayback = () => {
+    if (isPlaying && player && isPlayerValid.current) {
+      try {
+        player.pause();
+        setIsPlaying(false);
+      } catch (error) {
+        console.error("Error pausing video:", error);
+      }
+    }
+  };
+
   const handlePlayPause = async () => {
     if (!player || !isPlayerValid.current) return;
 
@@ -207,34 +196,93 @@ export default function usePreview() {
     }
   };
 
+  /**
+   * The scanner already uploaded (or queued) this clip. The button becomes a
+   * shortcut back into the app instead of starting a second upload.
+   */
+  const handleAlreadyHandled = () => {
+    if (uploadState === "uploaded") {
+      navigation.navigate("HomeTabs", { screen: "Diagnoses" });
+      showToast(
+        "info",
+        "Already Uploaded",
+        "This video is already being processed.",
+      );
+      return;
+    }
+
+    navigation.navigate("HomeTabs", { screen: "Home" });
+    showToast(
+      "info",
+      "Saved for Upload",
+      "It will upload automatically when the server is reachable.",
+    );
+  };
+
   const handleAnalyze = async () => {
     if (!isMounted.current) return;
+
+    pausePlayback();
+
+    if (uploadState) {
+      handleAlreadyHandled();
+      return;
+    }
 
     setIsAnalyzing(true);
     buttonScale.value = withTiming(0.95, { duration: 100 });
 
-    // Pause video if playing
-    if (isPlaying && player && isPlayerValid.current) {
-      try {
-        player.pause();
-        setIsPlaying(false);
-      } catch (error) {
-        console.error("Error pausing video:", error);
-      }
-    }
-
     try {
       buttonScale.value = withTiming(1, { duration: 100 });
-      await handlePresignUpload();
-      navigation.navigate("HomeTabs", {
-        screen: "Diagnoses",
+
+      if (!videoUri) {
+        throw new Error("Missing video URI");
+      }
+
+      const locationPromise = isUploaded
+        ? Promise.resolve<VideoLocation | undefined>(undefined)
+        : getVideoLocation();
+
+      const [token, location] = await Promise.all([
+        getToken().catch(() => null),
+        locationPromise,
+      ]);
+
+      const online =
+        isConnected !== false &&
+        isInternetReachable !== false &&
+        isServerReachable === true;
+
+      const outcome = await handleVideoForUpload({
+        localUri: videoUri,
+        ownerId: userId ?? null,
+        token,
+        online: online && !!token,
+        location,
+        thumbnailUri,
       });
 
-      showToast(
-        "info",
-        "Uploaded Successfully",
-        "Video is now being processed",
-      );
+      if (outcome.status === "uploaded") {
+        navigation.navigate("HomeTabs", {
+          screen: "Diagnoses",
+        });
+
+        showToast(
+          "success",
+          "Uploaded Successfully",
+          "Video is now being processed",
+        );
+      } else {
+        navigation.navigate("HomeTabs", {
+          screen: "Home",
+        });
+
+        showToast(
+          "info",
+          "Saved for Upload",
+          "Your video will be uploaded automatically when the server is reachable.",
+        );
+      }
     } catch (error) {
       console.log(error);
       showToast(
@@ -247,142 +295,36 @@ export default function usePreview() {
     }
   };
 
-  const handlePresignUpload = async () => {
-    try {
-      if (!isSignedIn) {
-        throw new Error("Clerk session is not active");
-      }
-
-      const [token, location] = await Promise.all([
-        getToken(),
-        getVideoLocation(),
-      ]);
-
-      if (!token) {
-        throw new Error("Failed to get Clerk token");
-      }
-
-      const capturedVideo = new File(videoUri);
-
-      const fileSize = capturedVideo.exists ? capturedVideo.size : 0;
-
-      const fileName = `video_${uploadIdRef.current}`;
-      const contentType = videoContentType(videoUri);
-
-      const idempotencyKey = idempotencyKeyRef.current;
-
-      // console.log({ fileName, contentType, fileSize }, token);
-      if (!idempotencyKey) {
-        throw new Error("Missing idempotency key");
-      }
-
-      const upload = await videoApi.requestVideoUpload(
-        {
-          fileName,
-          fileSize,
-          contentType,
-          // Omitted when the device has no location; the backend then uses its
-          // default farm location for weather context.
-          ...(location && !isUploaded ? { location } : {}),
-        },
-        token,
-        idempotencyKey,
-      );
-
-      await handleObjectStorageUpload(upload.uploadUrl, contentType);
-
-      // Stored before the video is marked uploaded so the processing job always
-      // sees the preview image key.
-      await handleThumbnailUpload(upload.videoId, token);
-
-      const updateStatus = await videoApi.completeVideoUpload(
-        upload.videoId,
-        token,
-      );
-
-      console.log(updateStatus);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleObjectStorageUpload = async (
-    presignedUrl: string,
-    contentType: string,
-  ): Promise<void> => {
-    if (!videoUri) {
-      throw new Error("Missing video URI");
-    }
-
-    if (!presignedUrl) throw new Error("missing presigned url");
-
-    await videoApi.uploadLocalFileToObjectStorage(
-      presignedUrl,
-      videoUri,
-      contentType,
-    );
-  };
-
-  /**
-   * Uploads the already-rendered preview image and records its key on the video.
-   *
-   * The image goes straight to object storage through a presigned PUT, so it
-   * never passes through the API. A failure here is logged and swallowed — the
-   * video upload itself must still succeed.
-   *
-   * Note there is deliberately no `expo-file-system` existence check here:
-   * `expo-video-thumbnails` writes into the raw Android cache directory, which
-   * Expo Go's file-system permission gate refuses to read. The file is fine; the
-   * read is what fails. RN's networking opens it natively instead.
-   */
-  const handleThumbnailUpload = async (videoId: string, token: string) => {
-    if (!thumbnailUri) return;
-
-    try {
-      const presigned = await videoApi.requestThumbnailUpload(
-        videoId,
-        THUMBNAIL_CONTENT_TYPE,
-        token,
-      );
-
-      await videoApi.uploadLocalFileToObjectStorage(
-        presigned.uploadUrl,
-        thumbnailUri,
-        THUMBNAIL_CONTENT_TYPE,
-      );
-
-      await videoApi.attachThumbnail(
-        videoId,
-        presigned.thumbnailStorageKey,
-        token,
-      );
-    } catch (error) {
-      console.error("Thumbnail upload failed:", error);
-    }
-  };
-
   const handleRecapture = () => {
-    Alert.alert(
-      "Recapture Video",
-      "Are you sure you want to discard this video and record a new one?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Recapture",
-          style: "destructive",
-          onPress: () => {
-            if (player && isPlayerValid.current) {
-              try {
-                player.pause();
-              } catch (error) {
-                console.error("Error pausing video:", error);
-              }
+    const message =
+      uploadState === "uploaded"
+        ? "This scan has already been uploaded and will stay in your diagnoses. Record a new one?"
+        : "Are you sure you want to discard this video and record a new one?";
+
+    Alert.alert("Recapture Video", message, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Recapture",
+        style: "destructive",
+        onPress: () => {
+          // The scanner already auto-queued this clip. Recapturing means the
+          // user does not want it, so drop the pending local copy before it
+          // can be synced later.
+          if (localVideoId) {
+            void discardQueuedVideo(localVideoId);
+          }
+
+          if (player && isPlayerValid.current) {
+            try {
+              player.pause();
+            } catch (error) {
+              console.error("Error pausing video:", error);
             }
-            navigation.navigate("VideoScanning");
-          },
+          }
+          navigation.navigate("VideoScanning");
         },
-      ],
-    );
+      },
+    ]);
   };
 
   const handleSaveDraft = async () => {
@@ -391,14 +333,7 @@ export default function usePreview() {
     setIsSaving(true);
     buttonScale.value = withTiming(0.95, { duration: 100 });
 
-    if (isPlaying && player && isPlayerValid.current) {
-      try {
-        player.pause();
-        setIsPlaying(false);
-      } catch (error) {
-        console.error("Error pausing video:", error);
-      }
-    }
+    pausePlayback();
 
     // Simulate saving
     setTimeout(() => {
@@ -425,6 +360,7 @@ export default function usePreview() {
     hasEnded,
     isAnalyzing,
     isSaving,
+    uploadState,
     buttonScale,
     playButtonScale,
     animatedPlayButtonStyle,

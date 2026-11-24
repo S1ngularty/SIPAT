@@ -16,7 +16,17 @@ export type UserStackParamList = {
   VideoScanning: undefined;
   VideoPreview: {
     videoUri: string;
+    /** True when the clip came from the gallery (so it has no capture location). */
     uploaded: boolean;
+    /**
+     * Set by the recorder/sync service when the video was already uploaded or
+     * saved to the local queue. The preview then never uploads it a second time.
+     */
+    uploadState?: "uploaded" | "queued";
+    /** Row id in the local SQLite queue, when this clip went through it. */
+    localVideoId?: string;
+    /** Backend video id, when the clip was uploaded immediately. */
+    videoId?: string;
   };
   DiagnosisDetail: {
     videoId: string;
