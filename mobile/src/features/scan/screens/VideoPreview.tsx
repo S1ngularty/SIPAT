@@ -44,6 +44,7 @@ const VideoPreviewScreen = () => {
     videoUri,
     thumbnailUri,
     navigation,
+    isOnline,
 
     handlePlayPause,
     handleRecapture,
@@ -57,7 +58,9 @@ const VideoPreviewScreen = () => {
       ? "View Diagnoses"
       : uploadState === "queued"
         ? "Saved for Upload"
-        : "Analyze Plant";
+        : isOnline
+          ? "Suriin ang halaman"
+          : "I-save at Suriin Mamaya";
 
   const handleBack = () => {
     if (player) {
@@ -207,7 +210,9 @@ const VideoPreviewScreen = () => {
             disabled={isBusy}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel="Analyze plant"
+            accessibilityLabel={
+              isOnline ? "Suriin Kapag Online" : "I-save at Suriin Mamaya"
+            }
           >
             {isAnalyzing ? (
               <Flow size={32} color={colors.white} />

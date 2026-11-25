@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import Animated, {
   useAnimatedStyle,
   withTiming,
@@ -14,7 +14,7 @@ import { Alert } from "react-native";
 import { getVideoLocation } from "../utils/videoLocation";
 import { useAuth } from "@clerk/expo";
 import * as VideoThumbnails from "expo-video-thumbnails";
-import { useNetwork } from "../../../network/NetworkProvider";
+import { NetworkStatus, useNetwork } from "../../../network/NetworkProvider";
 import {
   discardQueuedVideo,
   handleVideoForUpload,
@@ -52,6 +52,8 @@ export default function usePreview() {
   const [isSaving, setIsSaving] = useState(false);
   const [thumbnailUri, setThumbnailUri] = useState<string | null>(null);
 
+  const [isOnline, setIsOnline] = useState(false);
+
   // Rendering a frame is only worth doing once per recording.
   const thumbnailRequestedRef = useRef(false);
 
@@ -80,6 +82,18 @@ export default function usePreview() {
     player.playbackRate = 1.0;
     player.timeUpdateEventInterval = 0.5;
   });
+
+  useEffect(() => {
+    (() => {
+      const online =
+        isConnected == true &&
+        isInternetReachable == true &&
+        isServerReachable == true;
+
+      console.log(`preview: ${online}`);
+      setIsOnline(online);
+    })();
+  }, [isConnected, isServerReachable, isInternetReachable, useNetwork]);
 
   // Listen to player status changes
   useEffect(() => {
@@ -418,6 +432,7 @@ export default function usePreview() {
     videoUri,
     thumbnailUri,
     navigation,
+    isOnline,
 
     handlePlayPause,
     handleRecapture,
