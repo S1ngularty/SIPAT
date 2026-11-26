@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { StyleSheet } from "react-native";
 import { ClerkProvider, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
@@ -11,6 +11,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NetworkProvider, useNetwork } from "./network/NetworkProvider";
 import { initDatabase } from "./database/schema";
 import { VideoSyncProvider } from "./features/scan/VideoSyncProvider";
+import { registerBackgroundSync } from "./tasks/backgroundSyncTask";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -32,7 +33,7 @@ function AppContent() {
   const { isOffline, isInitialized } = useNetwork();
   const [isSplashVisible, setIsSplashVisible] = useState(true);
 
-  const handleSplashFinish = useCallback(async() => {
+  const handleSplashFinish = useCallback(async () => {
     await initDatabase();
     setIsSplashVisible(false);
   }, []);
@@ -58,6 +59,10 @@ function AppContent() {
 }
 
 export default function App() {
+  React.useEffect(() => {
+    void registerBackgroundSync();
+  }, []);
+  
   return (
     <NetworkProvider>
       <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
