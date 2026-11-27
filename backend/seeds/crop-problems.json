@@ -1,49 +1,48 @@
-
 [
   {
     "id": "early-blight",
     "slug": "early-blight",
     "name": "Early Blight",
-    "localName": "Sakit na nagdudulot ng maiitim na batik na may bilog-bilog na pattern sa dahon.",
+    "localName": "Sakit na nagdudulot ng maitim na batik na may bilog-bilog na pattern sa dahon.",
     "type": "disease",
     "category": "fungal",
     "scientificName": "Alternaria solani",
     "description": {
-      "tl": "Karaniwang nagdudulot ng kayumanggi o maiitim na batik sa dahon, minsan ay may magkakapatong na bilog at paninilaw sa paligid.",
+      "tl": "Karaniwang nagdudulot ng kayumanggi o maitim na batik sa dahon. Minsan may bilog-bilog na pattern sa loob at naninilaw ang paligid.",
       "en": "A fungal disease commonly associated with dark leaf lesions that may develop concentric rings and surrounding yellow tissue."
     },
-    "affectedCrops": ["tomato", "potato"],
-    "affectedParts": ["leaves", "stems", "fruits"],
+    "affectedCrops": ["kamatis", "patatas"],
+    "affectedParts": ["dahon", "tangkay", "bunga"],
     "symptoms": [
-      "Dark brown or black leaf lesions",
-      "Concentric rings within some lesions",
-      "Yellowing around affected areas",
-      "Possible stem and fruit lesions"
+      "Maitim na kayumanggi o itim na batik sa dahon",
+      "Bilog-bilog na pattern sa loob ng ilang batik",
+      "Paninilaw ng paligid ng apektadong bahagi",
+      "Posibleng batik sa tangkay at bunga"
     ],
-    "favorableConditions": ["Warm conditions", "High humidity", "Prolonged leaf wetness"],
-    "transmission": ["Infected plant debris", "Contaminated plant material", "Rain splash and irrigation water"],
+    "favorableConditions": ["Mainit na panahon", "Mataas na halumigmig", "Matagal na basa ang dahon"],
+    "transmission": ["Apektadong labi ng halaman", "Kontaminadong bahagi ng halaman", "Talsik ng ulan at tubig sa patubig"],
     "severity": "medium",
     "differentialDiagnosis": ["septoria-leaf-spot", "late-blight", "bacterial-spot"],
     "management": [
-      "Remove severely infected plant debris where practical",
-      "Improve airflow around plants",
-      "Avoid prolonged leaf wetness",
-      "Monitor new growth for spreading lesions"
+      "Alisin ang matinding apektadong labi ng halaman kung kaya",
+      "Pagbutihin ang daloy ng hangin sa paligid ng halaman",
+      "Iwasan ang matagal na basa ang dahon",
+      "Bantayan ang bagong tubo para sa pagkalat ng batik"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/remove-infected-plant-parts", "/improve-air-circulation", "/adjust-watering"],
     "safety": {
       "ppe": [],
       "environmentalPrecautions": [
-        "Dispose of infected material responsibly",
-        "Use only products registered for the affected crop and target disease"
+        "Itapon nang maayos ang apektadong materyal",
+        "Gumamit lamang ng produkto na rehistrado para sa apektadong halaman at sakit"
       ],
-      "harvestRestrictions": "Follow the label and pre-harvest interval of any pesticide used."
+      "harvestRestrictions": "Sundin ang label at pre-harvest interval ng anumang pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Look for dark lesions with concentric rings",
-      "Compare with Septoria Leaf Spot and other leaf spot diseases",
-      "Confirm the host crop before applying crop-specific advice"
+      "Hanapin ang maitim na batik na may bilog-bilog na pattern",
+      "Ihambing sa Septoria Leaf Spot at iba pang sakit na batik sa dahon",
+      "Kumpirmahin ang halaman bago magbigay ng payo na para sa partikular na halaman"
     ],
     "media": [],
     "metadata": {
@@ -65,7 +64,7 @@
     "category": "no-visible-symptoms",
     "scientificName": "",
     "description": {
-      "tl": "Walang malinaw na sintomas ng sakit o peste na nakita sa nasuring bahagi ng halaman. Hindi nito ginagarantiya na walang problema ang buong halaman.",
+      "tl": "Walang malinaw na sintomas ng sakit o peste sa nasuring bahagi ng halaman. Hindi ito nangangahulugang walang problema ang buong halaman.",
       "en": "No obvious pest or disease symptoms were detected in the inspected plant area. This does not guarantee that the entire plant is healthy."
     },
     "affectedCrops": [],
@@ -75,26 +74,26 @@
     "transmission": [],
     "severity": "low",
     "differentialDiagnosis": [
-      "Early-stage disease",
-      "Hidden pest infestation",
-      "Nutrient deficiency",
-      "Environmental stress"
+      "Maagang yugto ng sakit",
+      "Nakatagong peste",
+      "Kakulangan sa sustansiya",
+      "Stress sa paligid"
     ],
     "management": [
-      "Continue routine plant inspection",
-      "Check leaf undersides, stems, flowers, and fruits when applicable",
-      "Monitor for new or worsening symptoms"
+      "Ipagpatuloy ang regular na pagsusuri ng halaman",
+      "Tingnan ang ilalim ng dahon, tangkay, bulaklak, at bunga kung applicable",
+      "Bantayan ang bago o lumalálang sintomas"
     ],
     "treatments": [],
     "actionRefs": ["/scouting"],
     "safety": {
       "ppe": [],
-      "environmentalPrecautions": ["Do not apply pesticides without an identified reason."],
-      "harvestRestrictions": "No harvest restriction is implied by this result. Follow applicable pesticide labels if products have been used."
+      "environmentalPrecautions": ["Huwag mag-spray ng pesticide kung walang malinaw na dahilan."],
+      "harvestRestrictions": "Walang harvest restriction na ibinibigay ang resultang ito. Sundin ang applicable pesticide label kung may nagamit na produkto."
     },
     "diagnosisGuidance": [
-      "Interpret this result as no visible symptoms detected, not proof of disease absence",
-      "Consider image quality and model confidence"
+      "Ituring ito na walang nakikitang sintomas, hindi bilang patunay na walang sakit",
+      "Isaalang-alang ang kalidad ng larawan at confidence ng model"
     ],
     "media": [],
     "metadata": {
@@ -108,46 +107,46 @@
     "id": "late-blight",
     "slug": "late-blight",
     "name": "Late Blight",
-    "localName": "Sakit na maaaring mabilis magdulot ng pagkasira at pag-itim ng dahon at bunga.",
+    "localName": "Sakit na mabilis magpabagsak at magpaitim ng dahon at bunga.",
     "type": "disease",
     "category": "oomycete",
     "scientificName": "Phytophthora infestans",
     "description": {
-      "tl": "Maaaring magdulot ng mga batik na parang nabasa sa dahon, tangkay, at bunga. Maaari itong mabilis kumalat sa malamig at basang kondisyon.",
+      "tl": "Maaaring magdulot ng batik na parang nabasa sa dahon, tangkay, at bunga. Mabilis itong kumalat kapag malamig at basa ang panahon.",
       "en": "An oomycete disease that causes water-soaked lesions on susceptible plant tissues and may spread rapidly under favorable wet conditions."
     },
-    "affectedCrops": ["tomato", "potato"],
-    "affectedParts": ["leaves", "stems", "fruits"],
+    "affectedCrops": ["kamatis", "patatas"],
+    "affectedParts": ["dahon", "tangkay", "bunga"],
     "symptoms": [
-      "Irregular water-soaked leaf lesions",
-      "Lesions turning brown or dark",
-      "Possible pale growth on leaf undersides in humid conditions",
-      "Firm brown lesions on fruit"
+      "Hindi regular na batik na parang nabasa sa dahon",
+      "Nagiging kayumanggi o maitim ang batik",
+      "Posibleng maputlang amag sa ilalim ng dahon kapag mahalumigmig",
+      "Matigas na kayumangging batik sa bunga"
     ],
-    "favorableConditions": ["Cool and wet weather", "High humidity", "Prolonged leaf wetness", "Poor airflow"],
-    "transmission": ["Wind-driven spores", "Rain splash", "Infected plant material and susceptible volunteer plants"],
+    "favorableConditions": ["Malamig at basang panahon", "Mataas na halumigmig", "Matagal na basa ang dahon", "Mahinang daloy ng hangin"],
+    "transmission": ["Spore na dala ng hangin", "Talsik ng ulan", "Apektadong materyal ng halaman at ligaw na halaman"],
     "severity": "high",
     "differentialDiagnosis": ["early-blight", "bacterial-spot", "other-leaf-lesions"],
     "management": [
-      "Inspect nearby susceptible plants for rapid spread",
-      "Remove confirmed infected material according to local guidance",
-      "Improve airflow and reduce prolonged leaf wetness",
-      "Seek local agricultural advice if symptoms spread rapidly"
+      "Suriin ang kalapit na halaman para sa mabilis na pagkalat",
+      "Alisin ang kumpirmadong apektadong materyal ayon sa lokal na patnubay",
+      "Pagbutihin ang daloy ng hangin at bawasan ang matagal na basa ang dahon",
+      "Humingi ng lokal na payong agrikultural kung mabilis kumalat ang sintomas"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/remove-infected-plant-parts", "/adjust-watering", "/seek-agricultural-advice"],
     "safety": {
       "ppe": [],
       "environmentalPrecautions": [
-        "Late blight is caused by an oomycete, not a true fungus",
-        "Verify that any treatment is labeled for the confirmed crop and target"
+        "Ang late blight ay dulot ng oomycete, hindi tunay na fungus",
+        "Tiyakin na ang anumang treatment ay may label para sa kumpirmadong halaman at target"
       ],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Check for irregular water-soaked lesions and rapid progression",
-      "Inspect both leaf surfaces under humid conditions",
-      "Differentiate from Early Blight and bacterial diseases"
+      "Tingnan ang hindi regular na batik na parang nabasa at mabilis na paglala",
+      "Suriin ang dalawang gilid ng dahon kapag mahalumigmig",
+      "Ihiwalay sa Early Blight at bacterial diseases"
     ],
     "media": [],
     "metadata": {
@@ -170,35 +169,35 @@
     "category": "insect",
     "scientificName": "",
     "description": {
-      "tl": "Ang larvae ng ilang insekto ay kumakain sa loob ng tisyu ng dahon, na nag-iiwan ng mapuputi o paikot-ikot na lagusan.",
+      "tl": "Ang larvae ng ilang insekto ay kumakain sa loob ng dahon, kaya nag-iiwan ito ng mapuputi o paikot-ikot na lagusan.",
       "en": "Leaf-mining insect larvae feed within leaf tissue, leaving pale tunnels or blotchy mines."
     },
     "affectedCrops": [],
-    "affectedParts": ["leaves"],
-    "symptoms": ["Winding pale tunnels inside leaves", "Blotchy mined areas", "Leaf drying when damage is severe"],
+    "affectedParts": ["dahon"],
+    "symptoms": ["Paikot-ikot at maputlang lagusan sa loob ng dahon", "Batikan na bahagi ng dahon", "Pagkatuyo ng dahon kapag malubha ang pinsala"],
     "favorableConditions": [],
-    "transmission": ["Adult insects lay eggs on or within plant tissue; spread varies by species."],
+    "transmission": ["Nangingitlog ang adult na insekto sa ibabaw o loob ng halaman; iba-iba ang pagkalat depende sa species."],
     "severity": "medium",
     "differentialDiagnosis": ["leaf-spot-diseases", "mechanical-damage", "other-insect-feeding"],
     "management": [
-      "Inspect leaves for mines and larvae",
-      "Remove heavily infested leaves when practical",
-      "Monitor new growth for continuing damage",
-      "Identify the pest before choosing a control method"
+      "Suriin ang dahon para sa lagusan at larvae",
+      "Alisin ang matinding apektadong dahon kung kaya",
+      "Bantayan ang bagong tubo para sa tuloy-tuloy na pinsala",
+      "Kilalanin ang peste bago pumili ng paraan ng pagkontrol"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/remove-infested-leaves", "/seek-agricultural-advice"],
     "safety": {
       "ppe": [],
       "environmentalPrecautions": [
-        "Avoid unnecessary broad-spectrum insecticide use",
-        "Verify the pest species and registered crop use before treatment"
+        "Iwasan ang hindi kailangang broad-spectrum insecticide",
+        "Tiyakin ang species ng peste at registered crop use bago mag-treatment"
       ],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Look for tunnels within the leaf rather than isolated surface spots",
-      "Do not infer a particular leaf-mining species from this general label"
+      "Hanapin ang lagusan sa loob ng dahon, hindi lang batik sa ibabaw",
+      "Huwag agad tukuyin ang partikular na species ng leaf miner mula sa pangkalahatang label na ito"
     ],
     "media": [],
     "metadata": {
@@ -212,37 +211,37 @@
     "id": "leaf-mold",
     "slug": "leaf-mold",
     "name": "Leaf Mold",
-    "localName": "Sakit na maaaring magdulot ng dilaw na batik at amag sa ilalim ng dahon.",
+    "localName": "Sakit na nagdudulot ng dilaw na batik at amag sa ilalim ng dahon.",
     "type": "disease",
     "category": "fungal",
     "scientificName": "Passalora fulva",
     "description": {
-      "tl": "Sa karaniwang leaf mold ng kamatis, may mapusyaw na dilaw na bahagi sa ibabaw ng dahon at olibo o kulay-abong paglago sa ilalim, lalo na kapag mahalumigmig.",
+      "tl": "Sa kamatis, may maputlang dilaw na bahagi sa ibabaw ng dahon at kulay-olibo o abo na amag sa ilalim, lalo na kapag mahalumigmig.",
       "en": "Tomato leaf mold commonly causes pale yellow areas on upper leaf surfaces and olive-gray fungal growth underneath under humid conditions."
     },
-    "affectedCrops": ["tomato"],
-    "affectedParts": ["leaves"],
-    "symptoms": ["Pale yellow patches on upper leaf surfaces", "Olive-gray growth underneath leaves", "Leaf decline in severe cases"],
-    "favorableConditions": ["High humidity", "Poor air circulation", "Prolonged leaf wetness"],
-    "transmission": ["Spores from infected plant material", "Air movement"],
+    "affectedCrops": ["kamatis"],
+    "affectedParts": ["dahon"],
+    "symptoms": ["Maputlang dilaw na bahagi sa ibabaw ng dahon", "Kulay-olibo o abo na amag sa ilalim ng dahon", "Paghina ng dahon kapag malubha"],
+    "favorableConditions": ["Mataas na halumigmig", "Mahinang daloy ng hangin", "Matagal na basa ang dahon"],
+    "transmission": ["Spore mula sa apektadong halaman", "Paggalaw ng hangin"],
     "severity": "medium",
     "differentialDiagnosis": ["downy-mildew", "other-leaf-spot-diseases", "nutrient-deficiency"],
     "management": [
-      "Improve airflow around plants",
-      "Avoid unnecessary wetting of foliage",
-      "Remove severely affected leaves where practical",
-      "Monitor nearby plants for similar symptoms"
+      "Pagbutihin ang daloy ng hangin sa paligid ng halaman",
+      "Iwasan ang hindi kailangang pagbasa ng dahon",
+      "Alisin ang matinding apektadong dahon kung kaya",
+      "Bantayan ang kalapit na halaman para sa katulad na sintomas"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/improve-air-circulation", "/adjust-watering", "/remove-infected-plant-parts"],
     "safety": {
       "ppe": [],
-      "environmentalPrecautions": ["Confirm the host and disease before using crop-specific treatment advice."],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "environmentalPrecautions": ["Kumpirmahin ang halaman at sakit bago gumamit ng payong treatment para sa partikular na halaman."],
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Inspect both upper and lower leaf surfaces",
-      "The scientific name listed is associated with tomato leaf mold and should not automatically be applied to other hosts"
+      "Suriin ang ibabaw at ilalim ng dahon",
+      "Ang scientific name na nakalista ay para sa leaf mold ng kamatis at hindi awtomatikong applicable sa ibang halaman"
     ],
     "media": [],
     "metadata": {
@@ -261,35 +260,35 @@
     "category": "viral",
     "scientificName": "",
     "description": {
-      "tl": "Maaaring magdulot ng salit-salitang mapusyaw at madilim na berdeng bahagi sa dahon, pagbaluktot, at mahinang paglaki. Hindi sapat ang pattern lamang upang matukoy ang eksaktong virus.",
+      "tl": "Maaaring magdulot ng salit-salit na mapusyaw at madilim na berdeng bahagi sa dahon, pagkukulot, at mahinang paglaki. Hindi sapat ang pattern lang para matukoy ang eksaktong virus.",
       "en": "Mosaic symptoms may include mottled green patterns, leaf distortion, and reduced growth, but the visual pattern alone does not identify a specific virus."
     },
     "affectedCrops": [],
-    "affectedParts": ["leaves", "stems"],
-    "symptoms": ["Mottled light and dark green leaf patterns", "Leaf distortion", "Possible stunted growth"],
+    "affectedParts": ["dahon", "tangkay"],
+    "symptoms": ["Salit-salit na mapusyaw at madilim na berdeng pattern sa dahon", "Pagkukulot ng dahon", "Posibleng bansot na paglaki"],
     "favorableConditions": [],
-    "transmission": ["Transmission depends on the virus; possible routes include insect vectors, infected plant material, seeds, or contaminated tools."],
+    "transmission": ["Depende sa virus; maaaring sa insekto, apektadong halaman, buto, o kontaminadong kagamitan."],
     "severity": "high",
     "differentialDiagnosis": ["nutrient-deficiency", "herbicide-injury", "thrips-damage", "mite-damage"],
     "management": [
-      "Inspect plants for symptoms and possible insect vectors",
-      "Sanitize tools between plants",
-      "Separate suspicious plants when practical while seeking confirmation",
-      "Consult agricultural personnel when viral infection is suspected"
+      "Suriin ang halaman para sa sintomas at posibleng insekto na nagdadala ng virus",
+      "Linisin ang kagamitan sa pagitan ng mga halaman",
+      "Ihiwalay ang kahina-hinalang halaman kung kaya habang naghihintay ng kumpirmasyon",
+      "Kumonsulta sa agricultural personnel kapag pinaghihinalaang viral infection"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/sanitize-tools", "/isolate-suspicious-plant", "/seek-agricultural-advice"],
     "safety": {
       "ppe": [],
       "environmentalPrecautions": [
-        "Do not present pesticides as a cure for an established viral infection",
-        "Choose vector management only after the likely virus and vector are assessed"
+        "Huwag ipakita ang pesticide bilang gamot sa naitatag nang viral infection",
+        "Pumili ng vector management pagkatapos lang masuri ang posibleng virus at vector"
       ],
-      "harvestRestrictions": "No specific harvest interval is assigned here. Follow applicable product labels if treatments are used."
+      "harvestRestrictions": "Walang partikular na harvest interval na ibinibigay dito. Sundin ang applicable product label kung may treatment na gagamitin."
     },
     "diagnosisGuidance": [
-      "Describe this as mosaic symptoms unless the virus is identified",
-      "Check for alternative causes of leaf discoloration and distortion"
+      "Ilarawan ito bilang mosaic symptoms maliban kung nakilala ang virus",
+      "Tingnan ang iba pang dahilan ng pagkawala ng kulay at pagkukulot ng dahon"
     ],
     "media": [],
     "metadata": {
@@ -308,32 +307,32 @@
     "category": "fungal",
     "scientificName": "Septoria lycopersici",
     "description": {
-      "tl": "Karaniwang may maliliit na bilog na batik na may maitim na gilid at kulay-abuhin o mapusyaw na gitna. Ang eksaktong pathogen ay nakadepende sa host.",
+      "tl": "Karaniwang may maliliit na bilog na batik na may maitim na gilid at kulay-abo o mapusyaw na gitna. Depende sa halaman ang eksaktong sanhi.",
       "en": "Septoria leaf spot commonly produces small lesions with dark margins and pale centers; the associated pathogen depends on the host."
     },
-    "affectedCrops": ["tomato"],
-    "affectedParts": ["leaves", "stems"],
-    "symptoms": ["Small circular leaf spots", "Dark lesion margins", "Pale gray or tan centers", "Yellowing and leaf drop in severe cases"],
-    "favorableConditions": ["High humidity", "Wet foliage", "Rainy conditions"],
-    "transmission": ["Infected plant debris", "Rain splash", "Contaminated plant material"],
+    "affectedCrops": ["kamatis"],
+    "affectedParts": ["dahon", "tangkay"],
+    "symptoms": ["Maliliit at bilog na batik sa dahon", "Maitim na gilid ng batik", "Mapusyaw na abo o tan na gitna", "Paninilaw at paglagas ng dahon kapag malubha"],
+    "favorableConditions": ["Mataas na halumigmig", "Basa ang dahon", "Maulan na panahon"],
+    "transmission": ["Apektadong labi ng halaman", "Talsik ng ulan", "Kontaminadong materyal ng halaman"],
     "severity": "medium",
     "differentialDiagnosis": ["early-blight", "bacterial-spot", "cercospora-leaf-spot"],
     "management": [
-      "Remove infected leaves where practical",
-      "Improve airflow",
-      "Avoid prolonged leaf wetness",
-      "Dispose of infected plant debris responsibly"
+      "Alisin ang apektadong dahon kung kaya",
+      "Pagbutihin ang daloy ng hangin",
+      "Iwasan ang matagal na basa ang dahon",
+      "Itapon nang maayos ang apektadong labi ng halaman"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/remove-infected-plant-parts", "/improve-air-circulation", "/adjust-watering"],
     "safety": {
       "ppe": [],
-      "environmentalPrecautions": ["Confirm the host and likely pathogen before selecting a chemical treatment."],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "environmentalPrecautions": ["Kumpirmahin ang halaman at posibleng pathogen bago pumili ng chemical treatment."],
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Look for numerous small spots with pale centers",
-      "Compare with Early Blight, which often develops larger lesions with concentric rings"
+      "Hanapin ang maraming maliliit na batik na may mapusyaw na gitna",
+      "Ihambing sa Early Blight, na kadalasang may mas malaking batik na may bilog-bilog na pattern"
     ],
     "media": [],
     "metadata": {
@@ -355,36 +354,36 @@
     "category": "mite",
     "scientificName": "",
     "description": {
-      "tl": "Sumisipsip ng laman ng selula ng halaman ang spider mites, na maaaring magdulot ng mapuputlang tuldok, paninilaw, bronzing, at pinong sapot kapag marami na.",
+      "tl": "Sumisipsip ng laman ng selula ng halaman ang spider mites. Nagdudulot ito ng mapuputlang tuldok, paninilaw, bronzing, at pinong sapot kapag marami na.",
       "en": "Spider mites feed on plant cells and may cause stippling, yellowing, bronzing, and fine webbing during heavier infestations."
     },
     "affectedCrops": [],
-    "affectedParts": ["leaves", "stems"],
-    "symptoms": ["Fine pale stippling", "Yellowing or bronzing", "Fine webbing in heavier infestations", "Leaf drying or drop"],
-    "favorableConditions": ["Hot and dry conditions", "Dusty conditions", "Water-stressed plants"],
-    "transmission": ["Movement of infested plants or plant material", "Movement between nearby plants"],
+    "affectedParts": ["dahon", "tangkay"],
+    "symptoms": ["Pinong maputlang tuldok", "Paninilaw o bronzing", "Pinong sapot kapag marami na", "Pagkatuyo o paglagas ng dahon"],
+    "favorableConditions": ["Mainit at tuyong panahon", "Maalikabok na kondisyon", "Halamang kulang sa tubig"],
+    "transmission": ["Paggalaw ng apektadong halaman o materyal", "Paglipat sa kalapit na halaman"],
     "severity": "medium",
     "differentialDiagnosis": ["thrips-damage", "nutrient-stress", "other-mite-damage"],
     "management": [
-      "Inspect leaf undersides with a hand lens",
-      "Reduce plant water stress and excessive dust",
-      "Use directed water sprays only when suitable for the crop",
-      "Preserve predatory mites and other beneficial organisms"
+      "Suriin ang ilalim ng dahon gamit ang hand lens",
+      "Bawasan ang water stress ng halaman at sobrang alikabok",
+      "Gumamit ng direktang tubig spray kung angkop sa halaman",
+      "Pangalagaan ang predatory mites at iba pang beneficial organisms"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/adjust-watering", "/preserve-beneficial-insects", "/seek-agricultural-advice"],
     "safety": {
       "ppe": [],
       "environmentalPrecautions": [
-        "Some broad-spectrum insecticides can harm natural enemies and worsen mite outbreaks",
-        "Verify the crop and mite target on any pesticide label"
+        "May broad-spectrum insecticide na nakakasira sa natural enemies at nagpapalala ng mite outbreak",
+        "Tiyakin ang halaman at target na mite sa anumang pesticide label"
       ],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Inspect the underside of leaves for mites and eggs",
-      "Look for stippling and webbing together",
-      "Do not identify a mite species from this label alone"
+      "Suriin ang ilalim ng dahon para sa mites at itlog",
+      "Hanapin ang tuldok at sapot nang sabay",
+      "Huwag tukuyin ang species ng mite mula sa label na ito lang"
     ],
     "media": [],
     "metadata": {
@@ -398,41 +397,41 @@
     "id": "yellow-leaf-curl-virus",
     "slug": "yellow-leaf-curl-virus",
     "name": "Yellow Leaf Curl Virus",
-    "localName": "Paninilaw at pagkulot ng dahon na maaaring may kasamang bansot na paglaki.",
+    "localName": "Paninilaw at pagkukulot ng dahon na may kasamang bansot na paglaki.",
     "type": "disease",
     "category": "viral",
     "scientificName": "",
     "description": {
-      "tl": "Maaaring makita ang paninilaw, pagkulot pataas, pagliit ng dahon, at bansot na paglaki. Kailangang kumpirmahin ang eksaktong virus batay sa host at diagnosis.",
+      "tl": "Makikita ang paninilaw, pagkukulot pataas, pagliit ng dahon, at bansot na paglaki. Kailangang kumpirmahin ang eksaktong virus base sa halaman at diagnosis.",
       "en": "Symptoms may include yellowing, upward leaf curling, smaller leaves, and stunted growth. The exact virus requires confirmation."
     },
     "affectedCrops": [],
-    "affectedParts": ["leaves", "stems"],
-    "symptoms": ["Yellowing of leaves", "Upward leaf curling", "Reduced leaf size", "Stunted growth"],
+    "affectedParts": ["dahon", "tangkay"],
+    "symptoms": ["Paninilaw ng dahon", "Pagkukulot pataas ng dahon", "Pagliit ng dahon", "Bansot na paglaki"],
     "favorableConditions": [],
-    "transmission": ["Some leaf-curl viruses are transmitted by whiteflies; the specific route depends on the virus."],
+    "transmission": ["Ang ilang leaf-curl virus ay dala ng whiteflies; depende sa virus ang partikular na paraan ng pagkalat."],
     "severity": "high",
     "differentialDiagnosis": ["leaf-curl", "nutrient-deficiency", "mite-damage", "herbicide-injury"],
     "management": [
-      "Inspect for possible insect vectors",
-      "Monitor nearby plants for similar symptoms",
-      "Seek confirmation before recommending virus-specific management",
-      "Use locally recommended vector management when appropriate"
+      "Suriin ang posibleng insekto na nagdadala ng virus",
+      "Bantayan ang kalapit na halaman para sa katulad na sintomas",
+      "Humingi ng kumpirmasyon bago magrekomenda ng virus-specific management",
+      "Gumamit ng lokal na rekomendadong vector management kung angkop"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/monitor-insect-vectors", "/seek-agricultural-advice"],
     "safety": {
       "ppe": [],
       "environmentalPrecautions": [
-        "Do not claim that a pesticide cures an established viral infection",
-        "Avoid unnecessary insecticide use that may harm beneficial organisms"
+        "Huwag sabihing gumagaling ang naitatag nang viral infection sa pesticide",
+        "Iwasan ang hindi kailangang insecticide na maaaring makasira sa beneficial organisms"
       ],
-      "harvestRestrictions": "No specific harvest interval is assigned here. Follow applicable product labels if treatments are used."
+      "harvestRestrictions": "Walang partikular na harvest interval na ibinibigay dito. Sundin ang applicable product label kung may treatment na gagamitin."
     },
     "diagnosisGuidance": [
-      "Look for a combination of yellowing, curling, and stunted growth",
-      "Distinguish symptoms from nutritional, environmental, and pest-related causes",
-      "Do not infer the exact virus from the class label alone"
+      "Hanapin ang kombinasyon ng paninilaw, pagkukulot, at bansot na paglaki",
+      "Ihiwalay ang sintomas mula sa nutritional, environmental, at pest-related na dahilan",
+      "Huwag agad tukuyin ang eksaktong virus mula sa class label lang"
     ],
     "media": [],
     "metadata": {
@@ -446,38 +445,38 @@
     "id": "anthracnose",
     "slug": "anthracnose",
     "name": "Anthracnose",
-    "localName": "Sakit na maaaring magdulot ng lubog at maitim na batik sa bunga o ibang bahagi ng halaman.",
+    "localName": "Sakit na nagdudulot ng lubog at maitim na batik sa bunga o ibang bahagi ng halaman.",
     "type": "disease",
     "category": "fungal",
     "scientificName": "",
     "description": {
-      "tl": "Ang anthracnose ay maaaring magdulot ng lubog na batik sa bunga, dahon, tangkay, o ibang bahagi. Nag-iiba ang sanhi at sintomas depende sa host.",
+      "tl": "Ang anthracnose ay nagdudulot ng lubog na batik sa bunga, dahon, tangkay, o ibang bahagi. Iba-iba ang sanhi at sintomas depende sa halaman.",
       "en": "Anthracnose is a group of fungal diseases that may cause sunken lesions on fruit and other plant tissues, depending on the host and pathogen."
     },
     "affectedCrops": [],
-    "affectedParts": ["leaves", "stems", "fruits"],
-    "symptoms": ["Sunken dark lesions", "Expanding spots on fruit", "Possible dark lesions on leaves or stems", "Tissue decay in affected areas"],
-    "favorableConditions": ["Warm and humid conditions", "Prolonged wetness", "Infected plant debris"],
-    "transmission": ["Infected plant material", "Rain splash", "Contaminated tools or handling equipment in some cases"],
+    "affectedParts": ["dahon", "tangkay", "bunga"],
+    "symptoms": ["Lubog at maitim na batik", "Lumalaking batik sa bunga", "Posibleng maitim na batik sa dahon o tangkay", "Pagkabulok ng apektadong bahagi"],
+    "favorableConditions": ["Mainit at mahalumigmig na kondisyon", "Matagal na basa", "Apektadong labi ng halaman"],
+    "transmission": ["Apektadong materyal ng halaman", "Talsik ng ulan", "Kontaminadong kagamitan o handling equipment sa ilang kaso"],
     "severity": "medium",
     "differentialDiagnosis": ["fruit-rot", "bacterial-spot", "other-fungal-lesions"],
     "management": [
-      "Remove severely affected plant material",
-      "Reduce prolonged wetness where practical",
-      "Avoid injuring fruit during handling",
-      "Confirm the host and likely pathogen"
+      "Alisin ang matinding apektadong materyal ng halaman",
+      "Bawasan ang matagal na basa kung kaya",
+      "Iwasan ang pagkasira ng bunga habang hinahawakan",
+      "Kumpirmahin ang halaman at posibleng pathogen"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/remove-infected-plant-parts", "/adjust-watering", "/sanitize-tools"],
     "safety": {
       "ppe": [],
-      "environmentalPrecautions": ["Do not use a crop-specific chemical recommendation until the host and target are verified."],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "environmentalPrecautions": ["Huwag gumamit ng crop-specific chemical recommendation hangga't hindi nakumpirma ang halaman at target."],
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Check whether lesions are sunken and expanding",
-      "Consider the affected crop, plant part, and environmental conditions",
-      "Do not assign a species based on the generic class label"
+      "Tingnan kung lubog at lumalaki ang batik",
+      "Isaalang-alang ang apektadong halaman, bahagi ng halaman, at kondisyon ng paligid",
+      "Huwag magtalaga ng species base sa generic class label"
     ],
     "media": [],
     "metadata": {
@@ -496,33 +495,33 @@
     "category": "undetermined",
     "scientificName": "",
     "description": {
-      "tl": "Ang black spot ay pangkalahatang paglalarawan ng maiitim na batik. Hindi nito natutukoy kung fungal, bacterial, o ibang problema ang sanhi.",
+      "tl": "Ang black spot ay pangkalahatang tawag sa maiitim na batik. Hindi nito sinasabi kung fungal, bacterial, o ibang problema ang sanhi.",
       "en": "Black spot is a general description of dark lesions and does not identify a specific pathogen or cause."
     },
     "affectedCrops": [],
-    "affectedParts": ["leaves", "stems", "fruits"],
-    "symptoms": ["Dark brown or black spots", "Possible yellowing around lesions", "Possible enlargement or merging of spots"],
+    "affectedParts": ["dahon", "tangkay", "bunga"],
+    "symptoms": ["Maitim na kayumanggi o itim na batik", "Posibleng paninilaw sa paligid ng batik", "Posibleng paglaki o pagsasama-sama ng batik"],
     "favorableConditions": [],
-    "transmission": ["Depends on the actual cause; infectious cases may spread through water, air, or contaminated plant material."],
+    "transmission": ["Depende sa aktwal na sanhi; ang nakakahawang kaso ay maaaring kumalat sa tubig, hangin, o kontaminadong materyal ng halaman."],
     "severity": "medium",
     "differentialDiagnosis": ["early-blight", "septoria-leaf-spot", "bacterial-spot", "anthracnose"],
     "management": [
-      "Inspect the shape, location, and progression of lesions",
-      "Avoid unnecessary wetting of foliage",
-      "Remove severely affected material when appropriate",
-      "Seek confirmation before selecting a treatment"
+      "Suriin ang hugis, lokasyon, at paglala ng batik",
+      "Iwasan ang hindi kailangang pagbasa ng dahon",
+      "Alisin ang matinding apektadong materyal kung angkop",
+      "Humingi ng kumpirmasyon bago pumili ng treatment"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/remove-infected-plant-parts", "/seek-agricultural-advice"],
     "safety": {
       "ppe": [],
-      "environmentalPrecautions": ["Do not recommend a pesticide solely from the generic Black Spot label."],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "environmentalPrecautions": ["Huwag magrekomenda ng pesticide base lang sa generic na Black Spot label."],
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Treat the prediction as a dark-spot symptom category",
-      "Check host crop and lesion characteristics",
-      "Obtain expert confirmation if treatment depends on identifying the cause"
+      "Ituring ang prediction bilang dark-spot symptom category",
+      "Tingnan ang host crop at katangian ng batik",
+      "Kumuha ng expert confirmation kung ang treatment ay depende sa pagkilala sa sanhi"
     ],
     "media": [],
     "metadata": {
@@ -536,38 +535,38 @@
     "id": "botrytis-gray-mold",
     "slug": "botrytis-gray-mold",
     "name": "Botrytis Gray Mold",
-    "localName": "Pagkabulok na maaaring may kulay-abong malambot na amag sa apektadong bahagi.",
+    "localName": "Pagkabulok na may kulay-abong malambot na amag sa apektadong bahagi.",
     "type": "disease",
     "category": "fungal",
     "scientificName": "Botrytis cinerea",
     "description": {
-      "tl": "Maaaring magkaroon ng malambot na pagkabulok at kulay-abong amag sa nasugatan, namamatay, o nahihinog na tisyu ng halaman.",
+      "tl": "Maaaring magkaroon ng malambot na pagkabulok at kulay-abong amag sa nasugatan, lumang, o hinog na bahagi ng halaman.",
       "en": "A fungal disease that can cause soft decay and gray mold on wounded, aging, or susceptible plant tissues."
     },
     "affectedCrops": [],
-    "affectedParts": ["leaves", "stems", "flowers", "fruits"],
-    "symptoms": ["Gray fuzzy growth", "Soft or watery decay", "Brown lesions on flowers, stems, or fruit", "Damage around wounds or aging tissue"],
-    "favorableConditions": ["High humidity", "Poor airflow", "Prolonged wetness", "Wounded or aging plant tissue"],
-    "transmission": ["Airborne spores", "Contact with infected plant material", "Spread under favorable humid conditions"],
+    "affectedParts": ["dahon", "tangkay", "bulaklak", "bunga"],
+    "symptoms": ["Kulay-abong malambot na amag", "Malambot o parang tubig na pagkabulok", "Kayumangging batik sa bulaklak, tangkay, o bunga", "Pinsala sa paligid ng sugat o lumang bahagi"],
+    "favorableConditions": ["Mataas na halumigmig", "Mahinang daloy ng hangin", "Matagal na basa", "Nasugatan o lumang bahagi ng halaman"],
+    "transmission": ["Spore na dala ng hangin", "Pakikipag-ugnay sa apektadong materyal ng halaman", "Pagkalat sa mahalumigmig na kondisyon"],
     "severity": "high",
     "differentialDiagnosis": ["fruit-rot", "anthracnose", "other-gray-mold-like-decay"],
     "management": [
-      "Remove decaying plant material",
-      "Improve airflow",
-      "Avoid unnecessary wetting of flowers and foliage",
-      "Reduce plant injury and handle harvested produce carefully"
+      "Alisin ang nabubulok na materyal ng halaman",
+      "Pagbutihin ang daloy ng hangin",
+      "Iwasan ang hindi kailangang pagbasa ng bulaklak at dahon",
+      "Bawasan ang pinsala sa halaman at ingatan ang ani habang hinahawakan"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/remove-infected-plant-parts", "/improve-air-circulation", "/adjust-watering"],
     "safety": {
       "ppe": [],
-      "environmentalPrecautions": ["Confirm the disease and crop before selecting a registered treatment."],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "environmentalPrecautions": ["Kumpirmahin ang sakit at halaman bago pumili ng registered treatment."],
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Look for gray fuzzy growth on decaying tissue",
-      "Consider whether the affected tissue is wounded or aging",
-      "Do not confuse every soft fruit rot with Botrytis"
+      "Hanapin ang kulay-abong malambot na amag sa nabubulok na bahagi",
+      "Isaalang-alang kung ang apektadong bahagi ay nasugatan o luma na",
+      "Huwag ituring na Botrytis ang lahat ng malambot na pagkabulok ng bunga"
     ],
     "media": [],
     "metadata": {
@@ -581,38 +580,38 @@
     "id": "cercospora-leaf-spot",
     "slug": "cercospora-leaf-spot",
     "name": "Cercospora Leaf Spot",
-    "localName": "Batik sa dahon na nag-iiba ang hugis, kulay, at gilid depende sa halaman.",
+    "localName": "Batik sa dahon na iba-iba ang hugis, kulay, at gilid depende sa halaman.",
     "type": "disease",
     "category": "fungal",
     "scientificName": "",
     "description": {
-      "tl": "Pangkat ng mga sakit na nagdudulot ng batik sa dahon. Nag-iiba ang itsura at sanhi ayon sa halamang tinamaan.",
+      "tl": "Pangkat ng mga sakit na nagdudulot ng batik sa dahon. Iba-iba ang itsura at sanhi depende sa halamang tinamaan.",
       "en": "A group of fungal leaf spot diseases whose lesion appearance and causal species vary by host."
     },
     "affectedCrops": [],
-    "affectedParts": ["leaves"],
-    "symptoms": ["Circular or irregular leaf lesions", "Tan, gray, brown, or dark lesion centers depending on host", "Possible yellowing and premature leaf drop"],
-    "favorableConditions": ["Humidity", "Wet foliage", "Conditions favorable to the particular pathogen"],
-    "transmission": ["Infected plant debris", "Spores spread by air or water, depending on the pathogen"],
+    "affectedParts": ["dahon"],
+    "symptoms": ["Bilog o hindi regular na batik sa dahon", "Tan, abo, kayumanggi, o maitim na gitna depende sa halaman", "Posibleng paninilaw at maagang paglagas ng dahon"],
+    "favorableConditions": ["Halumigmig", "Basa ang dahon", "Kondisyon na pabor sa partikular na pathogen"],
+    "transmission": ["Apektadong labi ng halaman", "Spore na dala ng hangin o tubig, depende sa pathogen"],
     "severity": "medium",
     "differentialDiagnosis": ["septoria-leaf-spot", "early-blight", "bacterial-spot"],
     "management": [
-      "Inspect lesion patterns and the affected host",
-      "Remove infected debris where practical",
-      "Improve airflow and avoid prolonged leaf wetness",
-      "Confirm the host-pathogen combination before treatment"
+      "Suriin ang pattern ng batik at ang apektadong halaman",
+      "Alisin ang apektadong labi kung kaya",
+      "Pagbutihin ang daloy ng hangin at iwasan ang matagal na basa ang dahon",
+      "Kumpirmahin ang host-pathogen combination bago mag-treatment"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/remove-infected-plant-parts", "/improve-air-circulation", "/adjust-watering"],
     "safety": {
       "ppe": [],
-      "environmentalPrecautions": ["Do not assume that a treatment used for one Cercospora species is suitable for another."],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "environmentalPrecautions": ["Huwag ipagpalagay na ang treatment para sa isang Cercospora species ay angkop din sa iba."],
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Use lesion characteristics as supporting evidence only",
-      "Confirm the crop and likely causal organism",
-      "Compare against other leaf spot diseases"
+      "Gamitin ang katangian ng batik bilang supporting evidence lang",
+      "Kumpirmahin ang halaman at posibleng causal organism",
+      "Ihambing sa iba pang sakit na batik sa dahon"
     ],
     "media": [],
     "metadata": {
@@ -626,41 +625,41 @@
     "id": "downy-mildew",
     "slug": "downy-mildew",
     "name": "Downy Mildew",
-    "localName": "Sakit na maaaring magdulot ng dilaw na batik at mapusyaw na paglago sa ilalim ng dahon.",
+    "localName": "Sakit na nagdudulot ng dilaw na batik at mapusyaw na amag sa ilalim ng dahon.",
     "type": "disease",
     "category": "oomycete",
     "scientificName": "",
     "description": {
-      "tl": "Maaaring magdulot ng mapusyaw o dilaw na batik sa ibabaw ng dahon at downy na paglago sa ilalim sa angkop na kondisyon. Nag-iiba ang sanhi ayon sa host.",
+      "tl": "Maaaring magdulot ng mapusyaw o dilaw na batik sa ibabaw ng dahon at downy o malambot na amag sa ilalim kapag tama ang kondisyon. Iba-iba ang sanhi depende sa halaman.",
       "en": "Downy mildew diseases may cause pale or yellow leaf lesions and downy growth underneath leaves; the causal organism depends on the host."
     },
     "affectedCrops": [],
-    "affectedParts": ["leaves", "stems"],
-    "symptoms": ["Pale or yellow leaf lesions", "Downy growth on leaf undersides in suitable conditions", "Leaf browning or decline in severe cases"],
-    "favorableConditions": ["High humidity", "Prolonged leaf wetness", "Conditions favorable to the host-specific oomycete"],
-    "transmission": ["Spores or other infectious structures spread through air or water, depending on the organism."],
+    "affectedParts": ["dahon", "tangkay"],
+    "symptoms": ["Mapusyaw o dilaw na batik sa dahon", "Downy na amag sa ilalim ng dahon kapag angkop ang kondisyon", "Pagiging kayumanggi o paghina ng dahon kapag malubha"],
+    "favorableConditions": ["Mataas na halumigmig", "Matagal na basa ang dahon", "Kondisyon na pabor sa host-specific oomycete"],
+    "transmission": ["Spore o iba pang infectious structure na dala ng hangin o tubig, depende sa organismo."],
     "severity": "high",
     "differentialDiagnosis": ["leaf-mold", "powdery-mildew", "other-leaf-spot-diseases"],
     "management": [
-      "Improve airflow",
-      "Avoid prolonged leaf wetness",
-      "Remove severely infected plant material where appropriate",
-      "Confirm the host and disease before treatment"
+      "Pagbutihin ang daloy ng hangin",
+      "Iwasan ang matagal na basa ang dahon",
+      "Alisin ang matinding apektadong materyal ng halaman kung angkop",
+      "Kumpirmahin ang halaman at sakit bago mag-treatment"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/improve-air-circulation", "/adjust-watering", "/seek-agricultural-advice"],
     "safety": {
       "ppe": [],
       "environmentalPrecautions": [
-        "Downy mildew is generally associated with oomycetes, not true fungi",
-        "Verify that any treatment is labeled for the confirmed crop and disease"
+        "Ang downy mildew ay kadalasang nauugnay sa oomycetes, hindi tunay na fungi",
+        "Tiyakin na ang anumang treatment ay may label para sa kumpirmadong halaman at sakit"
       ],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Inspect both leaf surfaces",
-      "Consider the crop and environmental conditions",
-      "Do not use the class label to infer a specific species"
+      "Suriin ang dalawang gilid ng dahon",
+      "Isaalang-alang ang halaman at kondisyon ng paligid",
+      "Huwag gamitin ang class label para tukuyin ang partikular na species"
     ],
     "media": [],
     "metadata": {
@@ -674,41 +673,41 @@
     "id": "leaf-curl",
     "slug": "leaf-curl",
     "name": "Leaf Curl",
-    "localName": "Pagkakulot ng dahon na maaaring dulot ng sakit, peste, o kondisyon ng kapaligiran.",
+    "localName": "Pagkukulot ng dahon na maaaring dulot ng sakit, peste, o kondisyon ng paligid.",
     "type": "disease",
     "category": "undetermined",
     "scientificName": "",
     "description": {
-      "tl": "Ang pagkulot ng dahon ay sintomas at hindi awtomatikong patunay ng viral disease. Maaari itong maiugnay sa peste, kakulangan sa sustansiya, herbicide injury, o stress sa kapaligiran.",
+      "tl": "Ang pagkukulot ng dahon ay sintomas lang at hindi agad ibig sabihin na virus na. Maaari itong dulot ng peste, kakulangan sa sustansiya, herbicide, o stress sa paligid.",
       "en": "Leaf curl is a symptom rather than a confirmed disease and may result from viruses, pests, nutritional issues, herbicide injury, or environmental stress."
     },
     "affectedCrops": [],
-    "affectedParts": ["leaves", "stems"],
-    "symptoms": ["Upward or downward leaf curling", "Distorted new growth", "Possible yellowing or stunting"],
+    "affectedParts": ["dahon", "tangkay"],
+    "symptoms": ["Pagkukulot pataas o pababa ng dahon", "Deformed na bagong tubo", "Posibleng paninilaw o bansot na paglaki"],
     "favorableConditions": [],
-    "transmission": ["Depends on the underlying cause; viral causes may involve insect vectors, while noninfectious causes do not spread between plants."],
+    "transmission": ["Depende sa sanhi; ang viral cause ay maaaring may insekto na nagdadala, habang ang noninfectious cause ay hindi kumakalat sa halaman."],
     "severity": "medium",
     "differentialDiagnosis": ["yellow-leaf-curl-virus", "mosaic-virus", "aphids", "spider-mites", "environmental-stress"],
     "management": [
-      "Inspect leaf undersides and new growth for pests",
-      "Review watering, nutrition, and recent chemical exposure",
-      "Check nearby plants for similar symptoms",
-      "Seek confirmation before applying disease-specific treatment"
+      "Suriin ang ilalim ng dahon at bagong tubo para sa peste",
+      "Repasuhin ang pagdidilig, sustansiya, at kamakailang chemical exposure",
+      "Tingnan ang kalapit na halaman para sa katulad na sintomas",
+      "Humingi ng kumpirmasyon bago mag-apply ng disease-specific treatment"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/check-watering", "/check-nutrition", "/seek-agricultural-advice"],
     "safety": {
       "ppe": [],
       "environmentalPrecautions": [
-        "Do not assume leaf curl is caused by a virus",
-        "Avoid pesticide application without identifying a likely target"
+        "Huwag ipagpalagay na virus ang dahilan ng pagkukulot ng dahon",
+        "Iwasan ang pag-spray ng pesticide kung walang matukoy na target"
       ],
-      "harvestRestrictions": "No specific harvest interval is assigned here. Follow applicable product labels if treatments are used."
+      "harvestRestrictions": "Walang partikular na harvest interval na ibinibigay dito. Sundin ang applicable product label kung may treatment na gagamitin."
     },
     "diagnosisGuidance": [
-      "Treat this class as a visible symptom",
-      "Check for pests, environmental stress, and nutrient issues",
-      "Use a confirmed diagnosis before recommending treatment"
+      "Ituring ang class na ito bilang nakikitang sintomas",
+      "Tingnan ang peste, stress sa paligid, at nutrient issues",
+      "Gumamit ng kumpirmadong diagnosis bago magrekomenda ng treatment"
     ],
     "media": [],
     "metadata": {
@@ -722,38 +721,38 @@
     "id": "mycosphaerella-leaf-blotch",
     "slug": "mycosphaerella-leaf-blotch",
     "name": "Mycosphaerella Leaf Blotch",
-    "localName": "Mga batik o malalawak na bahaging may pagbabago ng kulay sa dahon.",
+    "localName": "Malalawak na batik o pagbabago ng kulay sa dahon.",
     "type": "disease",
     "category": "fungal",
     "scientificName": "",
     "description": {
-      "tl": "Pangalan na maaaring tumukoy sa iba't ibang leaf blotch disease na nauugnay sa fungi. Kailangang malaman ang host at eksaktong pathogen upang maging tiyak ang diagnosis.",
+      "tl": "Tawag ito sa iba't ibang leaf blotch disease na dulot ng fungi. Kailangang malaman ang halaman at eksaktong pathogen para maging tiyak ang diagnosis.",
       "en": "A label associated with leaf blotch diseases linked to fungi in the Mycosphaerella group; host and pathogen identification are needed for a specific diagnosis."
     },
     "affectedCrops": [],
-    "affectedParts": ["leaves"],
-    "symptoms": ["Brown, tan, or dark blotches", "Irregular areas of discolored leaf tissue", "Possible yellowing or premature leaf drop"],
+    "affectedParts": ["dahon"],
+    "symptoms": ["Kayumanggi, tan, o maitim na malalawak na batik", "Hindi regular na bahagi ng dahon na nagbago ang kulay", "Posibleng paninilaw o maagang paglagas ng dahon"],
     "favorableConditions": [],
-    "transmission": ["May involve spores and infected plant debris, depending on the causal organism."],
+    "transmission": ["Maaaring sa spore at apektadong labi ng halaman, depende sa causal organism."],
     "severity": "medium",
     "differentialDiagnosis": ["cercospora-leaf-spot", "septoria-leaf-spot", "early-blight", "other-leaf-blotches"],
     "management": [
-      "Document the host crop and lesion appearance",
-      "Remove infected debris where appropriate",
-      "Monitor whether lesions spread",
-      "Obtain crop-specific confirmation before treatment"
+      "Itala ang host crop at itsura ng batik",
+      "Alisin ang apektadong labi kung angkop",
+      "Bantayan kung lumalaki ang batik",
+      "Kumuha ng crop-specific confirmation bago mag-treatment"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/remove-infected-plant-parts", "/seek-agricultural-advice"],
     "safety": {
       "ppe": [],
-      "environmentalPrecautions": ["Do not infer a specific Mycosphaerella species from this model label."],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "environmentalPrecautions": ["Huwag agad tukuyin ang partikular na Mycosphaerella species mula sa model label na ito."],
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Confirm how this class was defined in the training dataset",
-      "Check the host crop and lesion characteristics",
-      "Keep the diagnosis provisional until the organism is verified"
+      "Kumpirmahin kung paano tinukoy ang class na ito sa training dataset",
+      "Tingnan ang host crop at katangian ng batik",
+      "Panatilihing provisional ang diagnosis hangga't hindi nakumpirma ang organismo"
     ],
     "media": [],
     "metadata": {
@@ -767,38 +766,38 @@
     "id": "powdery-mildew",
     "slug": "powdery-mildew",
     "name": "Powdery Mildew",
-    "localName": "Maputi at parang pulbos na paglago sa ibabaw ng dahon o ibang bahagi.",
+    "localName": "Maputi at parang pulbos na amag sa ibabaw ng dahon o ibang bahagi.",
     "type": "disease",
     "category": "fungal",
     "scientificName": "",
     "description": {
-      "tl": "Karaniwang nakikita bilang puting pulbos na paglago sa dahon o ibang bahagi ng halaman. Nag-iiba ang species at host range depende sa halaman.",
+      "tl": "Karaniwang nakikita bilang puting pulbos na amag sa dahon o ibang bahagi ng halaman. Iba-iba ang species at halaman na tinatamaan.",
       "en": "Powdery mildew commonly appears as white powder-like fungal growth on plant surfaces; the species and host range vary by crop."
     },
     "affectedCrops": [],
-    "affectedParts": ["leaves", "stems", "flowers", "fruits"],
-    "symptoms": ["White powder-like patches", "Leaf yellowing or distortion", "Reduced plant vigor in severe cases"],
-    "favorableConditions": ["Conditions favorable to the host-specific powdery mildew", "Dense growth and poor airflow may increase disease problems"],
-    "transmission": ["Airborne spores", "Spread from infected plants"],
+    "affectedParts": ["dahon", "tangkay", "bulaklak", "bunga"],
+    "symptoms": ["Maputi at parang pulbos na bahagi", "Paninilaw o pagkukulot ng dahon", "Paghina ng halaman kapag malubha"],
+    "favorableConditions": ["Kondisyon na pabor sa host-specific powdery mildew", "Siksik na tubo at mahinang daloy ng hangin ay maaaring magpalala ng sakit"],
+    "transmission": ["Spore na dala ng hangin", "Pagkalat mula sa apektadong halaman"],
     "severity": "medium",
     "differentialDiagnosis": ["downy-mildew", "residue-on-leaves", "other-fungal-growth"],
     "management": [
-      "Inspect the distribution and texture of the white growth",
-      "Improve airflow where practical",
-      "Remove severely affected material where appropriate",
-      "Confirm the host and disease before choosing a treatment"
+      "Suriin ang distribusyon at texture ng puting amag",
+      "Pagbutihin ang daloy ng hangin kung kaya",
+      "Alisin ang matinding apektadong materyal kung angkop",
+      "Kumpirmahin ang halaman at sakit bago pumili ng treatment"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/improve-air-circulation", "/remove-infected-plant-parts"],
     "safety": {
       "ppe": [],
-      "environmentalPrecautions": ["Verify crop registration and label instructions before pesticide use."],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "environmentalPrecautions": ["Tiyakin ang crop registration at label instructions bago gumamit ng pesticide."],
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Look for powder-like patches on plant surfaces",
-      "Differentiate from downy mildew and dried spray residue",
-      "Do not assign a species from the general class name"
+      "Hanapin ang parang pulbos na bahagi sa ibabaw ng halaman",
+      "Ihiwalay sa downy mildew at tuyong spray residue",
+      "Huwag magtalaga ng species mula sa pangkalahatang class name"
     ],
     "media": [],
     "metadata": {
@@ -817,32 +816,32 @@
     "category": "fungal",
     "scientificName": "",
     "description": {
-      "tl": "Ang rust disease ay maaaring magdulot ng kulay-kahel, kayumanggi, o kalawanging pustules sa halaman. Nag-iiba ang pathogen at host range ayon sa crop.",
+      "tl": "Ang rust disease ay nagdudulot ng kulay-kahel, kayumanggi, o kalawanging pustules sa halaman. Iba-iba ang pathogen at halaman na tinatamaan.",
       "en": "Rust diseases may produce orange, brown, or rust-colored pustules on plant tissue; causal species and host range vary."
     },
     "affectedCrops": [],
-    "affectedParts": ["leaves", "stems"],
-    "symptoms": ["Orange, brown, or rust-colored pustules", "Powdery spores released from some pustules", "Yellowing or leaf decline in severe cases"],
-    "favorableConditions": ["Conditions favorable to the particular rust species", "Humidity may support infection in some rust diseases"],
-    "transmission": ["Spores spread by air", "Some rust species require alternate hosts"],
+    "affectedParts": ["dahon", "tangkay"],
+    "symptoms": ["Kahel, kayumanggi, o kalawanging pustules", "Pulbos na spore mula sa ilang pustules", "Paninilaw o paghina ng dahon kapag malubha"],
+    "favorableConditions": ["Kondisyon na pabor sa partikular na rust species", "Ang halumigmig ay maaaring magpalala ng infection sa ilang rust disease"],
+    "transmission": ["Spore na dala ng hangin", "May rust species na kailangan ng alternate host"],
     "severity": "medium",
     "differentialDiagnosis": ["leaf-spot-diseases", "mite-damage", "other-spore-producing-diseases"],
     "management": [
-      "Inspect pustules and the affected plant parts",
-      "Remove heavily infected material where appropriate",
-      "Identify the host and likely rust organism",
-      "Seek crop-specific advice if the disease is spreading"
+      "Suriin ang pustules at apektadong bahagi ng halaman",
+      "Alisin ang matinding apektadong materyal kung angkop",
+      "Kilalanin ang halaman at posibleng rust organism",
+      "Humingi ng crop-specific advice kung kumakalat ang sakit"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/remove-infected-plant-parts", "/seek-agricultural-advice"],
     "safety": {
       "ppe": [],
-      "environmentalPrecautions": ["Do not select a treatment without confirming the crop and target disease."],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "environmentalPrecautions": ["Huwag pumili ng treatment kung hindi pa nakumpirma ang halaman at target na sakit."],
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Look for rust-colored pustules rather than flat dark spots alone",
-      "Confirm the host because rust fungi are often host-specific"
+      "Hanapin ang kalawanging pustules, hindi lang flat at maitim na batik",
+      "Kumpirmahin ang halaman dahil ang rust fungi ay kadalasang host-specific"
     ],
     "media": [],
     "metadata": {
@@ -856,41 +855,41 @@
     "id": "bacterial-spot",
     "slug": "bacterial-spot",
     "name": "Bacterial Spot",
-    "localName": "Maiitim na batik sa dahon na maaaring may dilaw na paligid; minsan ay may batik din sa bunga.",
+    "localName": "Maiitim na batik sa dahon na may dilaw na paligid; minsan may batik din sa bunga.",
     "type": "disease",
     "category": "bacterial",
     "scientificName": "",
     "description": {
-      "tl": "Maaaring magdulot ng maliliit na maiitim na batik sa dahon, minsan ay may dilaw na paligid, at mga batik sa bunga. Nag-iiba ang bacteria ayon sa host.",
+      "tl": "Maaaring magdulot ng maliliit na maiitim na batik sa dahon, minsan may dilaw na paligid, at batik sa bunga. Iba-iba ang bacteria depende sa halaman.",
       "en": "Bacterial spot may cause dark leaf spots, sometimes with yellow halos, and lesions on fruit; the causal bacteria vary by host."
     },
-    "affectedCrops": ["tomato", "pepper"],
-    "affectedParts": ["leaves", "stems", "fruits"],
-    "symptoms": ["Small dark leaf spots", "Possible yellow halos around lesions", "Possible raised or corky fruit lesions", "Leaf yellowing or drop in severe cases"],
-    "favorableConditions": ["Warm and wet conditions", "Rain splash", "Prolonged leaf wetness"],
-    "transmission": ["Infected seed or plant material in some cases", "Rain splash and irrigation water", "Contaminated tools and handling"],
+    "affectedCrops": ["kamatis", "sili"],
+    "affectedParts": ["dahon", "tangkay", "bunga"],
+    "symptoms": ["Maliliit na maitim na batik sa dahon", "Posibleng dilaw na paligid ng batik", "Posibleng nakataas o malutong na batik sa bunga", "Paninilaw o paglagas ng dahon kapag malubha"],
+    "favorableConditions": ["Mainit at basang kondisyon", "Talsik ng ulan", "Matagal na basa ang dahon"],
+    "transmission": ["Apektadong buto o materyal ng halaman sa ilang kaso", "Talsik ng ulan at tubig sa patubig", "Kontaminadong kagamitan at handling"],
     "severity": "high",
     "differentialDiagnosis": ["early-blight", "septoria-leaf-spot", "cercospora-leaf-spot"],
     "management": [
-      "Avoid working with wet plants when possible",
-      "Use clean tools and suitable planting material",
-      "Remove severely infected material where appropriate",
-      "Avoid overhead irrigation where practical"
+      "Iwasang hawakan ang halaman kapag basa kung kaya",
+      "Gumamit ng malinis na kagamitan at angkop na planting material",
+      "Alisin ang matinding apektadong materyal kung angkop",
+      "Iwasan ang overhead irrigation kung kaya"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/sanitize-tools", "/remove-infected-plant-parts", "/adjust-watering"],
     "safety": {
       "ppe": [],
       "environmentalPrecautions": [
-        "Confirm bacterial disease before treatment",
-        "Use only products registered for the crop and target"
+        "Kumpirmahin ang bacterial disease bago mag-treatment",
+        "Gumamit lamang ng produktong rehistrado para sa halaman at target"
       ],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Check leaf spots and any fruit lesions",
-      "Compare with fungal leaf spot diseases",
-      "Visual symptoms alone may not confirm the bacterial cause"
+      "Tingnan ang batik sa dahon at anumang batik sa bunga",
+      "Ihambing sa fungal leaf spot diseases",
+      "Ang sintomas lang na nakikita ay maaaring hindi sapat para kumpirmahin ang bacterial cause"
     ],
     "media": [],
     "metadata": {
@@ -912,36 +911,36 @@
     "category": "undetermined",
     "scientificName": "",
     "description": {
-      "tl": "Ang pagkabulok ng bunga ay maaaring sanhi ng fungi, bacteria, o hindi nakahahawang problema. Hindi matutukoy ang eksaktong sanhi sa pangalang ito lamang.",
+      "tl": "Ang pagkabulok ng bunga ay maaaring dulot ng fungi, bacteria, o hindi nakakahawang problema. Hindi matutukoy ang eksaktong sanhi sa pangalan lang.",
       "en": "Fruit rot can result from fungi, bacteria, or noninfectious problems. The label alone does not identify the cause."
     },
     "affectedCrops": [],
-    "affectedParts": ["fruits"],
-    "symptoms": ["Soft, watery, or discolored fruit tissue", "Expanding rotten areas", "Possible mold or visible lesions", "Possible foul odor depending on the cause"],
-    "favorableConditions": ["Excess moisture", "Wounds or insect damage", "Poor storage or handling conditions"],
-    "transmission": ["Depends on the cause; some infectious causes spread through contact, spores, or contaminated tools."],
+    "affectedParts": ["bunga"],
+    "symptoms": ["Malambot, parang tubig, o nagbago ang kulay na bunga", "Lumalaking bahagi ng nabubulok", "Posibleng amag o nakikitang batik", "Posibleng mabahong amoy depende sa sanhi"],
+    "favorableConditions": ["Sobrang halumigmig", "Sugat o pinsala ng insekto", "Mahinang storage o handling"],
+    "transmission": ["Depende sa sanhi; ang ilang nakakahawang cause ay kumakalat sa contact, spore, o kontaminadong kagamitan."],
     "severity": "medium",
     "differentialDiagnosis": ["anthracnose", "botrytis-gray-mold", "bacterial-decay", "physiological-disorders"],
     "management": [
-      "Remove rotting fruit from the plant or storage area",
-      "Reduce fruit injury during handling",
-      "Review watering and storage conditions",
-      "Identify the likely cause before treatment"
+      "Alisin ang nabubulok na bunga mula sa halaman o storage area",
+      "Bawasan ang pinsala sa bunga habang hinahawakan",
+      "Repasuhin ang pagdidilig at storage conditions",
+      "Kilalanin ang posibleng sanhi bago mag-treatment"
     ],
     "treatments": [],
     "actionRefs": ["/remove-rotten-fruit", "/sanitize-tools", "/adjust-watering", "/seek-agricultural-advice"],
     "safety": {
       "ppe": [],
       "environmentalPrecautions": [
-        "Do not assume all fruit rot is caused by a treatable pathogen",
-        "Dispose of rotten produce responsibly"
+        "Huwag ipagpalagay na lahat ng fruit rot ay dulot ng treatable pathogen",
+        "Itapon nang maayos ang nabubulok na ani"
       ],
-      "harvestRestrictions": "Do not consume produce that is rotten or unsafe. Follow any applicable pesticide label restrictions."
+      "harvestRestrictions": "Huwag kainin ang nabubulok o hindi ligtas na ani. Sundin ang applicable pesticide label restrictions."
     },
     "diagnosisGuidance": [
-      "Check whether decay begins at wounds, blossom ends, stems, or other locations",
-      "Inspect for mold, insect entry holes, and storage-related damage",
-      "Treat this as a symptom category until the cause is identified"
+      "Tingnan kung saan nagsisimula ang pagkabulok: sa sugat, dulo ng bulaklak, tangkay, o iba pang bahagi",
+      "Suriin ang amag, butas ng insekto, at pinsala mula sa storage",
+      "Ituring ito bilang symptom category hangga't hindi nakikilala ang sanhi"
     ],
     "media": [],
     "metadata": {
@@ -960,36 +959,36 @@
     "category": "insect",
     "scientificName": "Thrips palmi",
     "description": {
-      "tl": "Ang melon thrips ay maliliit at makikitid na insektong sumisira sa ibabaw ng dahon at iba pang bahagi habang kumakain. Kailangang kumpirmahin ang species dahil magkahawig ang pinsala ng iba't ibang thrips.",
+      "tl": "Ang melon thrips ay maliliit at payat na insektong sumisira sa ibabaw ng dahon at iba pang bahagi habang kumakain. Kailangang kumpirmahin ang species dahil magkahawig ang pinsala ng iba't ibang thrips.",
       "en": "Melon thrips are tiny slender insects that feed on plant tissue and may cause pale or silvery feeding scars. Species confirmation may be needed."
     },
     "affectedCrops": [],
-    "affectedParts": ["leaves", "flowers", "fruits", "stems"],
-    "symptoms": ["Silvery or pale feeding scars", "Leaf distortion", "Scarring on flowers or fruit", "Small slender insects on affected tissue"],
+    "affectedParts": ["dahon", "bulaklak", "bunga", "tangkay"],
+    "symptoms": ["Pilak o maputlang gasgas mula sa pagkain", "Pagkukulot ng dahon", "Gasgas sa bulaklak o bunga", "Maliliit at payat na insekto sa apektadong bahagi"],
     "favorableConditions": [],
-    "transmission": ["Movement of adult insects between plants", "Infested plant material"],
+    "transmission": ["Paglipat ng adult na insekto sa pagitan ng halaman", "Apektadong materyal ng halaman"],
     "severity": "medium",
     "differentialDiagnosis": ["spider-mites", "aphids", "other-thrips-species"],
     "management": [
-      "Inspect young leaves and flowers for thrips",
-      "Monitor the level of damage over time",
-      "Preserve beneficial insects",
-      "Confirm the pest before choosing a control method"
+      "Suriin ang murang dahon at bulaklak para sa thrips",
+      "Bantayan ang antas ng pinsala sa paglipas ng panahon",
+      "Pangalagaan ang beneficial insects",
+      "Kumpirmahin ang peste bago pumili ng paraan ng pagkontrol"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/monitor-insect-vectors", "/preserve-beneficial-insects", "/seek-agricultural-advice"],
     "safety": {
       "ppe": [],
       "environmentalPrecautions": [
-        "Avoid unnecessary broad-spectrum insecticide use",
-        "Verify the crop and target pest on the product label"
+        "Iwasan ang hindi kailangang broad-spectrum insecticide",
+        "Tiyakin ang halaman at target na peste sa product label"
       ],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Look for slender insects and silvery feeding scars",
-      "Distinguish thrips damage from mite stippling",
-      "Confirm species if treatment recommendations depend on it"
+      "Hanapin ang payat na insekto at pilak na gasgas mula sa pagkain",
+      "Ihiwalay ang pinsala ng thrips sa tuldok ng mite",
+      "Kumpirmahin ang species kung ang treatment recommendation ay depende dito"
     ],
     "media": [],
     "metadata": {
@@ -1008,36 +1007,36 @@
     "category": "insect",
     "scientificName": "",
     "description": {
-      "tl": "Ang fruit borer ay pangkalahatang tawag sa mga larvae na bumubutas at kumakain sa bunga. Maaaring magkaiba ang species at paraan ng pagkontrol depende sa crop.",
+      "tl": "Ang fruit borer ay pangkalahatang tawag sa mga larvae na bumubutas at kumakain sa bunga. Iba-iba ang species at paraan ng pagkontrol depende sa halaman.",
       "en": "Fruit borer is a general label for larvae that bore into and feed inside fruit. Species and control methods vary by crop."
     },
     "affectedCrops": [],
-    "affectedParts": ["fruits", "flowers", "stems"],
-    "symptoms": ["Entry holes on fruit", "Frass near entry holes", "Internal feeding damage", "Fruit rot following insect injury"],
+    "affectedParts": ["bunga", "bulaklak", "tangkay"],
+    "symptoms": ["Butas sa bunga", "Dumi ng uod malapit sa butas", "Pinsala sa loob ng bunga", "Pagkabulok ng bunga kasunod ng pinsala ng insekto"],
     "favorableConditions": [],
-    "transmission": ["Adult insects lay eggs on or near susceptible plant parts; the life cycle depends on the species."],
+    "transmission": ["Nangingitlog ang adult na insekto sa ibabaw o malapit sa halaman; depende sa species ang life cycle."],
     "severity": "high",
     "differentialDiagnosis": ["fruit-rot", "stem-borer-damage", "other-fruit-feeding-larvae"],
     "management": [
-      "Inspect fruit for entry holes and frass",
-      "Remove and properly dispose of infested fruit",
-      "Monitor susceptible plant parts regularly",
-      "Identify the borer species before choosing a treatment"
+      "Suriin ang bunga para sa butas at dumi ng uod",
+      "Alisin at itapon nang maayos ang apektadong bunga",
+      "Bantayan regularly ang susceptible na bahagi ng halaman",
+      "Kilalanin ang species ng borer bago pumili ng treatment"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/remove-infested-fruit", "/seek-agricultural-advice"],
     "safety": {
       "ppe": [],
       "environmentalPrecautions": [
-        "Do not assume all fruit borers are the same species",
-        "Verify crop-specific registration and label directions before pesticide use"
+        "Huwag ipagpalagay na lahat ng fruit borer ay parehong species",
+        "Tiyakin ang crop-specific registration at label directions bago gumamit ng pesticide"
       ],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Look for entry holes, frass, and internal feeding",
-      "Check the affected crop and plant part",
-      "Do not substitute a specific pest identity without supporting evidence"
+      "Hanapin ang butas, dumi ng uod, at pagkain sa loob ng bunga",
+      "Tingnan ang apektadong halaman at bahagi ng halaman",
+      "Huwag magbigay ng partikular na pest identity kung walang supporting evidence"
     ],
     "media": [],
     "metadata": {
@@ -1056,36 +1055,36 @@
     "category": "insect",
     "scientificName": "",
     "description": {
-      "tl": "Ang aphids ay maliliit na insektong sumisipsip ng katas ng halaman. Maaari silang magdulot ng pagkulot ng dahon, malagkit na honeydew, at mahinang paglaki.",
+      "tl": "Ang aphids ay maliliit na insektong sumisipsip ng katas ng halaman. Nagdudulot sila ng pagkukulot ng dahon, malagkit na honeydew, at mahinang paglaki.",
       "en": "Aphids are small sap-feeding insects that may cause distorted growth and produce sticky honeydew."
     },
     "affectedCrops": [],
-    "affectedParts": ["leaves", "stems", "flowers"],
-    "symptoms": ["Clusters of small soft-bodied insects", "Curled or distorted young leaves", "Sticky honeydew", "Possible sooty mold growing on honeydew"],
+    "affectedParts": ["dahon", "tangkay", "bulaklak"],
+    "symptoms": ["Kumpol ng maliliit at malambot na insekto", "Pagkukulot o pagka-deform ng murang dahon", "Malagkit na honeydew", "Posibleng sooty mold sa honeydew"],
     "favorableConditions": [],
-    "transmission": ["Winged aphids move between plants", "Some aphid species transmit plant viruses"],
+    "transmission": ["May pakpak na aphids na lumilipat sa pagitan ng halaman", "May aphid species na nagdadala ng plant virus"],
     "severity": "medium",
     "differentialDiagnosis": ["whiteflies", "thrips", "spider-mites", "leaf-curl"],
     "management": [
-      "Inspect the undersides of leaves and growing tips",
-      "Monitor infestation levels",
-      "Preserve lady beetles, lacewings, and other natural enemies",
-      "Use physical removal or directed water where appropriate for the crop"
+      "Suriin ang ilalim ng dahon at tumutubong dulo",
+      "Bantayan ang antas ng infestation",
+      "Pangalagaan ang lady beetles, lacewings, at iba pang natural enemies",
+      "Gumamit ng physical removal o direktang tubig kung angkop sa halaman"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/remove-infested-plant-parts", "/preserve-beneficial-insects", "/seek-agricultural-advice"],
     "safety": {
       "ppe": [],
       "environmentalPrecautions": [
-        "Avoid unnecessary broad-spectrum insecticides that harm beneficial insects",
-        "Confirm the target and crop label before using any pesticide"
+        "Iwasan ang hindi kailangang broad-spectrum insecticide na nakakasira sa beneficial insects",
+        "Kumpirmahin ang target at crop label bago gumamit ng anumang pesticide"
       ],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Look for clusters of insects and sticky honeydew",
-      "Check for distorted new growth",
-      "Aphid presence does not by itself confirm a viral infection"
+      "Hanapin ang kumpol ng insekto at malagkit na honeydew",
+      "Tingnan ang deformed na bagong tubo",
+      "Ang pagkakaroon ng aphids ay hindi agad patunay ng viral infection"
     ],
     "media": [],
     "metadata": {
@@ -1099,41 +1098,41 @@
     "id": "flea-beetles",
     "slug": "flea-beetles",
     "name": "Flea Beetles",
-    "localName": "Maliliit na salagubang na nag-iiwan ng maraming maliliit na bilog na butas sa dahon.",
+    "localName": "Maliliit na salagubang na nag-iiwan ng maraming maliliit at bilog na butas sa dahon.",
     "type": "pest",
     "category": "insect",
     "scientificName": "",
     "description": {
-      "tl": "Ang flea beetles ay maliliit na salagubang na kumakain sa dahon at karaniwang nag-iiwan ng maraming maliliit na butas na parang binutas ng karayom.",
+      "tl": "Ang flea beetles ay maliliit na salagubang na kumakain sa dahon. Karaniwan silang nag-iiwan ng maraming maliliit na butas na parang binutas ng karayom.",
       "en": "Flea beetles are small beetles that feed on foliage, often leaving numerous small round holes."
     },
     "affectedCrops": [],
-    "affectedParts": ["leaves"],
-    "symptoms": ["Numerous small round holes in leaves", "Shot-hole appearance", "Severe damage to young seedlings in some crops"],
+    "affectedParts": ["dahon"],
+    "symptoms": ["Maraming maliliit at bilog na butas sa dahon", "Itsurang butas-butas", "Malubhang pinsala sa murang punla sa ilang halaman"],
     "favorableConditions": [],
-    "transmission": ["Adult beetles move between plants; life cycle and host range vary by species."],
+    "transmission": ["Lumilipat ang adult na salagubang sa pagitan ng halaman; iba-iba ang life cycle at host range depende sa species."],
     "severity": "medium",
     "differentialDiagnosis": ["caterpillar-feeding", "slug-damage", "other-chewing-insects"],
     "management": [
-      "Inspect leaves for beetles and fresh feeding damage",
-      "Monitor seedlings closely",
-      "Use suitable physical barriers where practical",
-      "Confirm the pest before selecting a control method"
+      "Suriin ang dahon para sa salagubang at sariwang pinsala",
+      "Bantayan nang mabuti ang punla",
+      "Gumamit ng angkop na physical barrier kung kaya",
+      "Kumpirmahin ang peste bago pumili ng paraan ng pagkontrol"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/protect-seedlings", "/seek-agricultural-advice"],
     "safety": {
       "ppe": [],
       "environmentalPrecautions": [
-        "Avoid unnecessary pesticide use, especially when damage is minor",
-        "Verify crop registration and label directions before treatment"
+        "Iwasan ang hindi kailangang pesticide, lalo na kung maliit lang ang pinsala",
+        "Tiyakin ang crop registration at label directions bago mag-treatment"
       ],
-      "harvestRestrictions": "Follow the product label and applicable pre-harvest interval if a pesticide is used."
+      "harvestRestrictions": "Sundin ang product label at applicable pre-harvest interval kung may pesticide na gagamitin."
     },
     "diagnosisGuidance": [
-      "Look for many small, relatively round feeding holes",
-      "Inspect for the beetles when damage is fresh",
-      "Do not confuse feeding holes with leaf spot lesions"
+      "Hanapin ang maraming maliliit at medyo bilog na butas mula sa pagkain",
+      "Suriin ang salagubang kapag sariwa pa ang pinsala",
+      "Huwag ipagkamali ang butas mula sa pagkain sa batik ng leaf spot"
     ],
     "media": [],
     "metadata": {
@@ -1152,37 +1151,37 @@
     "category": "bacterial",
     "scientificName": "Ralstonia solanacearum species complex",
     "description": {
-      "tl": "Maaaring magdulot ng mabilis na pagkalanta kahit may sapat na tubig sa lupa. Hindi sapat ang pagkalanta lamang upang kumpirmahin ang bacterial wilt.",
+      "tl": "Maaaring magdulot ng mabilis na pagkalanta kahit may sapat na tubig sa lupa. Hindi sapat ang pagkalanta lang para kumpirmahin ang bacterial wilt.",
       "en": "Bacterial wilt can cause plants to wilt despite adequate soil moisture, but wilting alone is not sufficient to confirm the bacterial cause."
     },
     "affectedCrops": [],
-    "affectedParts": ["roots", "stems"],
-    "symptoms": ["Wilting despite adequate soil moisture", "Progressive plant decline", "Possible vascular discoloration", "Possible bacterial streaming in a suitable diagnostic test"],
-    "favorableConditions": ["Conditions favorable to the causal bacterial strain and host", "Warm soil may favor some bacterial wilt cases"],
-    "transmission": ["Contaminated soil or water", "Infected planting material", "Contaminated tools and movement of soil"],
+    "affectedParts": ["ugat", "tangkay"],
+    "symptoms": ["Pagkalanta kahit may sapat na tubig sa lupa", "Unti-unting paghina ng halaman", "Posibleng pagbabago ng kulay sa loob ng tangkay", "Posibleng bacterial streaming sa angkop na diagnostic test"],
+    "favorableConditions": ["Kondisyon na pabor sa causal bacterial strain at halaman", "Mainit na lupa ay maaaring magpalala ng ilang bacterial wilt case"],
+    "transmission": ["Kontaminadong lupa o tubig", "Apektadong planting material", "Kontaminadong kagamitan at paggalaw ng lupa"],
     "severity": "high",
     "differentialDiagnosis": ["water-stress", "vascular-fungal-wilt", "root-disease", "root-damage"],
     "management": [
-      "Inspect soil moisture and root condition",
-      "Avoid moving potentially contaminated soil between areas",
-      "Clean tools after handling suspicious plants",
-      "Seek local diagnostic confirmation and crop-specific management advice"
+      "Suriin ang halumigmig ng lupa at kalagayan ng ugat",
+      "Iwasang ilipat ang posibleng kontaminadong lupa sa ibang lugar",
+      "Linisin ang kagamitan pagkatapos hawakan ang kahina-hinalang halaman",
+      "Humingi ng lokal na diagnostic confirmation at crop-specific management advice"
     ],
     "treatments": [],
     "actionRefs": ["/scouting", "/sanitize-tools", "/isolate-suspicious-plant", "/seek-agricultural-advice"],
     "safety": {
       "ppe": [],
       "environmentalPrecautions": [
-        "Do not move potentially contaminated soil or water to clean growing areas",
-        "Do not assume routine fungicide treatment will control bacterial wilt"
+        "Huwag ilipat ang posibleng kontaminadong lupa o tubig sa malinis na taniman",
+        "Huwag ipagpalagay na kayang kontrolin ng routine fungicide ang bacterial wilt"
       ],
-      "harvestRestrictions": "No specific harvest interval is assigned here. Follow applicable product labels if treatments are used."
+      "harvestRestrictions": "Walang partikular na harvest interval na ibinibigay dito. Sundin ang applicable product label kung may treatment na gagamitin."
     },
     "diagnosisGuidance": [
-      "Check whether the plant has adequate soil moisture",
-      "Inspect roots and stems when practical",
-      "Distinguish from water stress and other vascular diseases",
-      "Confirm the bacterial cause before making a definitive diagnosis"
+      "Tingnan kung may sapat na tubig sa lupa ang halaman",
+      "Suriin ang ugat at tangkay kung kaya",
+      "Ihiwalay sa water stress at iba pang vascular disease",
+      "Kumpirmahin ang bacterial cause bago magbigay ng tiyak na diagnosis"
     ],
     "media": [],
     "metadata": {

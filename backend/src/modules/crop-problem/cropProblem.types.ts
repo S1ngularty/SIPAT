@@ -27,11 +27,18 @@ export type CropProblemReviewStatus =
 
 /** Plant organs a problem can affect. */
 export const CROP_PROBLEM_AFFECTED_PARTS = [
+  // English (canonical)
   "leaves",
   "stems",
+  "fruits",
   "roots",
   "flowers",
-  "fruits",
+  // Tagalog
+  "dahon",
+  "tangkay",
+  "bunga",
+  "ugat",
+  "bulaklak",
 ] as const;
 export type CropProblemAffectedPart =
   (typeof CROP_PROBLEM_AFFECTED_PARTS)[number];
@@ -167,9 +174,7 @@ export type CreateCropProblemInput = Omit<
 /** Every updatable field is optional. `| undefined` keeps it assignable under
  * `exactOptionalPropertyTypes` when a parser emits explicit `undefined`. */
 export type UpdateCropProblemInput = {
-  [K in keyof CreateCropProblemInput]?:
-    | CreateCropProblemInput[K]
-    | undefined;
+  [K in keyof CreateCropProblemInput]?: CreateCropProblemInput[K] | undefined;
 };
 
 // ==========================================
