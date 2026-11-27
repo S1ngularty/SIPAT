@@ -23,6 +23,8 @@ export type UseWeatherOptions = {
   /** Shown when coordinates never arrive. */
   unavailableMessage?: string;
   refreshIntervalMs?: number;
+  /** Set false to suspend fetching (e.g. while the device is offline). */
+  enabled?: boolean;
 };
 
 export type UseWeatherResult = {
@@ -54,6 +56,7 @@ export const useWeather = ({
   pending = false,
   unavailableMessage = DEFAULT_UNAVAILABLE_MESSAGE,
   refreshIntervalMs = REFRESH_INTERVAL_MS,
+  enabled = true,
 }: UseWeatherOptions): UseWeatherResult => {
   const [raw, setRaw] = useState<RawWeatherState>({ status: "loading" });
 
@@ -75,6 +78,7 @@ export const useWeather = ({
 
   const load = useCallback(
     async (showLoading: boolean) => {
+      if (!enabled) return;
       if (latitude === undefined || longitude === undefined) return;
 
       const id = ++requestId.current;
@@ -99,11 +103,12 @@ export const useWeather = ({
         );
       }
     },
-    [latitude, longitude],
+    [enabled, latitude, longitude],
   );
 
   /** Keep the block honest while there is nothing to fetch. */
   useEffect(() => {
+    if (!enabled) return;
     if (latitude !== undefined && longitude !== undefined) return;
 
     setRaw(
@@ -111,10 +116,11 @@ export const useWeather = ({
         ? { status: "loading" }
         : { status: "unavailable", message: unavailableMessage },
     );
-  }, [latitude, longitude, pending, unavailableMessage]);
+  }, [enabled, latitude, longitude, pending, unavailableMessage]);
 
   /** Fetch on arrival, then on every refresh interval. */
   useEffect(() => {
+    if (!enabled) return undefined;
     if (latitude === undefined || longitude === undefined) return undefined;
 
     void load(true);
@@ -124,7 +130,7 @@ export const useWeather = ({
     }, refreshIntervalMs);
 
     return () => clearInterval(timer);
-  }, [latitude, longitude, load, refreshIntervalMs]);
+  }, [enabled, latitude, longitude, load, refreshIntervalMs]);
 
   /** Map at render time so a new place name applies without another fetch. */
   const state = useMemo<WeatherState>(() => {

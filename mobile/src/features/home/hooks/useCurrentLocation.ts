@@ -94,6 +94,11 @@ const locatePosition = async (): Promise<Location.LocationObject | null> => {
   }
 };
 
+export type UseCurrentLocationOptions = {
+  /** Set false to skip the permission prompt and GPS fix (e.g. offline). */
+  enabled?: boolean;
+};
+
 /**
  * Foreground location + reverse geocoding for the home dashboard.
  *
@@ -102,7 +107,9 @@ const locatePosition = async (): Promise<Location.LocationObject | null> => {
  * so SIPAT never nags. When the OS no longer allows a prompt, `refresh` opens
  * the Settings app instead.
  */
-export const useCurrentLocation = (): CurrentLocation => {
+export const useCurrentLocation = ({
+  enabled = true,
+}: UseCurrentLocationOptions = {}): CurrentLocation => {
   const [status, setStatus] = useState<LocationStatus>("loading");
   const [place, setPlace] = useState<LocatedPlace | null>(null);
   const [canAskAgain, setCanAskAgain] = useState(true);
@@ -194,12 +201,14 @@ export const useCurrentLocation = (): CurrentLocation => {
 
   /** Ask on first mount; already-granted users just see the place name. */
   useEffect(() => {
+    if (!enabled) return;
     void load({ request: true, openSettings: false });
-  }, [load]);
+  }, [enabled, load]);
 
   const refresh = useCallback(() => {
+    if (!enabled) return;
     void load({ request: true, openSettings: true });
-  }, [load]);
+  }, [enabled, load]);
 
   return { status, place, canAskAgain, message, refresh };
 };

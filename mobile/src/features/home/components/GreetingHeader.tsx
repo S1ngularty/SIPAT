@@ -15,8 +15,10 @@ import { colors, spacing } from "../../../theme";
 type Props = {
   name: string;
   avatarUrl?: string | null;
-  onPressAvatar: () => void;
-  onPressNotifications: () => void;
+  /** Opens the profile screen. Omitted in limited/offline mode. */
+  onPressAvatar?: () => void;
+  /** Opens recent activity. Omitted in limited/offline mode. */
+  onPressNotifications?: () => void;
   /** Opens the Flora chat screen. Hidden when omitted. */
   onPressChat?: () => void;
   /** "light" when placed over photography/dark surfaces, "dark" on light surfaces. */
@@ -47,58 +49,74 @@ export const GreetingHeader: React.FC<Props> = ({
 }) => {
   const onDark = tone === "light";
 
+  const identity = (
+    <>
+      <View style={[styles.avatar, onDark && styles.avatarOnDark]}>
+        <ProfileAvatar uri={avatarUrl} name={name} size={44} />
+      </View>
+
+      <View style={styles.greetingText}>
+        <Text
+          style={[styles.greeting, onDark && styles.greetingOnDark]}
+          numberOfLines={1}
+        >
+          {getGreeting()}
+        </Text>
+        <Text
+          style={[styles.name, onDark && styles.nameOnDark]}
+          numberOfLines={1}
+        >
+          {name}
+        </Text>
+      </View>
+    </>
+  );
+
+  const hasActions = Boolean(onPressChat || onPressNotifications);
+
   return (
     <View style={[styles.container, style]}>
-      <Pressable
-        onPress={onPressAvatar}
-        accessibilityRole="button"
-        accessibilityLabel="Open profile"
-        hitSlop={6}
-        style={({ pressed }) => [styles.identity, pressed && styles.pressed]}
-      >
-        <View style={[styles.avatar, onDark && styles.avatarOnDark]}>
-          <ProfileAvatar uri={avatarUrl} name={name} size={44} />
-        </View>
-
-        <View style={styles.greetingText}>
-          <Text
-            style={[styles.greeting, onDark && styles.greetingOnDark]}
-            numberOfLines={1}
-          >
-            {getGreeting()}
-          </Text>
-          <Text
-            style={[styles.name, onDark && styles.nameOnDark]}
-            numberOfLines={1}
-          >
-            {name}
-          </Text>
-        </View>
-      </Pressable>
-
-      <View style={styles.actions}>
-        {onPressChat ? (
-          <CircularIconButton
-            onPress={onPressChat}
-            accessibilityLabel="Open the Flora chat"
-            variant={onDark ? "outline" : "solid"}
-          >
-            <MessageCircle
-              size={20}
-              color={colors.textOnDark}
-              strokeWidth={1.8}
-            />
-          </CircularIconButton>
-        ) : null}
-
-        <CircularIconButton
-          onPress={onPressNotifications}
-          accessibilityLabel="View recent activity"
-          variant={onDark ? "outline" : "solid"}
+      {onPressAvatar ? (
+        <Pressable
+          onPress={onPressAvatar}
+          accessibilityRole="button"
+          accessibilityLabel="Open profile"
+          hitSlop={6}
+          style={({ pressed }) => [styles.identity, pressed && styles.pressed]}
         >
-          <Bell size={20} color={colors.textOnDark} strokeWidth={1.8} />
-        </CircularIconButton>
-      </View>
+          {identity}
+        </Pressable>
+      ) : (
+        <View style={styles.identity}>{identity}</View>
+      )}
+
+      {hasActions ? (
+        <View style={styles.actions}>
+          {onPressChat ? (
+            <CircularIconButton
+              onPress={onPressChat}
+              accessibilityLabel="Open the Flora chat"
+              variant={onDark ? "outline" : "solid"}
+            >
+              <MessageCircle
+                size={20}
+                color={colors.textOnDark}
+                strokeWidth={1.8}
+              />
+            </CircularIconButton>
+          ) : null}
+
+          {onPressNotifications ? (
+            <CircularIconButton
+              onPress={onPressNotifications}
+              accessibilityLabel="View recent activity"
+              variant={onDark ? "outline" : "solid"}
+            >
+              <Bell size={20} color={colors.textOnDark} strokeWidth={1.8} />
+            </CircularIconButton>
+          ) : null}
+        </View>
+      ) : null}
     </View>
   );
 };

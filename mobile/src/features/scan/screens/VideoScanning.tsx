@@ -304,7 +304,9 @@ const VideoScanningScreen = () => {
         <Text style={styles.helpText}>
           {isRecording
             ? "Tap to stop scanning"
-            : `Tap to start scanning (Max ${MAX_DURATION}s)`}
+            : isProcessing
+              ? "Saving your scan..."
+              : `Tap to start scanning (Max ${MAX_DURATION}s)`}
         </Text>
       </Animated.View>
     </View>
