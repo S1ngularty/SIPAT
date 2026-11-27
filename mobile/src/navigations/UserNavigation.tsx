@@ -4,6 +4,8 @@ import VideoScanningScreen from "../features/scan/screens/VideoScanning";
 import VideoPreviewScreen from "../features/scan/screens/VideoPreview";
 import { DiagnosisDetailScreen } from "../features/diagnosis/screens/DiagnosisDetailScreen";
 import { EvidencePreviewScreen } from "../features/diagnosis/screens/EvidencePreviewScreen";
+import { CropProblemsScreen } from "../features/crop-problems/screens/CropProblemsScreen";
+import { CropProblemDetailScreen } from "../features/crop-problems/screens/CropProblemDetailScreen";
 import { ChatMessagesScreen } from "../features/chat/screens/ChatMessagesScreen";
 import { ChatProvider } from "../features/chat/ChatProvider";
 import EditProfileScreen from "../features/profile/screen/EditProfileScreen";
@@ -48,6 +50,10 @@ export type UserStackParamList = {
       evidenceUrl: string;
     }[];
   };
+  /** Offline crop-care browser, optionally pre-filtered from a Home shortcut. */
+  CropProblems: { query?: string } | undefined;
+  /** One guide record from the bundled crop-problem data. */
+  CropProblemDetail: { id: string };
 };
 
 const UserStack = createNativeStackNavigator<UserStackParamList>();
@@ -104,6 +110,20 @@ export default function UserNavigation() {
           name="EvidencePreview"
           options={{
             animation: "slide_from_right", // Optional: nice animation for scanner
+          }}
+        />
+        <UserStack.Screen
+          component={CropProblemsScreen}
+          name="CropProblems"
+          options={{
+            animation: "slide_from_right",
+          }}
+        />
+        <UserStack.Screen
+          component={CropProblemDetailScreen}
+          name="CropProblemDetail"
+          options={{
+            animation: "slide_from_right",
           }}
         />
       </UserStack.Navigator>

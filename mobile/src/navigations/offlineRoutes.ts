@@ -1,10 +1,11 @@
 /**
  * Screens that keep working without a connection.
  *
- * Home provides the offline guide content, while Scan and the recorder/preview
- * remain available so a farmer can capture a clip anyway: recordings are saved
- * to the device's documents directory and uploaded automatically once the
- * backend is reachable again.
+ * Home provides the offline guide content, while the crop-care browser reads
+ * its records from the bundled JSON files and needs no network. Scan and the
+ * recorder/preview remain available so a farmer can capture a clip anyway:
+ * recordings are saved to the device's documents directory and uploaded
+ * automatically once the backend is reachable again.
  *
  * Everything else in the app (diagnosis history/detail, Flora chat, profile,
  * account settings) either reads user-owned data or calls the API, so it is
@@ -18,4 +19,6 @@ export const OFFLINE_ROUTE_NAMES: ReadonlySet<string> = new Set([
   "Scan",
   "VideoScanning",
   "VideoPreview",
+  "CropProblems",
+  "CropProblemDetail",
 ]);

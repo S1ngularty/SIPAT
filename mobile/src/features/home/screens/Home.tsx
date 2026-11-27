@@ -25,7 +25,7 @@ import { HomeHeroSheet } from "../components/HomeHeroSheet";
 import { ChatPromptBar } from "../components/ChatPromptBar";
 import { DiagnosisCard } from "../components/DiagnosisCard";
 import { AgriTipCard } from "../components/AgriTipCard";
-import { BrowseSymptoms, ExploreCropCareCard } from "../components/KnowledgeShortcuts";
+import { BrowseCropProblems } from "../components/KnowledgeShortcuts";
 import { useCurrentLocation } from "../hooks/useCurrentLocation";
 import { useWeather } from "../hooks/useWeather";
 import { useVideoList } from "../../diagnosis/hooks/useVideoList";
@@ -35,6 +35,10 @@ import type { VideoListItem } from "../../diagnosis/diagnosisTypes";
 import type { TabParamList } from "../../../navigations/HomeTabNavigation";
 import type { UserStackParamList } from "../../../navigations/UserNavigation";
 import { useNetwork } from "../../../network/NetworkProvider";
+import { useLanguage } from "../../../modules/language/LanguageProvider";
+import { getCropProblemsCopy } from "../../crop-problems/copy";
+import { getCropProblems } from "../../crop-problems/data";
+import type { CropProblem } from "../../crop-problems/types";
 
 /** Home only previews the newest diagnoses; the rest live on the Diagnoses tab. */
 const MAX_HOME_DIAGNOSES = 3;
@@ -101,6 +105,8 @@ const HomeScreen: React.FC = () => {
   const tabBarHeight = useBottomTabBarHeight();
   const { user } = useUser();
   const { isOffline } = useNetwork();
+  const { language } = useLanguage();
+  const cropCopy = getCropProblemsCopy(language);
 
   // Suspended while offline: the list is owned data and needs a session.
   const { videos, isLoading, reload } = useVideoList({ enabled: !isOffline });
@@ -191,22 +197,21 @@ const HomeScreen: React.FC = () => {
   }, [isOffline, location.refresh, weather.refresh]);
 
   /**
-   * Temporary: the Crop Care guide and symptom browser have no screens yet,
-   * so the shortcuts acknowledge the tap instead of navigating nowhere.
+   * Opens the offline crop-care browser. The guide reads from the JSON bundle,
+   * so this works in limited mode too.
    */
-  const openCropCare = useCallback(() => {
-    Alert.alert(
-      "Explore Crop Care",
-      "Diseases and pests with symptoms, prevention and treatments — coming soon.",
-    );
-  }, []);
+  const openProblem = useCallback(
+    (problem: CropProblem) => {
+      navigation
+        .getParent<UserStackNavigation>()
+        ?.navigate("CropProblemDetail", { id: problem.id });
+    },
+    [navigation],
+  );
 
-  const openSymptom = useCallback((symptom: string) => {
-    Alert.alert(
-      "Browse Symptoms",
-      `Possible causes of "${symptom}" — coming soon.`,
-    );
-  }, []);
+  const openAllProblems = useCallback(() => {
+    navigation.getParent<UserStackNavigation>()?.navigate("CropProblems");
+  }, [navigation]);
 
   /**
    * Sends the prompt, then opens the conversation screen. The message is added
@@ -226,13 +231,6 @@ const HomeScreen: React.FC = () => {
     Alert.alert("Flora", "Voice questions are coming soon.");
   }, [isOffline]);
 
-  const openAllSymptoms = useCallback(() => {
-    Alert.alert(
-      "Browse Symptoms",
-      "The full symptom list is coming soon.",
-    );
-  }, []);
-
   const displayName =
     user?.firstName || user?.fullName || user?.username || "Farmer";
 
@@ -250,6 +248,12 @@ const HomeScreen: React.FC = () => {
   );
 
   const hasMoreDiagnoses = videos.length > MAX_HOME_DIAGNOSES;
+
+  /** First three guide records; tapping one opens its detail directly. */
+  const homeProblems = useMemo(
+    () => getCropProblems(language).slice(0, 3),
+    [language],
+  );
 
   /** Picked once per app session (module-level), so it's stable while open. */
   const tip = getSessionTip();
@@ -327,13 +331,13 @@ const HomeScreen: React.FC = () => {
           </>
         )}
 
-        <ExploreCropCareCard onPress={openCropCare} />
+        <SectionHeader title={cropCopy.browseTitle} />
 
-        <SectionHeader title="Browse Symptoms" />
-
-        <BrowseSymptoms
-          onPressSymptom={openSymptom}
-          onPressSeeMore={openAllSymptoms}
+        <BrowseCropProblems
+          problems={homeProblems}
+          seeMoreLabel={cropCopy.seeMore}
+          onPressProblem={openProblem}
+          onPressSeeMore={openAllProblems}
         />
       </ScrollView>
     </SafeAreaView>

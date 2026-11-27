@@ -9,6 +9,7 @@ import { toastConfig } from "./helper/toast";
 import Toast from "react-native-toast-message";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NetworkProvider, useNetwork } from "./network/NetworkProvider";
+import { LanguageProvider } from "./modules/language/LanguageProvider";
 import { initDatabase } from "./database/schema";
 import { VideoSyncProvider } from "./features/scan/VideoSyncProvider";
 
@@ -60,9 +61,11 @@ function AppContent() {
 export default function App() {
   return (
     <NetworkProvider>
-      <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-        <AppContent />
-      </ClerkProvider>
+      <LanguageProvider>
+        <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+          <AppContent />
+        </ClerkProvider>
+      </LanguageProvider>
     </NetworkProvider>
   );
 }
