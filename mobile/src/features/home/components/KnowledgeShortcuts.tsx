@@ -1,16 +1,17 @@
 import React from "react";
+import { LinearGradient } from "expo-linear-gradient";
 import {
+  Image,
   Pressable,
   StyleSheet,
   Text,
   View,
   useWindowDimensions,
 } from "react-native";
+
 import { colors, radii, spacing } from "../../../theme";
 import { CropProblemImage } from "../../crop-problems/components/CropProblemImage";
 import type { CropProblem } from "../../crop-problems/types";
-
-const TILE_TEXT_HEIGHT = 38;
 
 type BrowseCropProblemsProps = {
   problems: readonly CropProblem[];
@@ -19,10 +20,6 @@ type BrowseCropProblemsProps = {
   onPressSeeMore: () => void;
 };
 
-/**
- * Home preview of the offline crop-care guide: the first few records plus a
- * tile into the complete list.
- */
 export const BrowseCropProblems: React.FC<BrowseCropProblemsProps> = ({
   problems,
   seeMoreLabel,
@@ -30,11 +27,13 @@ export const BrowseCropProblems: React.FC<BrowseCropProblemsProps> = ({
   onPressSeeMore,
 }) => {
   const { width } = useWindowDimensions();
-  const tileWidth = Math.round(
-    (width - spacing.xl * 2 - spacing.md) / 2,
-  );
-  const tileImageHeight = Math.round(tileWidth * 0.75);
-  const tileHeight = tileImageHeight + spacing.sm + TILE_TEXT_HEIGHT;
+
+  const horizontalPadding = spacing.lg;
+  const tileGap = spacing.md;
+
+  const tileWidth = Math.floor((width - horizontalPadding * 2 - tileGap) / 2);
+
+  const tileHeight = tileWidth;
 
   return (
     <View style={styles.grid}>
@@ -46,35 +45,78 @@ export const BrowseCropProblems: React.FC<BrowseCropProblemsProps> = ({
           accessibilityLabel={problem.name}
           style={({ pressed }) => [
             styles.tile,
-            { width: tileWidth, height: tileHeight },
+            {
+              width: tileWidth,
+              height: tileHeight,
+            },
             pressed && styles.pressed,
           ]}
         >
           <CropProblemImage
             path={problem.images[0] ?? ""}
             label={problem.name}
-            style={[
-              styles.tileImage,
-              { width: tileWidth, height: tileImageHeight },
-            ]}
+            style={styles.tileImage}
           />
-          <Text style={styles.tileName} numberOfLines={2}>
-            {problem.name}
-          </Text>
+
+          {/* Overall image dimming */}
+          <View pointerEvents="none" style={styles.imageDim} />
+
+          {/* Bottom gradient */}
+          <LinearGradient
+            pointerEvents="none"
+            colors={[
+              "transparent",
+              "rgba(0, 0, 0, 0.15)",
+              "rgba(0, 0, 0, 0.75)",
+            ]}
+            locations={[0, 0.45, 1]}
+            style={styles.bottomGradient}
+          />
+
+          {/* Crop problem label */}
+          <View pointerEvents="none" style={styles.labelContainer}>
+            <Text style={styles.tileName} numberOfLines={2}>
+              {problem.name}
+            </Text>
+          </View>
         </Pressable>
       ))}
 
+      {/* See More tile */}
       <Pressable
         onPress={onPressSeeMore}
         accessibilityRole="button"
         accessibilityLabel={seeMoreLabel}
         style={({ pressed }) => [
           styles.seeMoreTile,
-          { width: tileWidth, height: tileHeight },
+          {
+            width: tileWidth,
+            height: tileHeight,
+          },
           pressed && styles.pressed,
         ]}
       >
-        <Text style={styles.seeMoreText}>{seeMoreLabel}</Text>
+        <Image
+          source={require("../../../../assets/browse-images/eggplant-leaf-borer.webp")}
+          style={styles.seeMoreImage}
+          resizeMode="cover"
+        />
+
+        {/* Overall image dimming */}
+        <View pointerEvents="none" style={styles.imageDim} />
+
+        {/* Bottom gradient */}
+        <LinearGradient
+          pointerEvents="none"
+          colors={["transparent", "rgba(0, 0, 0, 0.15)", "rgba(0, 0, 0, 0.75)"]}
+          locations={[0, 0.45, 1]}
+          style={styles.bottomGradient}
+        />
+
+        {/* Centered ellipsis */}
+        <View pointerEvents="none" style={styles.seeMoreContent}>
+          <Text style={styles.seeMoreText}>...</Text>
+        </View>
       </Pressable>
     </View>
   );
@@ -82,37 +124,88 @@ export const BrowseCropProblems: React.FC<BrowseCropProblemsProps> = ({
 
 const styles = StyleSheet.create({
   grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.md,
-    paddingHorizontal: spacing.xl,
-  },
+  flexDirection: "row",
+  flexWrap: "wrap",
+  gap: spacing.md,
+  paddingHorizontal: spacing.lg,
+},
+
+  // Crop problem tile
   tile: {
-    backgroundColor: colors.white,
-  },
-  tileImage: {
+    position: "relative",
+    overflow: "hidden",
     borderRadius: radii.md,
     backgroundColor: colors.surfaceMuted,
   },
+
+  tileImage: {
+    ...StyleSheet.absoluteFill,
+    width: undefined,
+    height: undefined,
+    borderRadius: radii.md,
+  },
+
+  // Shared image overlays
+  imageDim: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0, 0, 0, 0.32)",
+  },
+
+  bottomGradient: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "65%",
+  },
+
+  // Crop problem label
+  labelContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+
   tileName: {
-    marginTop: spacing.sm,
-    minHeight: TILE_TEXT_HEIGHT,
     fontSize: 14,
     lineHeight: 18,
     fontWeight: "600",
-    color: colors.text,
+    color: colors.white,
   },
+
+  // See More tile
   seeMoreTile: {
-    alignItems: "center",
-    justifyContent: "center",
+    position: "relative",
+    overflow: "hidden",
     borderRadius: radii.md,
     backgroundColor: colors.surfaceMuted,
   },
-  seeMoreText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.textMuted,
+
+  seeMoreImage: {
+    ...StyleSheet.absoluteFill,
+    width: undefined,
+    height: undefined,
   },
+
+  seeMoreContent: {
+    ...StyleSheet.absoluteFill,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  seeMoreText: {
+    fontSize: 36,
+    lineHeight: 42,
+    fontWeight: "600",
+    color: colors.white,
+    letterSpacing: 3,
+    marginTop: -8,
+  },
+
+  // Press feedback
   pressed: {
     opacity: 0.75,
   },
