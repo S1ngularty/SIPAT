@@ -20,7 +20,6 @@ interface Props {
  */
 export const CropProblemImage: React.FC<Props> = ({ path, label, style }) => {
   const source = getCropProblemImageSource(path) ?? CROP_PROBLEM_PLACEHOLDER_IMAGE;
-
   return (
     <Image
       source={source}
