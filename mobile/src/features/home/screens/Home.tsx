@@ -250,10 +250,7 @@ const HomeScreen: React.FC = () => {
   const hasMoreDiagnoses = videos.length > MAX_HOME_DIAGNOSES;
 
   /** First three guide records; tapping one opens its detail directly. */
-  const homeProblems = useMemo(
-    () => getCropProblems(language).slice(0, 3),
-    [language],
-  );
+  const homeProblems = useMemo(() => getCropProblems().slice(0, 3), []);
 
   /** Picked once per app session (module-level), so it's stable while open. */
   const tip = getSessionTip();

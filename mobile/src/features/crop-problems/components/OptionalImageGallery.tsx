@@ -2,6 +2,7 @@ import React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { colors, radii, spacing } from "../../../theme";
 import { getCropProblemsCopy } from "../copy";
+import { getCropProblemImageSource } from "../imageAssets";
 import type { Language } from "../types";
 import { CropProblemImage } from "./CropProblemImage";
 
@@ -16,16 +17,22 @@ interface Props {
  * for that field, so no empty media section is ever shown.
  */
 export const OptionalImageGallery: React.FC<Props> = ({ images, language }) => {
-  if (images.length === 0) return null;
+  // Hide optional media whose file has not been bundled yet, instead of
+  // showing a placeholder inside an otherwise text-only section.
+  const availableImages = images.filter(
+    (path) => getCropProblemImageSource(path) !== null,
+  );
+
+  if (availableImages.length === 0) return null;
 
   const copy = getCropProblemsCopy(language);
-  const isSingle = images.length === 1;
+  const isSingle = availableImages.length === 1;
 
   return (
     <View style={styles.container}>
       {isSingle ? (
         <CropProblemImage
-          path={images[0]}
+          path={availableImages[0]}
           label={copy.photoLabel(1)}
           style={styles.single}
         />
@@ -36,7 +43,7 @@ export const OptionalImageGallery: React.FC<Props> = ({ images, language }) => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.row}
         >
-          {images.map((path, index) => (
+          {availableImages.map((path, index) => (
             <CropProblemImage
               key={`${path || "empty"}-${index}`}
               path={path}

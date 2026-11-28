@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { colors, radii, spacing } from "../../../theme";
 import { getCropProblemsCopy } from "../copy";
+import { getCropProblemImageSource } from "../imageAssets";
 import type { Language } from "../types";
 import { CropProblemImage } from "./CropProblemImage";
 
@@ -17,8 +18,9 @@ interface Props {
 }
 
 /**
- * Full-width photo carousel for a crop problem. While the JSON paths are not
- * backed by real assets, each slide shows the bundled leaf placeholder.
+ * Full-width photo carousel for a crop problem. Only paths that resolve to a
+ * bundled or remote image become slides; a record with none shows the leaf
+ * placeholder once.
  */
 export const CropProblemCarousel: React.FC<Props> = ({ images, language }) => {
   const copy = getCropProblemsCopy(language);
@@ -29,10 +31,13 @@ export const CropProblemCarousel: React.FC<Props> = ({ images, language }) => {
   const slideWidth = Math.max(1, width - spacing.xl * 2);
   const slideHeight = Math.round(Math.min(slideWidth * 0.75, 360));
 
-  const slides = useMemo(
-    () => (images.length > 0 ? images : [""]),
-    [images],
-  );
+  const slides = useMemo(() => {
+    const available = images.filter(
+      (path) => getCropProblemImageSource(path) !== null,
+    );
+    return available.length > 0 ? available : [""];
+  }, [images]);
+  const hasImages = slides.length > 0 && slides[0] !== "";
 
   const handleMomentumEnd = (offsetX: number) => {
     const next = Math.round(offsetX / slideWidth);
@@ -75,8 +80,8 @@ export const CropProblemCarousel: React.FC<Props> = ({ images, language }) => {
           <CropProblemImage
             path={item}
             label={
-              images.length > 0
-                ? copy.photoOf(index + 1, images.length)
+              hasImages
+                ? copy.photoOf(index + 1, slides.length)
                 : copy.noPhotoYet
             }
             style={[styles.slide, { width: slideWidth, height: slideHeight }]}

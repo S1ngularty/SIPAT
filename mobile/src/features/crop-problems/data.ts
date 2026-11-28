@@ -1,36 +1,50 @@
-import tagalogProblems from "../../data/crop-problems-tagalog.json";
-import englishProblems from "../../data/crop-problems-english.json";
+import problems from "../../data/crop-problem.json";
 import type {
+  Bilingual,
+  BilingualList,
   CropProblem,
-  CropProblemTextEntry,
   Language,
+  TextWithImages,
 } from "./types";
 
 /**
- * Bundled knowledge base. Keeping both files in the JS bundle is what makes
- * the browser work without a connection: no API call, no cache to warm.
+ * Bundled knowledge base. Keeping it in the JS bundle is what makes the
+ * browser work without a connection: no API call, no cache to warm.
+ *
+ * The records are bilingual, so the same dataset serves both languages.
  */
-const DATASETS: Record<Language, readonly CropProblem[]> = {
-  tl: tagalogProblems as unknown as CropProblem[],
-  en: englishProblems as unknown as CropProblem[],
-};
+const CROP_PROBLEMS = problems as unknown as CropProblem[];
 
-export const getCropProblems = (language: Language): readonly CropProblem[] =>
-  DATASETS[language] ?? DATASETS.tl;
+export const getCropProblems = (): readonly CropProblem[] => CROP_PROBLEMS;
 
-export const getCropProblem = (
-  id: string,
-  language: Language,
-): CropProblem | undefined =>
-  getCropProblems(language).find(
+export const getCropProblem = (id: string): CropProblem | undefined =>
+  CROP_PROBLEMS.find(
     (problem) => problem.id === id || problem.slug === id,
   );
 
-/** Picks the copy for the active language from a bilingual entry. */
-export const getEntryText = (
-  entry: CropProblemTextEntry,
+/** Picks the copy for the active language from a bilingual field. */
+export const getLocalizedText = (
+  value: Bilingual,
   language: Language,
-): string => (language === "tl" ? entry.text : (entry.textEn ?? entry.text));
+): string => value[language] ?? value.tl;
+
+/** Picks the copy for the active language from a bilingual list field. */
+export const getLocalizedList = (
+  value: BilingualList,
+  language: Language,
+): string[] => value[language] ?? value.tl;
+
+/** Picks the copy for the active language from a list of bilingual values. */
+export const getLocalizedItems = (
+  items: readonly Bilingual[],
+  language: Language,
+): string[] => items.map((item) => getLocalizedText(item, language));
+
+/** Picks the copy for the active language from an entry's `text` field. */
+export const getEntryText = (
+  entry: TextWithImages,
+  language: Language,
+): string => getLocalizedText(entry.text, language);
 
 const normalizeSearchText = (value: string): string =>
   value
@@ -41,49 +55,46 @@ const normalizeSearchText = (value: string): string =>
     .trim();
 
 /**
- * Search across every string in a record, in both languages. The English file
- * mirrors the Tagalog one by id, so a query typed in either language finds the
- * same record even while the UI shows the other language.
+ * Search across every string in a record, in both languages. A query typed in
+ * either language finds the same record even while the UI shows the other one.
  */
 const buildSearchText = (problem: CropProblem): string =>
   [
+    problem.id,
+    problem.slug,
     problem.name,
-    problem.localName,
+    problem.localName.tl,
+    problem.localName.en,
     problem.scientificName,
     problem.type,
     problem.category,
     problem.severity,
     problem.description.tl,
     problem.description.en,
-    ...problem.affectedCrops,
-    ...problem.affectedParts,
-    ...problem.favorableConditions,
-    ...problem.transmission,
-    ...problem.differentialDiagnosis,
-    ...problem.symptoms.flatMap((entry) => [entry.text, entry.textEn ?? ""]),
-    ...problem.management.flatMap((entry) => [entry.text, entry.textEn ?? ""]),
+    ...problem.affectedCrops.tl,
+    ...problem.affectedCrops.en,
+    ...problem.affectedParts.tl,
+    ...problem.affectedParts.en,
+    ...problem.favorableConditions.flatMap((item) => [item.tl, item.en]),
+    ...problem.transmission.flatMap((item) => [item.tl, item.en]),
+    ...problem.differentialDiagnosis.flatMap((item) => [item.tl, item.en]),
+    ...problem.symptoms.flatMap((entry) => [entry.text.tl, entry.text.en]),
+    ...problem.management.flatMap((entry) => [entry.text.tl, entry.text.en]),
     ...problem.diagnosisGuidance.flatMap((entry) => [
-      entry.text,
-      entry.textEn ?? "",
+      entry.text.tl,
+      entry.text.en,
     ]),
     ...problem.treatments.flatMap((treatment) => [
-      treatment.category,
-      ...treatment.examples,
-      ...treatment.cautions,
-      ...treatment.steps.map((step) => step.text),
+      treatment.category.tl,
+      treatment.category.en,
+      ...treatment.examples.flatMap((item) => [item.tl, item.en]),
+      ...treatment.cautions.flatMap((item) => [item.tl, item.en]),
+      ...treatment.steps.flatMap((step) => [step.text.tl, step.text.en]),
     ]),
     ...problem.metadata.sources,
   ]
     .filter(Boolean)
     .join(" ");
-
-const getCounterpart = (
-  problem: CropProblem,
-  language: Language,
-): CropProblem | undefined => {
-  const otherLanguage: Language = language === "tl" ? "en" : "tl";
-  return DATASETS[otherLanguage].find((candidate) => candidate.id === problem.id);
-};
 
 /**
  * Token-based search: every word in the query must appear somewhere in the
@@ -91,22 +102,16 @@ const getCounterpart = (
  * "dark spots" finds "dark spot" copy.
  */
 export const searchCropProblems = (
-  problems: readonly CropProblem[],
+  problemsToSearch: readonly CropProblem[],
   query: string,
-  language: Language,
 ): readonly CropProblem[] => {
   const normalizedQuery = normalizeSearchText(query);
-  if (!normalizedQuery) return problems;
+  if (!normalizedQuery) return problemsToSearch;
 
   const tokens = normalizedQuery.split(" ").filter(Boolean);
 
-  return problems.filter((problem) => {
-    const counterpart = getCounterpart(problem, language);
-    const haystack = normalizeSearchText(
-      `${buildSearchText(problem)} ${
-        counterpart ? buildSearchText(counterpart) : ""
-      }`,
-    );
+  return problemsToSearch.filter((problem) => {
+    const haystack = normalizeSearchText(buildSearchText(problem));
 
     return tokens.every((token) => {
       if (haystack.includes(token)) return true;

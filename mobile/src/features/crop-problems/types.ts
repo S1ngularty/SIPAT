@@ -1,90 +1,138 @@
 /**
  * Shapes used by the bundled crop-problem knowledge base
- * (`src/data/crop-problems-*.json`).
+ * (`src/data/crop-problem.json`).
  *
- * The Tagalog file is canonical: every human-readable entry carries the
- * Tagalog copy in `text` and the English copy in `textEn`. The English file
- * keeps the same record shape but swaps `text` to English (so `textEn` is
- * absent there).
+ * The merged file is bilingual: human-readable fields carry both `tl` and
+ * `en`, so the app reads one dataset and only switches which value it renders.
  */
 
 export type Language = "tl" | "en";
 
-export type CropProblemType = "disease" | "pest" | "healthy";
-
-export type CropProblemSeverity = "low" | "medium" | "high";
-
-export interface LocalizedText {
+/** A string that exists in both Tagalog and English. */
+export interface Bilingual {
   tl: string;
   en: string;
 }
 
+/** A list of strings that exists in both Tagalog and English. */
+export interface BilingualList {
+  tl: string[];
+  en: string[];
+}
+
+export const CROP_PROBLEM_TYPES = ["disease", "pest", "healthy"] as const;
+export type CropProblemType = (typeof CROP_PROBLEM_TYPES)[number];
+
+export const CROP_PROBLEM_SEVERITIES = ["low", "medium", "high"] as const;
+export type CropProblemSeverity = (typeof CROP_PROBLEM_SEVERITIES)[number];
+
+export const CROP_PROBLEM_REVIEW_STATUSES = [
+  "draft",
+  "reviewed",
+  "published",
+] as const;
+export type CropProblemReviewStatus =
+  (typeof CROP_PROBLEM_REVIEW_STATUSES)[number];
+
+export const CROP_PROBLEM_AFFECTED_PARTS = [
+  "leaves",
+  "stems",
+  "fruits",
+  "roots",
+  "flowers",
+  "dahon",
+  "tangkay",
+  "bunga",
+  "ugat",
+  "bulaklak",
+] as const;
+export type CropProblemAffectedPart =
+  (typeof CROP_PROBLEM_AFFECTED_PARTS)[number];
+
+export const CROP_PROBLEM_CATEGORIES = [
+  "fungal",
+  "oomycete",
+  "bacterial",
+  "viral",
+  "insect",
+  "mite",
+  "undetermined",
+  "no-visible-symptoms",
+] as const;
+export type CropProblemCategory = (typeof CROP_PROBLEM_CATEGORIES)[number];
+
 /** A symptom, management step or diagnosis-guidance line. */
-export interface CropProblemTextEntry {
+export interface TextWithImages {
   id: string;
-  text: string;
-  /** English copy in the Tagalog file; omitted in the English file. */
-  textEn?: string;
+  text: Bilingual;
   images: string[];
 }
 
-export interface CropProblemTreatmentStep {
+/** A single step inside a treatment. */
+export interface TreatmentStep {
   id: string;
   order: number;
-  text: string;
+  text: Bilingual;
   images: string[];
 }
 
-export interface CropProblemTreatment {
+/** A treatment entry. */
+export interface Treatment {
   id: string;
-  category: string;
-  examples: string[];
-  cautions: string[];
+  category: Bilingual;
+  examples: Bilingual[];
+  cautions: Bilingual[];
   images: string[];
-  steps: CropProblemTreatmentStep[];
+  steps: TreatmentStep[];
 }
 
-export interface CropProblemSafety {
-  ppe: string[];
-  environmentalPrecautions: string[];
-  harvestRestrictions: string;
+/** Safety block. */
+export interface Safety {
+  ppe: Bilingual[];
+  environmentalPrecautions: Bilingual[];
+  harvestRestrictions: Bilingual;
 }
 
-export interface CropProblemMedia {
-  url: string;
-  type: string;
-  caption: string;
-}
-
+/** Metadata block (machine data — not translated). */
 export interface CropProblemMetadata {
   version: string;
   sources: string[];
   reviewDate: string | null;
-  reviewStatus: string;
+  reviewStatus: CropProblemReviewStatus;
 }
 
 export interface CropProblem {
   id: string;
   slug: string;
+  /** Canonical English display name; not translated. */
   name: string;
-  localName: string;
+  localName: Bilingual;
   type: CropProblemType;
-  category: string;
+  category: CropProblemCategory;
   scientificName: string;
-  description: LocalizedText;
-  affectedCrops: string[];
-  affectedParts: string[];
+
+  description: Bilingual;
+
+  affectedCrops: BilingualList;
+  affectedParts: BilingualList;
+
   images: string[];
-  symptoms: CropProblemTextEntry[];
-  favorableConditions: string[];
-  transmission: string[];
+
+  symptoms: TextWithImages[];
+  favorableConditions: Bilingual[];
+  transmission: Bilingual[];
   severity: CropProblemSeverity;
-  differentialDiagnosis: string[];
-  management: CropProblemTextEntry[];
-  treatments: CropProblemTreatment[];
+  differentialDiagnosis: Bilingual[];
+  management: TextWithImages[];
+  treatments: Treatment[];
+
   actionRefs: string[];
-  safety: CropProblemSafety;
-  diagnosisGuidance: CropProblemTextEntry[];
-  media: CropProblemMedia[];
+
+  safety: Safety;
+
+  diagnosisGuidance: TextWithImages[];
+
+  media: string[];
+
   metadata: CropProblemMetadata;
 }

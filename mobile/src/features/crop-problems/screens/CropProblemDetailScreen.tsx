@@ -14,11 +14,18 @@ import { colors, spacing } from "../../../theme";
 import { useLanguage } from "../../../modules/language/LanguageProvider";
 import type { UserStackParamList } from "../../../navigations/UserNavigation";
 import { getCropProblemsCopy } from "../copy";
-import { getCropProblem, getCropProblems, getEntryText } from "../data";
+import {
+  getCropProblem,
+  getCropProblems,
+  getEntryText,
+  getLocalizedItems,
+  getLocalizedList,
+  getLocalizedText,
+} from "../data";
 import type {
-  CropProblemTextEntry,
-  CropProblemTreatment,
   Language,
+  TextWithImages,
+  Treatment,
 } from "../types";
 import { CropProblemCarousel } from "../components/CropProblemCarousel";
 import { LanguageToggle } from "../components/LanguageToggle";
@@ -51,7 +58,7 @@ const BulletList: React.FC<{ items: string[] }> = ({ items }) => (
 );
 
 const EntryList: React.FC<{
-  entries: CropProblemTextEntry[];
+  entries: TextWithImages[];
   language: Language;
 }> = ({ entries, language }) => (
   <View style={styles.entryList}>
@@ -70,7 +77,7 @@ const EntryList: React.FC<{
 );
 
 const TreatmentBlock: React.FC<{
-  treatment: CropProblemTreatment;
+  treatment: Treatment;
   language: Language;
 }> = ({ treatment, language }) => {
   const copy = getCropProblemsCopy(language);
@@ -78,21 +85,23 @@ const TreatmentBlock: React.FC<{
 
   return (
     <View style={styles.treatment}>
-      <Text style={styles.treatmentTitle}>{treatment.category}</Text>
+      <Text style={styles.treatmentTitle}>
+        {getLocalizedText(treatment.category, language)}
+      </Text>
 
       <OptionalImageGallery images={treatment.images} language={language} />
 
       {treatment.examples.length > 0 ? (
         <View style={styles.subBlock}>
           <Text style={styles.subTitle}>{copy.examples}</Text>
-          <BulletList items={treatment.examples} />
+          <BulletList items={getLocalizedItems(treatment.examples, language)} />
         </View>
       ) : null}
 
       {treatment.cautions.length > 0 ? (
         <View style={styles.subBlock}>
           <Text style={styles.subTitle}>{copy.cautions}</Text>
-          <BulletList items={treatment.cautions} />
+          <BulletList items={getLocalizedItems(treatment.cautions, language)} />
         </View>
       ) : null}
 
@@ -106,7 +115,9 @@ const TreatmentBlock: React.FC<{
                   {String(index + 1).padStart(2, "0")}
                 </Text>
                 <View style={styles.entryBody}>
-                  <Text style={styles.bodyText}>{step.text}</Text>
+                  <Text style={styles.bodyText}>
+                    {getLocalizedText(step.text, language)}
+                  </Text>
                   <OptionalImageGallery
                     images={step.images}
                     language={language}
@@ -136,26 +147,28 @@ export const CropProblemDetailScreen: React.FC = () => {
   const copy = getCropProblemsCopy(language);
 
   const problem = useMemo(
-    () => getCropProblem(route.params.id, language),
-    [language, route.params.id],
+    () => getCropProblem(route.params.id),
+    [route.params.id],
   );
 
   const related = useMemo<RelatedItem[]>(() => {
     if (!problem) return [];
 
-    const all = getCropProblems(language);
+    const all = getCropProblems();
 
     return problem.differentialDiagnosis.map((value) => {
+      const english = value.en.trim().toLowerCase();
       const match = all.find(
         (candidate) =>
-          candidate.id === value ||
-          candidate.slug === value ||
-          candidate.name.toLowerCase() === value.toLowerCase(),
+          candidate.id === value.en ||
+          candidate.slug === value.en ||
+          candidate.name.trim().toLowerCase() === english ||
+          candidate.localName.en.trim().toLowerCase() === english,
       );
 
       return {
-        key: value,
-        name: match?.name ?? value,
+        key: `${value.en}-${value.tl}`,
+        name: getLocalizedText(value, language),
         targetId: match?.id,
       };
     });
@@ -165,7 +178,8 @@ export const CropProblemDetailScreen: React.FC = () => {
     !!problem &&
     (problem.safety.ppe.length > 0 ||
       problem.safety.environmentalPrecautions.length > 0 ||
-      problem.safety.harvestRestrictions.trim().length > 0);
+      getLocalizedText(problem.safety.harvestRestrictions, language).trim()
+        .length > 0);
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
@@ -201,10 +215,12 @@ export const CropProblemDetailScreen: React.FC = () => {
         >
           <View style={styles.headingBlock}>
             <Text style={styles.name}>{problem.name}</Text>
-            <Text style={styles.localName}>{problem.localName}</Text>
-            {problem.affectedCrops.length > 0 ? (
+            <Text style={styles.localName}>
+              {getLocalizedText(problem.localName, language)}
+            </Text>
+            {getLocalizedList(problem.affectedCrops, language).length > 0 ? (
               <Text style={styles.cropLine}>
-                {problem.affectedCrops.join(" · ")}
+                {getLocalizedList(problem.affectedCrops, language).join(" · ")}
               </Text>
             ) : null}
           </View>
@@ -213,7 +229,7 @@ export const CropProblemDetailScreen: React.FC = () => {
 
           <Section title={copy.about}>
             <Text style={styles.bodyText}>
-              {problem.description[language] ?? problem.description.tl}
+              {getLocalizedText(problem.description, language)}
             </Text>
           </Section>
 
@@ -225,13 +241,17 @@ export const CropProblemDetailScreen: React.FC = () => {
 
           {problem.favorableConditions.length > 0 ? (
             <Section title={copy.favorableConditions}>
-              <BulletList items={problem.favorableConditions} />
+              <BulletList
+                items={getLocalizedItems(problem.favorableConditions, language)}
+              />
             </Section>
           ) : null}
 
           {problem.transmission.length > 0 ? (
             <Section title={copy.transmission}>
-              <BulletList items={problem.transmission} />
+              <BulletList
+                items={getLocalizedItems(problem.transmission, language)}
+              />
             </Section>
           ) : null}
 
@@ -319,7 +339,9 @@ export const CropProblemDetailScreen: React.FC = () => {
               {problem.safety.ppe.length > 0 ? (
                 <View style={styles.subBlock}>
                   <Text style={styles.subTitle}>{copy.ppe}</Text>
-                  <BulletList items={problem.safety.ppe} />
+                  <BulletList
+                    items={getLocalizedItems(problem.safety.ppe, language)}
+                  />
                 </View>
               ) : null}
 
@@ -329,18 +351,27 @@ export const CropProblemDetailScreen: React.FC = () => {
                     {copy.environmentalPrecautions}
                   </Text>
                   <BulletList
-                    items={problem.safety.environmentalPrecautions}
+                    items={getLocalizedItems(
+                      problem.safety.environmentalPrecautions,
+                      language,
+                    )}
                   />
                 </View>
               ) : null}
 
-              {problem.safety.harvestRestrictions.trim().length > 0 ? (
+              {getLocalizedText(
+                problem.safety.harvestRestrictions,
+                language,
+              ).trim().length > 0 ? (
                 <View style={styles.subBlock}>
                   <Text style={styles.subTitle}>
                     {copy.harvestRestrictions}
                   </Text>
                   <Text style={styles.bodyText}>
-                    {problem.safety.harvestRestrictions}
+                    {getLocalizedText(
+                      problem.safety.harvestRestrictions,
+                      language,
+                    )}
                   </Text>
                 </View>
               ) : null}

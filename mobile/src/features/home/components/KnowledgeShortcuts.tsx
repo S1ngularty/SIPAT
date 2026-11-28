@@ -11,6 +11,7 @@ import {
 
 import { colors, radii, spacing } from "../../../theme";
 import { CropProblemImage } from "../../crop-problems/components/CropProblemImage";
+import { getFirstAvailableImage } from "../../crop-problems/imageAssets";
 import type { CropProblem } from "../../crop-problems/types";
 
 type BrowseCropProblemsProps = {
@@ -53,7 +54,7 @@ export const BrowseCropProblems: React.FC<BrowseCropProblemsProps> = ({
           ]}
         >
           <CropProblemImage
-            path={problem.images[0] ?? ""}
+            path={getFirstAvailableImage(problem.images)}
             label={problem.name}
             style={styles.tileImage}
           />

@@ -135,3 +135,7 @@ export const getCropProblemImageSource = (
 
   return REMOTE_IMAGE_PATTERN.test(path) ? { uri: path } : null;
 };
+
+/** First path in the list that actually resolves to a bundled or remote image. */
+export const getFirstAvailableImage = (paths: string[]): string =>
+  paths.find((path) => getCropProblemImageSource(path) !== null) ?? "";

@@ -16,9 +16,10 @@ import { colors, radii, spacing } from "../../../theme";
 import { useLanguage } from "../../../modules/language/LanguageProvider";
 import type { UserStackParamList } from "../../../navigations/UserNavigation";
 import { getCropProblemsCopy } from "../copy";
-import { getCropProblems, searchCropProblems } from "../data";
+import { getCropProblems, getLocalizedText, searchCropProblems } from "../data";
 import type { CropProblem } from "../types";
 import { CropProblemImage } from "../components/CropProblemImage";
+import { getFirstAvailableImage } from "../imageAssets";
 import { LanguageToggle } from "../components/LanguageToggle";
 
 const CARD_IMAGE_SIZE = 108;
@@ -34,6 +35,8 @@ const ProblemCard: React.FC<ProblemCardProps> = ({
   isLast,
   onPress,
 }) => {
+  const { language } = useLanguage();
+
   return (
     <Pressable
       onPress={() => onPress(problem)}
@@ -43,10 +46,13 @@ const ProblemCard: React.FC<ProblemCardProps> = ({
         pressed && styles.pressed,
       ]}
       accessibilityRole="button"
-      accessibilityLabel={`${problem.name}. ${problem.localName}`}
+      accessibilityLabel={`${problem.name}. ${getLocalizedText(
+        problem.localName,
+        language,
+      )}`}
     >
       <CropProblemImage
-        path={problem.images[0] ?? ""}
+        path={getFirstAvailableImage(problem.images)}
         label={problem.name}
         style={styles.cardImage}
       />
@@ -56,7 +62,7 @@ const ProblemCard: React.FC<ProblemCardProps> = ({
           {problem.name}
         </Text>
         <Text style={styles.cardLocalName} numberOfLines={3}>
-          {problem.localName}
+          {getLocalizedText(problem.localName, language)}
         </Text>
       </View>
     </Pressable>
@@ -64,8 +70,8 @@ const ProblemCard: React.FC<ProblemCardProps> = ({
 };
 
 /**
- * Offline crop-care browser. Everything it shows comes from the two bundled
- * JSON files, so it opens instantly and works with no network at all.
+ * Offline crop-care browser. Everything it shows comes from the bundled
+ * bilingual JSON file, so it opens instantly and works with no network at all.
  */
 export const CropProblemsScreen: React.FC = () => {
   const navigation =
@@ -86,8 +92,8 @@ export const CropProblemsScreen: React.FC = () => {
   }, [route.params?.query]);
 
   const problems = useMemo(
-    () => searchCropProblems(getCropProblems(language), search, language),
-    [language, search],
+    () => searchCropProblems(getCropProblems(), search),
+    [search],
   );
 
   const openProblem = useCallback(
