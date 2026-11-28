@@ -30,6 +30,7 @@ import Animated, {
 
 import { useDiagnosisDetail } from "../hooks/useDiagnosisDetail";
 import { useGlossary } from "../hooks/useGlossary";
+import { getActionAsset } from "../../../utils/actionAssets";
 import { TermGlossaryModal } from "../components/TermGlossaryModal";
 import { TermHighlightText } from "../components/TermHighlightText";
 import { diagnosisApi } from "../diagnosisApi";
@@ -891,6 +892,7 @@ const DiagnosisDetailContent: React.FC = () => {
 
         return {
           ...action,
+          image: getActionAsset(action.title, action.explanation),
           titleSegments: segmentsFor(action.title),
           explanationSegments: segmentsFor(action.explanation),
         };
@@ -1161,25 +1163,30 @@ const DiagnosisDetailContent: React.FC = () => {
                 </Text>
 
                 <View style={styles.actionContent}>
-                  <View style={styles.actionHeader}>
-                    <View style={styles.actionTextContent}>
-                      <TermHighlightText
-                        text={action.title}
-                        segments={action.titleSegments}
-                        onPressTerm={openTerm}
-                        style={styles.actionTitle}
-                      />
+                  <TermHighlightText
+                    text={action.title}
+                    segments={action.titleSegments}
+                    onPressTerm={openTerm}
+                    style={styles.actionTitle}
+                  />
 
-                      {action.explanation ? (
-                        <TermHighlightText
-                          text={action.explanation}
-                          segments={action.explanationSegments}
-                          onPressTerm={openTerm}
-                          style={styles.actionExplanation}
-                        />
-                      ) : null}
-                    </View>
-                  </View>
+                  {action.image ? (
+                    <Image
+                      source={action.image}
+                      style={styles.actionImage}
+                      resizeMode="cover"
+                      accessible={false}
+                    />
+                  ) : null}
+
+                  {action.explanation ? (
+                    <TermHighlightText
+                      text={action.explanation}
+                      segments={action.explanationSegments}
+                      onPressTerm={openTerm}
+                      style={styles.actionExplanation}
+                    />
+                  ) : null}
                 </View>
               </View>
             ))
@@ -1539,7 +1546,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 14,
-    marginBottom: 18,
+    marginBottom: 30,
   },
 
   actionNumber: {
@@ -1556,16 +1563,13 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
 
-  actionHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-
-  actionTextContent: {
-    flex: 1,
-    minWidth: 0,
+  actionImage: {
+    width: 96,
+    height: 96,
+    borderRadius: 12,
+    backgroundColor: COLORS.surfaceMuted,
+    marginTop: 10,
+    marginBottom: 2,
   },
 
   actionTitle: {

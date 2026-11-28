@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import {
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -30,6 +31,8 @@ import type {
 import { CropProblemCarousel } from "../components/CropProblemCarousel";
 import { LanguageToggle } from "../components/LanguageToggle";
 import { OptionalImageGallery } from "../components/OptionalImageGallery";
+import { getCropProblemImageSource } from "../imageAssets";
+import { getActionAssetForText } from "../../../utils/actionAssets";
 
 const MARGIN = spacing.xl;
 
@@ -57,19 +60,59 @@ const BulletList: React.FC<{ items: string[] }> = ({ items }) => (
   </View>
 );
 
+const hasResolvableImage = (images: string[]): boolean =>
+  images.some((path) => getCropProblemImageSource(path) !== null);
+
+const ActionEntryBody: React.FC<{
+  text: string;
+  images: string[];
+  language: Language;
+  showActionImage?: boolean;
+}> = ({ text, images, language, showActionImage = false }) => {
+  const fallback =
+    showActionImage && !hasResolvableImage(images)
+      ? getActionAssetForText(text)
+      : null;
+
+  return (
+    <>
+      <Text style={styles.bodyText}>{text}</Text>
+      {fallback ? (
+        <Image
+          source={fallback}
+          style={styles.entryActionImage}
+          resizeMode="cover"
+          accessible={false}
+        />
+      ) : null}
+      <OptionalImageGallery images={images} language={language} />
+    </>
+  );
+};
+
 const EntryList: React.FC<{
   entries: TextWithImages[];
   language: Language;
-}> = ({ entries, language }) => (
-  <View style={styles.entryList}>
+  showActionImages?: boolean;
+}> = ({ entries, language, showActionImages = false }) => (
+  <View
+    style={[
+      styles.entryList,
+      showActionImages && styles.entryListWithImages,
+    ]}
+  >
     {entries.map((entry, index) => (
       <View key={entry.id} style={styles.entry}>
         <Text style={styles.entryNumber}>
           {String(index + 1).padStart(2, "0")}
         </Text>
         <View style={styles.entryBody}>
-          <Text style={styles.bodyText}>{getEntryText(entry, language)}</Text>
-          <OptionalImageGallery images={entry.images} language={language} />
+          <ActionEntryBody
+            text={getEntryText(entry, language)}
+            images={entry.images}
+            language={language}
+            showActionImage={showActionImages}
+          />
         </View>
       </View>
     ))}
@@ -108,19 +151,18 @@ const TreatmentBlock: React.FC<{
       {steps.length > 0 ? (
         <View style={styles.subBlock}>
           <Text style={styles.subTitle}>{copy.steps}</Text>
-          <View style={styles.stepList}>
+          <View style={[styles.stepList, styles.stepListWithImages]}>
             {steps.map((step, index) => (
               <View key={step.id} style={styles.entry}>
                 <Text style={styles.entryNumber}>
                   {String(index + 1).padStart(2, "0")}
                 </Text>
                 <View style={styles.entryBody}>
-                  <Text style={styles.bodyText}>
-                    {getLocalizedText(step.text, language)}
-                  </Text>
-                  <OptionalImageGallery
+                  <ActionEntryBody
+                    text={getLocalizedText(step.text, language)}
                     images={step.images}
                     language={language}
+                    showActionImage
                   />
                 </View>
               </View>
@@ -307,7 +349,11 @@ export const CropProblemDetailScreen: React.FC = () => {
 
           {problem.management.length > 0 ? (
             <Section title={copy.management}>
-              <EntryList entries={problem.management} language={language} />
+              <EntryList
+                entries={problem.management}
+                language={language}
+                showActionImages
+              />
             </Section>
           ) : null}
 
@@ -475,6 +521,9 @@ const styles = StyleSheet.create({
   entryList: {
     gap: spacing.lg,
   },
+  entryListWithImages: {
+    gap: spacing.xxxl,
+  },
   entry: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -492,6 +541,13 @@ const styles = StyleSheet.create({
   entryBody: {
     flex: 1,
     minWidth: 0,
+  },
+  entryActionImage: {
+    width: 270,
+    height: 270,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceMuted,
+    marginTop: spacing.md,
   },
   relatedList: {
     marginTop: -spacing.xs,
@@ -535,6 +591,9 @@ const styles = StyleSheet.create({
   },
   stepList: {
     gap: spacing.lg,
+  },
+  stepListWithImages: {
+    gap: spacing.xxxl,
   },
   notFound: {
     flex: 1,
